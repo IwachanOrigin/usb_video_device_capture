@@ -26,5 +26,6 @@
 #include <mfapi.h>
 #include <mfidl.h>
 #include <mferror.h>
+#include <mfcaptureengine.h>
 
 #endif // STDAFX_H_
