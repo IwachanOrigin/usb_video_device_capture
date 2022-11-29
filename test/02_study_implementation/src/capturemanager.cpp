@@ -29,6 +29,25 @@ STDMETHODIMP_ (ULONG) CaptureManager::CaptureEngineCB::Release()
 
 STDMETHODIMP CaptureManager::CaptureEngineCB::OnEvent(_In_ IMFMediaEvent* event)
 {
-  
+  if (m_isSleeping && m_manager != nullptr)
+  {
+    GUID guidType;
+    HRESULT hrStatus = S_OK;
+    HRESULT hr = event->GetStatus(&hrStatus);
+    if (FAILED(hr))
+    {
+      hrStatus = hr;
+    }
+
+    hr = event->GetExtendedType(&guidType);
+    if (SUCCEEDED(hr))
+    {
+      if (guidType == MF_CAPTURE_ENGINE_PREVIEW_STOPPED)
+      {
+        m_manager->onPreviewStopped(hrStatus);
+        SetEvent(m_manager->m_event);
+      }
+    }
+  }
 }
 
