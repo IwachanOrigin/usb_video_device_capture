@@ -4,8 +4,6 @@
 
 #include "stdafx.h"
 #include "dxhelper.h"
-#include <intsafe.h>
-#include <winnt.h>
 
 class CaptureManager
 {
