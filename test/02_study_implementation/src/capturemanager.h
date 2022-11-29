@@ -5,6 +5,8 @@
 #include "stdafx.h"
 #include "dxhelper.h"
 
+const UINT WM_APP_CAPTURE_EVENT = WM_APP + 1;
+
 class CaptureManager
 {
   // The event callback object.
@@ -26,6 +28,7 @@ class CaptureManager
 
     void setSleeping(const bool sleeping) { m_isSleeping = sleeping; }
     bool isSleeping() { return m_isSleeping; }
+    void setCaptureManager(CaptureManager* manager) { m_manager = manager; }
   private:
     bool m_isSleeping;
     CaptureManager* m_manager;
@@ -73,7 +76,7 @@ class CaptureManager
   }
 
   // Capture engine event handlers
-  void onCapEngineInit(HRESULT& hr);
+  void onCapEngineInited(HRESULT& hr);
   void onPreviewStarted(HRESULT& hr);
   void onPreviewStopped(HRESULT& hr);
   void onRecordStarted(HRESULT& hr);
