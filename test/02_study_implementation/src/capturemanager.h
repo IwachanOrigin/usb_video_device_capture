@@ -62,10 +62,11 @@ class CaptureManager
     m_pwrRequest = INVALID_HANDLE_VALUE;
     m_isPowerRequestSet = false;
 
+    WCHAR srs[] = L"CaptureEngine is recording!";
     REASON_CONTEXT powerContext = {};
     powerContext.Version = POWER_REQUEST_CONTEXT_VERSION;
     powerContext.Flags = POWER_REQUEST_CONTEXT_SIMPLE_STRING;
-    powerContext.Reason.SimpleReasonString = L"CaptureEngine is recording!";
+    powerContext.Reason.SimpleReasonString = srs;
 
     m_pwrRequest = PowerCreateRequest(&powerContext);
   }

@@ -2,8 +2,10 @@
 #include "stdafx.h"
 #include "dxhelper.h"
 
-#pragma comment(lib, "mfplat.lib")
-#pragma comment(lib, "Mf.lib")
+#pragma comment(lib, "mf")
+#pragma comment(lib, "mfplat")
+#pragma comment(lib, "mfuuid")
+#pragma comment(lib, "shlwapi")
 
 using namespace helper;
 

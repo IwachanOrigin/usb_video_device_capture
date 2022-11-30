@@ -8,6 +8,20 @@
 namespace helper
 {
 
+  // Gets an interface pointer from a Media Foundation collection.
+template <class IFACE>
+HRESULT utilGetCollectionObject(IMFCollection* collection, DWORD index, IFACE** ppObject)
+{
+  IUnknown* pUnk = nullptr;
+  HRESULT hr = collection->GetElement(index, &pUnk);
+  if (SUCCEEDED(hr))
+  {
+    hr = pUnk->QueryInterface(IID_PPV_ARGS(ppObject));
+    pUnk->Release();
+  }
+  return hr;
+}
+
 HRESULT utilCopyAttribute(IMFAttributes* srcAttribute, IMFAttributes* dstAttribute, const GUID& key)
 {
   PROPVARIANT var;
@@ -150,11 +164,86 @@ HRESULT utilConfigureVideoEncodeing(IMFCaptureSource* capSrc, IMFCaptureRecordSi
   {
     UINT32 encodingBitrate = 0;
     hr = utilGetEncodingBitrate(mediatype2, &encodingBitrate);
+    if (FAILED(hr))
+    {
+      goto Exit;
+    }
+
+    hr = mediatype2->SetUINT32(MF_MT_AVG_BITRATE, encodingBitrate);
+  }
+
+  if (FAILED(hr))
+  {
+    goto Exit;
+  }
+
+
+  {
+    // Connect the video stream to the recording sink.
+    DWORD sinkStreamIndex = 0;
+    hr = capRecord->AddStream((DWORD)MF_CAPTURE_ENGINE_PREFERRED_SOURCE_STREAM_FOR_VIDEO_RECORD, mediatype2, nullptr, &sinkStreamIndex);
   }
 
 Exit:
   SAFE_RELEASE(mediatype);
   SAFE_RELEASE(mediatype2);
+
+  return hr;
+}
+
+HRESULT utilConfigureAudioEncoding(IMFCaptureSource* capSrc, IMFCaptureRecordSink* capRecord, REFGUID guidEncodingType)
+{
+  IMFCollection* availableTypes = nullptr;
+  IMFMediaType* mediatype = nullptr;
+  IMFAttributes* attributes = nullptr;
+
+  // Configure the audio format for the recording sink.
+  HRESULT hr = MFCreateAttributes(&attributes, 1);
+  if (FAILED(hr))
+  {
+    goto Exit;
+  }
+
+  // Enumerate low latency media types.
+  hr = attributes->SetUINT32(MF_LOW_LATENCY, true);
+  if (FAILED(hr))
+  {
+    goto Exit;
+  }
+
+  // Get a list of encoded output formats that are supported by the encoder.
+  hr = MFTranscodeGetAudioOutputAvailableTypes(
+      guidEncodingType
+    , MFT_ENUM_FLAG_ALL | MFT_ENUM_FLAG_SORTANDFILTER
+    , attributes
+    , &availableTypes);
+  if (FAILED(hr))
+  {
+    goto Exit;
+  }
+
+  // Pick the first format from the list.
+  hr = utilGetCollectionObject(availableTypes, 0, &mediatype);
+  if (FAILED(hr))
+  {
+    goto Exit;
+  }
+
+  // Connect the audio stream to the recording sink.
+  {
+    DWORD sinkStreamIndex = 0;
+    hr = capRecord->AddStream((DWORD)MF_CAPTURE_ENGINE_PREFERRED_SOURCE_STREAM_FOR_AUDIO, mediatype, nullptr, &sinkStreamIndex);
+    if (hr == MF_E_INVALIDSTREAMNUMBER)
+    {
+      // If an audio device is not present, allow video only recording.
+      hr = S_OK;
+    }
+  }
+
+Exit:
+  SAFE_RELEASE(availableTypes);
+  SAFE_RELEASE(mediatype);
+  SAFE_RELEASE(attributes);
 
   return hr;
 }

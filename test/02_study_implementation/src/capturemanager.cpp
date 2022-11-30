@@ -1,6 +1,7 @@
 
-#include "capturemanager.h"
+#include "stdafx.h"
 #include "utils.h"
+#include "capturemanager.h"
 
 using namespace helper;
 
@@ -139,6 +140,8 @@ Exit:
     factory->Release();
     factory = nullptr;
   }
+
+  return hr;
 }
 
 // Handle an event from the capture engine.
@@ -341,8 +344,19 @@ HRESULT CaptureManager::stopPreview()
   return hr;
 }
 
+HRESULT CaptureManager::startRecord(PCWSTR destinationFile)
+{
+  return S_OK;
+}
 
+HRESULT CaptureManager::stopRecord()
+{
+  return S_OK;
+}
 
-
+HRESULT CaptureManager::takePhoto(PCWSTR filename)
+{
+  return S_OK;
+}
 
 // CaptureManager

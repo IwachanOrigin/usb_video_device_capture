@@ -23,10 +23,12 @@
 #include <shellapi.h>
 #include <shlobj.h>
 #include <shlwapi.h>
+#include <tchar.h>
 
 #include <mfapi.h>
 #include <mfidl.h>
 #include <mferror.h>
 #include <mfcaptureengine.h>
+
 
 #endif // STDAFX_H_
