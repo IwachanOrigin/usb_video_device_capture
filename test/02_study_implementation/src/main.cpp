@@ -6,6 +6,7 @@
 #pragma comment(lib, "mfplat")
 #pragma comment(lib, "mfuuid")
 #pragma comment(lib, "shlwapi")
+#pragma comment(lib, "powrprof")
 
 using namespace helper;
 
