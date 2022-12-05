@@ -111,7 +111,6 @@ public:
     return hr;
   }
 
-  HRESULT initCaptureManager(IUnknown* pUnk);
   void destroyCapEngine()
   {
     if (nullptr != m_event)
@@ -130,6 +129,9 @@ public:
     m_errorID = 0;
   }
 
+
+  HRESULT initCaptureManager(IUnknown* pUnk);
+  
   bool isPreviewing() const { return m_isPreviewing; }
   bool isRecording() const { return m_isRecording; }
   bool isPhotoPending() const { return m_isPhotoPending; }

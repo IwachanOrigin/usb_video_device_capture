@@ -1,6 +1,7 @@
 
 #include "stdafx.h"
 #include "dxhelper.h"
+#include "capturemanager.h"
 
 #pragma comment(lib, "mf")
 #pragma comment(lib, "mfplat")
@@ -55,8 +56,14 @@ int main(int argc, char* argv[])
   ThrowIfFailed(CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE));
   ThrowIfFailed(MFStartup(MF_VERSION));
 
+  // Get devices.
   std::vector<std::wstring> deviceNames;
   getVideoDeviceNames(deviceNames);
+
+  // Create
+  //std::shared_ptr<CaptureManager> g_pEngine;
+  //ThrowIfFailed(CaptureManager::createInst(, &g_pEngine));
+  //ThrowIfFailed(g_pEngine->initCaptureManager(, ));
 
   // Release
   ThrowIfFailed(MFShutdown());
