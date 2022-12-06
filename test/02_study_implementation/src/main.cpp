@@ -89,8 +89,14 @@ int main(int argc, char* argv[])
     std::wcout << "Failed device select.";
   }
 
+  // Start preview
+  //ThrowIfFailed(g_pEngine->startPreview());
+
   // window message handle
   Win32MessageHandler::getInstance().run((HINSTANCE)0, 1);
+
+  // Stop preview
+  //ThrowIfFailed(g_pEngine->stopPreview());
 
   // Release
   if (g_pEngine)
