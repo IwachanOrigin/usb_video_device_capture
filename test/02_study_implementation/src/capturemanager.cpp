@@ -58,6 +58,7 @@ STDMETHODIMP CaptureManager::CaptureEngineCB::OnEvent(_In_ IMFMediaEvent* event)
       }
       else
       {
+        std::wcout << "Set event." << std::endl;
         SetEvent(m_manager->m_event);
       }
     }
@@ -66,8 +67,9 @@ STDMETHODIMP CaptureManager::CaptureEngineCB::OnEvent(_In_ IMFMediaEvent* event)
   }
   else
   {
+    std::wcout << "Add ref." << std::endl;
     event->AddRef();
-    PostMessage(m_hwnd, WM_APP_CAPTURE_EVENT, (WPARAM)event, 0L);
+    //PostMessage(m_hwnd, WM_APP_CAPTURE_EVENT, (WPARAM)event, 0L);
   }
   return S_OK;
 }
@@ -91,7 +93,7 @@ HRESULT CaptureManager::initCaptureManager(IUnknown* pUnk)
     goto Exit;
   }
 
-  m_capCallback = new (std::nothrow)CaptureEngineCB(m_hwndEvent);
+  m_capCallback = new (std::nothrow)CaptureEngineCB();
   if (nullptr == m_capCallback)
   {
     hr = E_OUTOFMEMORY;

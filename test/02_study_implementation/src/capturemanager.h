@@ -13,10 +13,9 @@ class CaptureManager
   class CaptureEngineCB : public IMFCaptureEngineOnEventCallback
   {
     long m_ref;
-    HWND m_hwnd;
 
   public:
-    CaptureEngineCB(HWND hwnd) : m_ref(1), m_hwnd(hwnd), m_isSleeping(false), m_manager(nullptr) {}
+    CaptureEngineCB() : m_ref(1), m_isSleeping(false), m_manager(nullptr) {}
 
     // IUnknown
     STDMETHODIMP  QueryInterface(REFIID riid, void** ppv);
@@ -34,8 +33,6 @@ class CaptureManager
     CaptureManager* m_manager;
   };
 
-  HWND m_hwndEvent;
-
   IMFCaptureEngine* m_captureEngine;
   IMFCapturePreviewSink *m_capPrevSink;
   CaptureEngineCB* m_capCallback;
@@ -48,9 +45,8 @@ class CaptureManager
   HANDLE m_pwrRequest;
   bool m_isPowerRequestSet;
 
-  CaptureManager(HWND hwnd)
+  CaptureManager()
   {
-    m_hwndEvent = hwnd;
     m_captureEngine = nullptr;
     m_capPrevSink = nullptr;
     m_capCallback = nullptr;
@@ -93,12 +89,12 @@ public:
     this->destroyCapEngine();
   }
 
-  static HRESULT createInst(HWND hwndEvent, CaptureManager** ppEngine)
+  static HRESULT createInst(CaptureManager** ppEngine)
   {
     HRESULT hr = S_OK;
-    ppEngine = nullptr;
+    *ppEngine = nullptr;
 
-    CaptureManager* pEngine = new (std::nothrow)CaptureManager(hwndEvent);
+    CaptureManager* pEngine = new (std::nothrow)CaptureManager();
     if (pEngine != nullptr)
     {
       *ppEngine = pEngine;
