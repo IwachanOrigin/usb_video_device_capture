@@ -1,6 +1,7 @@
 
 #include "stdafx.h"
 #include "utils.h"
+#include "captureenginesamplecallback.h"
 #include "capturemanager.h"
 
 using namespace helper;
@@ -304,6 +305,12 @@ HRESULT CaptureManager::startPreview()
     // Connect the video stream to the preview sink.
     DWORD dwSinkStreamIndex = 0;
     hr = m_capPrevSink->AddStream((DWORD)MF_CAPTURE_ENGINE_PREFERRED_SOURCE_STREAM_FOR_VIDEO_PREVIEW, mediatype2, nullptr, &dwSinkStreamIndex);
+    if (FAILED(hr))
+    {
+      goto Exit;
+    }
+
+    hr = m_capPrevSink->SetSampleCallback(dwSinkStreamIndex, new CaptureEngineSampleCB());
     if (FAILED(hr))
     {
       goto Exit;

@@ -27,8 +27,20 @@ STDMETHODIMP_(ULONG) CaptureEngineSampleCB::Release()
   return ref;
 }
 
-STDMETHODIMP CaptureEngineSampleCB::OnSample(_In_ IMFSample *sample)
+STDMETHODIMP CaptureEngineSampleCB::OnSample(_In_ IMFSample* sample)
 {
+  if (sample == nullptr)
+  {
+    return S_OK;
+  }
+
+  DWORD dwTotalLength = 0;
+  HRESULT hr = sample->GetTotalLength(&dwTotalLength);
+  if (SUCCEEDED(hr))
+  {
+    std::wcout << "Buffer size : " << dwTotalLength << std::endl;
+  }
+
   sample->AddRef();
   // I'm not sending events to MainWindow now, so I'm release here.
   sample->Release();

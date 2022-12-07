@@ -16,7 +16,7 @@ public:
   STDMETHODIMP_(ULONG) AddRef();
   STDMETHODIMP_(ULONG) Release();
 
-  STDMETHODIMP OnSample(_In_ IMFSample *sample);
+  STDMETHODIMP OnSample(_In_ IMFSample* sample);
 };
 
 #endif // CAPTURE_ENGINE_SAMPLE_CALLBACK_H_
