@@ -36,6 +36,35 @@ void getVideoDevices(IMFActivate*** pppRawDevice, uint32_t& count)
   pppRawDevice = &ppRawDevice;
 }
 
+LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+  switch (uMsg)
+  {
+  case WM_ERASEBKGND:
+    return 1;
+  }
+  return DefWindowProc(hwnd, uMsg, wParam, lParam);
+}
+
+HWND CreatePreviewWindow(HINSTANCE hInstance, HWND hParent)
+{
+  // Register the window class.
+  const wchar_t CLASS_NAME[] = L"Capture Engine Preview Window Class";
+
+  WNDCLASS wc = { };
+
+  wc.lpfnWndProc = WindowProc;
+  wc.hInstance = hInstance;
+  wc.lpszClassName = CLASS_NAME;
+
+  RegisterClass(&wc);
+
+  // Create the window.
+  return CreateWindowEx(0, CLASS_NAME, L"Capture Application",
+    WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+    NULL, NULL, hInstance, NULL);
+}
+
 int main(int argc, char* argv[])
 {
   // INIT
@@ -78,11 +107,25 @@ int main(int argc, char* argv[])
 
   // Input device no.
   uint32_t selectionNo = 0;
+
+  HPOWERNOTIFY hPowerNotify = nullptr;
+  HPOWERNOTIFY hPowerNotifyMonitor = nullptr;
+  SYSTEM_POWER_CAPABILITIES pwrCaps;
+  HWND previewWnd;
+
   std::wcout << "Please input device no : ";
   std::wcin >> selectionNo;
   if (selectionNo < deviceCount)
   {
     ThrowIfFailed(g_pEngine->initCaptureManager(devices[selectionNo]));
+    devices[selectionNo]->AddRef();
+
+    previewWnd = CreatePreviewWindow(GetModuleHandle(NULL), nullptr);
+    // Information cannot be obtained from the device without the following process.
+    hPowerNotify = RegisterSuspendResumeNotification((HANDLE)previewWnd, DEVICE_NOTIFY_WINDOW_HANDLE);
+    hPowerNotifyMonitor = RegisterPowerSettingNotification((HANDLE)previewWnd, &GUID_MONITOR_POWER_ON, DEVICE_NOTIFY_WINDOW_HANDLE);
+    ZeroMemory(&pwrCaps, sizeof(pwrCaps));
+    GetPwrCapabilities(&pwrCaps);
   }
   else
   {
@@ -90,19 +133,25 @@ int main(int argc, char* argv[])
   }
 
   // Start preview
-  //ThrowIfFailed(g_pEngine->startPreview());
+  ThrowIfFailed(g_pEngine->startPreview());
 
   // window message handle
   Win32MessageHandler::getInstance().run((HINSTANCE)0, 1);
 
   // Stop preview
-  //ThrowIfFailed(g_pEngine->stopPreview());
+  ThrowIfFailed(g_pEngine->stopPreview());
 
   // Release
   if (g_pEngine)
   {
     delete g_pEngine;
     g_pEngine = nullptr;
+  }
+
+  if (hPowerNotify)
+  {
+    UnregisterSuspendResumeNotification(hPowerNotify);
+    hPowerNotify = NULL;
   }
 
   if (devices != nullptr)

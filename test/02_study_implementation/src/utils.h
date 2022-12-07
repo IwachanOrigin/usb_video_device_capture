@@ -52,7 +52,7 @@ HRESULT utilCloneVideomediaType(IMFMediaType* srcMediaType, REFGUID guidSubType,
     goto Exit;
   }
 
-  hr = newMediaType->SetGUID(MF_MT_MAJOR_TYPE, guidSubType);
+  hr = newMediaType->SetGUID(MF_MT_SUBTYPE, guidSubType);
   if (FAILED(hr))
   {
     goto Exit;

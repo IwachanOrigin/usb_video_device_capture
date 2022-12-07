@@ -33,19 +33,21 @@ STDMETHODIMP_ (ULONG) CaptureManager::CaptureEngineCB::Release()
 
 STDMETHODIMP CaptureManager::CaptureEngineCB::OnEvent(_In_ IMFMediaEvent* event)
 {
-  if (m_isSleeping && m_manager != nullptr)
-  {
-    GUID guidType;
-    HRESULT hrStatus = S_OK;
-    HRESULT hr = event->GetStatus(&hrStatus);
-    if (FAILED(hr))
-    {
-      hrStatus = hr;
-    }
+  GUID guidType;
+  HRESULT hrStatus = S_OK;
 
-    hr = event->GetExtendedType(&guidType);
-    if (SUCCEEDED(hr))
+  HRESULT hr = event->GetStatus(&hrStatus);
+  if (FAILED(hr))
+  {
+    hrStatus = hr;
+  }
+
+  hr = event->GetExtendedType(&guidType);
+  if (SUCCEEDED(hr))
+  {
+    if (m_isSleeping && m_manager != nullptr)
     {
+
       if (guidType == MF_CAPTURE_ENGINE_PREVIEW_STOPPED)
       {
         m_manager->onPreviewStopped(hrStatus);
@@ -58,18 +60,24 @@ STDMETHODIMP CaptureManager::CaptureEngineCB::OnEvent(_In_ IMFMediaEvent* event)
       }
       else
       {
-        std::wcout << "Set event." << std::endl;
         SetEvent(m_manager->m_event);
       }
     }
-
-    return S_OK;
-  }
-  else
-  {
-    std::wcout << "Add ref." << std::endl;
+    else
+    {
+      if (guidType == MF_CAPTURE_ENGINE_INITIALIZED)
+      {
+        if (m_manager != nullptr)
+        {
+          m_manager->onCapEngineInited(hrStatus);
+          m_manager->setErrorID(hrStatus, 104);
+          SetEvent(m_manager->m_event);
+        }
+      }
+    }
     event->AddRef();
-    //PostMessage(m_hwnd, WM_APP_CAPTURE_EVENT, (WPARAM)event, 0L);
+    // I'm not sending events to MainWindow now, so I'm release here.
+    event->Release();
   }
   return S_OK;
 }

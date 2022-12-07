@@ -191,7 +191,7 @@ CaptureManager::InitializeCaptureManager(HWND hwndPreview, IUnknown* pUnk)
     {
         goto Exit;
     }
-    hr = pAttributes->SetUnknown(MF_CAPTURE_ENGINE_D3D_MANAGER, g_pDXGIMan);
+    //hr = pAttributes->SetUnknown(MF_CAPTURE_ENGINE_D3D_MANAGER, g_pDXGIMan);
     if (FAILED(hr))
     {
         goto Exit;
@@ -401,7 +401,7 @@ HRESULT CaptureManager::StartPreview()
         }
 
         // Connect the video stream to the preview sink.
-        DWORD dwSinkStreamIndex;
+        DWORD dwSinkStreamIndex = 0;
         hr = m_pPreview->AddStream((DWORD)MF_CAPTURE_ENGINE_PREFERRED_SOURCE_STREAM_FOR_VIDEO_PREVIEW,  pMediaType2, NULL, &dwSinkStreamIndex);        
         if (FAILED(hr))
         {

@@ -29,6 +29,6 @@
 #include <mfidl.h>
 #include <mferror.h>
 #include <mfcaptureengine.h>
-
+#include <powrprof.h>
 
 #endif // STDAFX_H_
