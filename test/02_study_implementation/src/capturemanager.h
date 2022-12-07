@@ -19,8 +19,8 @@ class CaptureManager
 
     // IUnknown
     STDMETHODIMP  QueryInterface(REFIID riid, void** ppv);
-    STDMETHODIMP_ (ULONG) AddRef();
-    STDMETHODIMP_ (ULONG) Release();
+    STDMETHODIMP_(ULONG) AddRef();
+    STDMETHODIMP_(ULONG) Release();
 
     // IMFCaptureEngineOnEventCallback
     STDMETHODIMP OnEvent(_In_ IMFMediaEvent* event);
