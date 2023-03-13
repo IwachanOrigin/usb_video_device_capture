@@ -41,6 +41,7 @@ set(main_src
   stdafx.h
   texture.cpp
   texture.h
+  utils.h
 )
 
 add_executable(${PROJECT_NAME} WIN32 ${main_src})
