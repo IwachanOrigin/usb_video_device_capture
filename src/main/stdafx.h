@@ -19,6 +19,20 @@
 
 #include <wrl.h>
 #include <shellapi.h>
+#include <shlobj.h>
+#include <shlwapi.h>
+#include <tchar.h>
+
+#include <iostream>
+#include <vector>
+#include <string>
+#include <memory>
+
+#include <mfapi.h>
+#include <mfidl.h>
+#include <mferror.h>
+#include <mfcaptureengine.h>
+#include <powrprof.h>
 
 #include "SimpleMath.h"
 

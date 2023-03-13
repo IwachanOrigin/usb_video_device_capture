@@ -2,7 +2,6 @@
 #include "mainapp.h"
 #include "dx11base.h"
 #include "SimpleMath.h"
-#include <vector>
 
 using namespace DirectX;
 
@@ -80,8 +79,8 @@ bool MainApp::create(HWND hWnd)
     }
   }
 
-  VideoTexture::createAPI();
-  if (!m_videoTexture.create("C:\\Users\\iwanaga\\github\\dxplayer\\test\\02_dx11_study_render\\main\\data\\demo.mp4"))
+  HRESULT hr = CaptureTexture::createInst(&m_videoTexture);
+  if (FAILED(hr))
   {
     return false;
   }
@@ -95,7 +94,7 @@ void MainApp::render()
   {
     // The video
     m_pipeVideo.activate();
-    m_videoTexture.getTexture()->activate(0);
+    //m_videoTexture.getTexture()->activate(0);
     m_quad.activateAndRender();
   }
 
@@ -110,7 +109,7 @@ void MainApp::update(float dt)
 void MainApp::destroy()
 {
   m_videoTexture.destroy();
-  VideoTexture::destroyAPI();
+  CaptureTexture::stopPreview();
   m_quad.destroy();
   m_pipeVideo.destroy();
   DX11Base::getInstance().destroy();

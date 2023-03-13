@@ -5,7 +5,7 @@
 #include "stdafx.h"
 #include "pipeline.h"
 #include "mesh.h"
-#include "video_texture.h"
+#include "capture_texture.h"
 
 using namespace Render;
 
@@ -23,7 +23,7 @@ public:
 private:
   Pipeline m_pipeVideo;
   Mesh m_quad;
-  VideoTexture m_videoTexture;
+  CaptureTexture m_videoTexture;
 };
 
 #endif // MAIN_APP_H_

@@ -20,6 +20,10 @@ set_source_files_properties(videoPS.hlsl
 add_custom_target(hlsl SOURCES ${hlsl_srcs})
 
 set(main_src
+  capture_texture.cpp
+  capture_texture.h
+  captureenginesamplecallback.cpp
+  captureenginesamplecallback.h
   clock.h
   dx11base.cpp
   dx11base.h
@@ -31,10 +35,10 @@ set(main_src
   mesh.h
   pipeline.cpp
   pipeline.h
-  stdafx.cpp
-  stdafx.h
   SimpleMath.cpp
   SimpleMath.h
+  stdafx.cpp
+  stdafx.h
   texture.cpp
   texture.h
 )
