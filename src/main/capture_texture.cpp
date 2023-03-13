@@ -109,7 +109,7 @@ HRESULT CaptureTexture::initCaptureTexture(IUnknown* pUnk)
     goto Exit;
   }
 
-  m_capCallback->setCaptureManager(this);
+  m_capCallback->setCaptureTexture(this);
 
   hr = MFCreateAttributes(&attributes, 1);
   if (FAILED(hr))
@@ -296,6 +296,12 @@ HRESULT CaptureTexture::startPreview()
       goto Exit;
     }
 
+    hr = utilGetFrameSize(mediatype2, &m_width, &m_height);
+    if (FAILED(hr))
+    {
+      goto Exit;
+    }
+
     hr = mediatype2->SetUINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, true);
     if (FAILED(hr))
     {
@@ -310,7 +316,7 @@ HRESULT CaptureTexture::startPreview()
       goto Exit;
     }
 
-    hr = m_capPrevSink->SetSampleCallback(dwSinkStreamIndex, new CaptureEngineSampleCB());
+    hr = m_capPrevSink->SetSampleCallback(dwSinkStreamIndex, new CaptureEngineSampleCB(m_width, m_height));
     if (FAILED(hr))
     {
       goto Exit;
@@ -376,4 +382,9 @@ HRESULT CaptureTexture::takePhoto(PCWSTR filename)
   return S_OK;
 }
 
-// CaptureManager
+void CaptureTexture::update(float dt)
+{
+
+}
+
+// CaptureTexture

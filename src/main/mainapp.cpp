@@ -6,6 +6,7 @@
 using namespace DirectX;
 
 MainApp::MainApp()
+  : m_captureTexture(nullptr)
 {
 }
 
@@ -79,7 +80,7 @@ bool MainApp::create(HWND hWnd)
     }
   }
 
-  HRESULT hr = CaptureTexture::createInst(&m_videoTexture);
+  HRESULT hr = CaptureTexture::createInst(&m_captureTexture);
   if (FAILED(hr))
   {
     return false;
@@ -103,13 +104,13 @@ void MainApp::render()
 
 void MainApp::update(float dt)
 {
-  m_videoTexture.update(dt);
+  m_captureTexture->update(dt);
 }
 
 void MainApp::destroy()
 {
-  m_videoTexture.destroy();
-  CaptureTexture::stopPreview();
+  m_captureTexture->stopPreview();
+  m_captureTexture->destroyCapEngine();
   m_quad.destroy();
   m_pipeVideo.destroy();
   DX11Base::getInstance().destroy();

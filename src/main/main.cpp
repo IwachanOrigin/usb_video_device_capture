@@ -8,6 +8,12 @@
 
 #pragma comment(lib, "d3d11")
 #pragma comment(lib, "d3dcompiler")
+#pragma comment(lib, "mf")
+#pragma comment(lib, "mfplat")
+#pragma comment(lib, "mfuuid")
+#pragma comment(lib, "shlwapi")
+#pragma comment(lib, "powrprof")
+
 
 //--------------------------------------------------------------------------------------
 // Called every time the application receives a message

@@ -4,6 +4,7 @@
 
 #include "stdafx.h"
 #include "dxhelper.h"
+#include "texture.h"
 
 const UINT WM_APP_CAPTURE_EVENT = WM_APP + 1;
 
@@ -45,6 +46,10 @@ class CaptureTexture
   HANDLE m_pwrRequest;
   bool m_isPowerRequestSet;
 
+  Render::Texture* m_targetTexture;
+  uint32_t m_width;
+  uint32_t m_height;
+
   CaptureTexture()
   {
     m_captureEngine = nullptr;
@@ -57,6 +62,7 @@ class CaptureTexture
     m_event = nullptr;
     m_pwrRequest = INVALID_HANDLE_VALUE;
     m_isPowerRequestSet = false;
+    m_targetTexture = nullptr;
 
     WCHAR srs[] = L"CaptureEngine is recording!";
     REASON_CONTEXT powerContext = {};
@@ -132,6 +138,7 @@ public:
   bool isRecording() const { return m_isRecording; }
   bool isPhotoPending() const { return m_isPhotoPending; }
   UINT errorID() const { return m_errorID; }
+  Render::Texture* CaptureTexture::getTexture() { return m_targetTexture; }
 
   HRESULT onCapEvent(WPARAM wParam, LPARAM lParam);
   HRESULT setVideoDevice(IUnknown* pUnk);
@@ -160,6 +167,8 @@ public:
       return S_OK;
     }
   }
+
+  void update(float dt);
 };
 
 #endif // CAPTURE_TEXTURE_H_
