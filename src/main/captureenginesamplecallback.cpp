@@ -52,7 +52,7 @@ STDMETHODIMP CaptureEngineSampleCB::OnSample(_In_ IMFSample* sample)
 
   IMFMediaBuffer* buf = nullptr;
   DWORD bufLength;
-  hr = sample->CopyToBuffer(buf);
+  hr = sample->ConvertToContiguousBuffer(&buf);
   hr = buf->GetCurrentLength(&bufLength);
 
   byte* byteBuffer = nullptr;
@@ -70,12 +70,8 @@ STDMETHODIMP CaptureEngineSampleCB::OnSample(_In_ IMFSample* sample)
     }
   }
 
-  DWORD dwTotalLength = 0;
-  hr = sample->GetTotalLength(&dwTotalLength);
-  if (SUCCEEDED(hr))
-  {
-    std::wcout << "Buffer size : " << dwTotalLength << std::endl;
-  }
+  // write
+  m_targetTexture->updateFromIYUV(byteBuffer, buffCurrLen);
 
   buf->Unlock();
   SAFE_RELEASE(buf);

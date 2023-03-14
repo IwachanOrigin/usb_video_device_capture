@@ -316,7 +316,11 @@ HRESULT CaptureTexture::startPreview()
       goto Exit;
     }
 
-    hr = m_capPrevSink->SetSampleCallback(dwSinkStreamIndex, new CaptureEngineSampleCB(m_width, m_height));
+    m_samplerCallback = new CaptureEngineSampleCB();
+    m_samplerCallback->setHeight(m_height);
+    m_samplerCallback->setWidth(m_width);
+
+    hr = m_capPrevSink->SetSampleCallback(dwSinkStreamIndex, m_samplerCallback);
     if (FAILED(hr))
     {
       goto Exit;

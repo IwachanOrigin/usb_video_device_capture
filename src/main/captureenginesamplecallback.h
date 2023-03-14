@@ -10,7 +10,7 @@ class CaptureEngineSampleCB : public IMFCaptureEngineOnSampleCallback
   long m_ref;
 
 public:
-  CaptureEngineSampleCB(const uint32_t width, const uint32_t height) : m_ref(1), m_targetTexture(nullptr), m_width(width), m_height(height) {}
+  CaptureEngineSampleCB() : m_ref(1), m_targetTexture(nullptr), m_width(0), m_height(0) {}
 
   // IUnknown
   STDMETHODIMP QueryInterface(REFIID riid, void** ppv);
@@ -18,6 +18,11 @@ public:
   STDMETHODIMP_(ULONG) Release();
 
   STDMETHODIMP OnSample(_In_ IMFSample* sample);
+
+  //
+  void setWidth(const uint32_t width) { m_width = width; }
+  void setHeight(const uint32_t height) { m_height = height; }
+  Render::Texture* getTexture() { return m_targetTexture; }
 
 private:
   Render::Texture* m_targetTexture;
