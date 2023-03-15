@@ -3,8 +3,8 @@
 #include "dxhelper.h"
 #include "dx11base.h"
 
-
 using namespace Render;
+using namespace dx_engine;
 
 Texture::Texture()
   : m_texture(nullptr)

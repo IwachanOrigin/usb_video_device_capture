@@ -11,6 +11,7 @@
 #include "videoVS.h"
 
 using namespace Render;
+using namespace dx_engine;
 
 Pipeline::Pipeline()
   : m_vs(nullptr)

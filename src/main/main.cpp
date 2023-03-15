@@ -10,9 +10,10 @@
 #pragma comment(lib, "d3dcompiler")
 #pragma comment(lib, "mf")
 #pragma comment(lib, "mfplat")
+#pragma comment(lib, "mfplay")
+#pragma comment(lib, "mfreadwrite")
 #pragma comment(lib, "mfuuid")
-#pragma comment(lib, "shlwapi")
-#pragma comment(lib, "powrprof")
+#pragma comment(lib, "wmcodecdspuuid")
 
 
 //--------------------------------------------------------------------------------------

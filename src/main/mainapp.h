@@ -23,7 +23,7 @@ public:
 private:
   Pipeline m_pipeVideo;
   Mesh m_quad;
-  CaptureTexture* m_captureTexture;
+  CaptureTexture m_captureTexture;
 };
 
 #endif // MAIN_APP_H_

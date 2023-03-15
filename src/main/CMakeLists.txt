@@ -22,8 +22,6 @@ add_custom_target(hlsl SOURCES ${hlsl_srcs})
 set(main_src
   capture_texture.cpp
   capture_texture.h
-  captureenginesamplecallback.cpp
-  captureenginesamplecallback.h
   clock.h
   dx11base.cpp
   dx11base.h
@@ -33,6 +31,7 @@ set(main_src
   mainapp.h
   mesh.cpp
   mesh.h
+  mfutility.h
   pipeline.cpp
   pipeline.h
   SimpleMath.cpp
@@ -41,7 +40,6 @@ set(main_src
   stdafx.h
   texture.cpp
   texture.h
-  utils.h
 )
 
 add_executable(${PROJECT_NAME} WIN32 ${main_src})

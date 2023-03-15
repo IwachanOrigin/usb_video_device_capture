@@ -3,6 +3,7 @@
 #include "dxhelper.h"
 
 using namespace Render;
+using namespace dx_engine;
 
 DX11Base::DX11Base()
   : m_device(nullptr)

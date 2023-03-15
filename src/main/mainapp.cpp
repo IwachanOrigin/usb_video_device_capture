@@ -8,7 +8,6 @@ using namespace DirectX;
 using namespace dx_engine;
 
 MainApp::MainApp()
-  : m_captureTexture(nullptr)
 {
 }
 
@@ -84,62 +83,31 @@ bool MainApp::create(HWND hWnd)
 
   // INIT
   ThrowIfFailed(CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE));
-  ThrowIfFailed(MFStartup(MF_VERSION));
 
-  // Get devices.
-  uint32_t deviceCount = 0;
-  IMFActivate** devices = nullptr;
-  {
-    std::shared_ptr<IMFAttributes> pAttributes;
-    IMFAttributes* pRawAttributes = nullptr;
-    ThrowIfFailed(MFCreateAttributes(&pRawAttributes, 1));
-    pAttributes = std::shared_ptr<IMFAttributes>(pRawAttributes, [](auto* p) { p->Release(); });
+  CaptureTexture::createAPI();
+  // Input device no.
+  uint32_t videoDeviceNo = 1;
+  uint32_t audioDeviceNo = 1;
 
-    ThrowIfFailed(pAttributes->SetGUID(MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE, MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_GUID));
-
-    ThrowIfFailed(MFEnumDeviceSources(pAttributes.get(), &devices, &deviceCount));
-  }
-
-  HRESULT hr = CaptureTexture::createInst(&m_captureTexture);
-  if (FAILED(hr))
+  if (!m_captureTexture.create(videoDeviceNo, audioDeviceNo))
   {
     return false;
   }
-
-  // Input device no.
-  uint32_t selectionNo = 1;
-  HPOWERNOTIFY hPowerNotify = nullptr;
-  HPOWERNOTIFY hPowerNotifyMonitor = nullptr;
-  SYSTEM_POWER_CAPABILITIES pwrCaps;
-
-  ThrowIfFailed(m_captureTexture->initCaptureTexture(devices[selectionNo]));
-  devices[selectionNo]->AddRef();
-
-  // Information cannot be obtained from the device without the following process.
-  hPowerNotify = RegisterSuspendResumeNotification((HANDLE)hWnd, DEVICE_NOTIFY_WINDOW_HANDLE);
-  hPowerNotifyMonitor = RegisterPowerSettingNotification((HANDLE)hWnd, &GUID_MONITOR_POWER_ON, DEVICE_NOTIFY_WINDOW_HANDLE);
-  ZeroMemory(&pwrCaps, sizeof(pwrCaps));
-  GetPwrCapabilities(&pwrCaps);
-
-  // Start preview
-  ThrowIfFailed(m_captureTexture->startPreview());
 
   return true;
 }
 
 void MainApp::render()
 {
-  if (m_captureTexture->getSamplerCallback()->getTexture() == nullptr)
-  {
-    return;
-  }
-
   DX11Base::getInstance().render();
 
   {
     // The video
     m_pipeVideo.activate();
-    m_captureTexture->getSamplerCallback()->getTexture()->activate(0);
+    if (m_captureTexture.getTexture())
+    {
+      m_captureTexture.getTexture()->activate(0);
+    }
     m_quad.activateAndRender();
   }
 
@@ -148,13 +116,13 @@ void MainApp::render()
 
 void MainApp::update(float dt)
 {
-  m_captureTexture->update(dt);
+  m_captureTexture.update(dt);
 }
 
 void MainApp::destroy()
 {
-  m_captureTexture->stopPreview();
-  m_captureTexture->destroyCapEngine();
+  m_captureTexture.destroy();
+  CaptureTexture::destroyAPI();
   m_quad.destroy();
   m_pipeVideo.destroy();
   DX11Base::getInstance().destroy();

@@ -4,6 +4,7 @@
 #include "dxhelper.h"
 
 using namespace Render;
+using namespace dx_engine;
 
 Mesh::Mesh()
   : m_vb(nullptr)

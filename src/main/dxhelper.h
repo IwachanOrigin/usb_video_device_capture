@@ -26,13 +26,37 @@ private:
   const HRESULT m_hr;
 };
 
-#define SAFE_RELEASE(p) if (p) (p)->Release()
-
 inline void ThrowIfFailed(HRESULT hr)
 {
   if (FAILED(hr))
   {
     throw HrException(hr);
+  }
+}
+
+template <class T> void SAFE_RELEASE(T** ppT)
+{
+  if (*ppT)
+  {
+    (*ppT)->Release();
+    *ppT = NULL;
+  }
+}
+
+template <class T> inline void SAFE_RELEASE(T*& pT)
+{
+  if (pT != NULL)
+  {
+    pT->Release();
+    pT = NULL;
+  }
+}
+
+template <class T> inline void SAFE_RELEASE(T t)
+{
+  if (t)
+  {
+    t->Release();
   }
 }
 
