@@ -2,8 +2,8 @@
 #include "capture_texture.h"
 #include "mfutility.h"
 
-#define OUTPUT_FRAME_WIDTH 640				// Adjust if the webcam does not support this frame width.
-#define OUTPUT_FRAME_HEIGHT 480				// Adjust if the webcam does not support this frame height.
+#define OUTPUT_FRAME_WIDTH 1280				// Adjust if the webcam does not support this frame width.
+#define OUTPUT_FRAME_HEIGHT 720				// Adjust if the webcam does not support this frame height.
 #define OUTPUT_FRAME_RATE 30					// Adjust if the webcam does not support this frame rate.
 
 CaptureTexture::CaptureTexture()
@@ -100,7 +100,7 @@ public:
     {
       printf("Stream %d is selected %d.\n", stmIndex, isSelected);
 
-      CHECK_HR(pSourceReader->GetCurrentMediaType(stmIndex, &pStmMediaType), "Failed to get media type for selected stream.");
+      CHECK_HR(pSourceReader->GetCurrentMediaType(stmIndex, &pStmMediaType), L"Failed to get media type for selected stream.");
       std::cout << "Media type: " << GetMediaTypeDescription(pStmMediaType) << std::endl;
 
       GUID majorMediaType;
@@ -185,6 +185,11 @@ public:
       }
     }
 
+    if (streamIndex == srcAudioStreamIndex)
+    {
+      return;
+    }
+
     if (pSample)
     {
       hr = pSample->SetSampleTime(llSampleTimeStamp);
@@ -211,6 +216,8 @@ public:
           return;
         }
       }
+
+      dbg(L"buffer curr len = %d\n", buffCurrLen);
 
       m_targetTexture->updateFromIYUV(byteBuffer, buffCurrLen);
 

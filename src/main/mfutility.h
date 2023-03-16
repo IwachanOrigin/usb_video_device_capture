@@ -27,7 +27,7 @@ static void dbg(const wchar_t* format, ...) {
   va_list argptr;
   va_start(argptr, format);
   wchar_t dest[1024 * 4];
-  int n = _vsnwprintf(dest, sizeof(dest), format, argptr);
+  int n = _vsnwprintf_s(dest, sizeof(dest), format, argptr);
   assert(n < sizeof(dest));
   dest[n] = 0x00;
   va_end(argptr);
@@ -398,7 +398,7 @@ HRESULT GetSourceFromCaptureDevice(DeviceType deviceType, UINT nDevice, IMFMedia
   HRESULT hr = S_OK;
 
   hr = MFCreateAttributes(&pDeviceConfig, 1);
-  CHECK_HR(hr, "Error creating capture device configuration.");
+  CHECK_HR(hr, L"Error creating capture device configuration.");
 
   GUID captureType = (deviceType == DeviceType::Audio) ?
     MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_AUDCAP_GUID :
@@ -408,10 +408,10 @@ HRESULT GetSourceFromCaptureDevice(DeviceType deviceType, UINT nDevice, IMFMedia
   hr = pDeviceConfig->SetGUID(
     MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE,
     captureType);
-  CHECK_HR(hr, "Error initialising capture device configuration object.");
+  CHECK_HR(hr, L"Error initialising capture device configuration object.");
 
   hr = MFEnumDeviceSources(pDeviceConfig, &ppCaptureDevices, &captureDeviceCount);
-  CHECK_HR(hr, "Error enumerating capture devices.");
+  CHECK_HR(hr, L"Error enumerating capture devices.");
 
   if (nDevice >= captureDeviceCount) {
     printf("The device index of %d was invalid for available device count of %d.\n", nDevice, captureDeviceCount);
@@ -419,23 +419,21 @@ HRESULT GetSourceFromCaptureDevice(DeviceType deviceType, UINT nDevice, IMFMedia
   }
   else {
     hr = ppCaptureDevices[nDevice]->GetAllocatedString(MF_DEVSOURCE_ATTRIBUTE_FRIENDLY_NAME, &deviceFriendlyName, &nameLength);
-    CHECK_HR(hr, "Error retrieving video device friendly name.\n");
+    CHECK_HR(hr, L"Error retrieving video device friendly name.\n");
 
     wprintf(L"Capture device friendly name: %s\n", deviceFriendlyName);
 
     hr = ppCaptureDevices[nDevice]->ActivateObject(IID_PPV_ARGS(ppMediaSource));
-    CHECK_HR(hr, "Error activating capture device.");
+    CHECK_HR(hr, L"Error activating capture device.");
 
     // Is a reader required or does the caller only want the source?
     if (ppMediaReader != nullptr) {
-      CHECK_HR(MFCreateAttributes(&pAttributes, 1),
-        "Failed to create attributes.");
+      CHECK_HR(MFCreateAttributes(&pAttributes, 1), L"Failed to create attributes.");
 
       if (deviceType == DeviceType::Video) {
         // Adding this attribute creates a video source reader that will handle
         // colour conversion and avoid the need to manually convert between RGB24 and RGB32 etc.
-        CHECK_HR(pAttributes->SetUINT32(MF_SOURCE_READER_ENABLE_VIDEO_PROCESSING, 1),
-          "Failed to set enable video processing attribute.");
+        CHECK_HR(pAttributes->SetUINT32(MF_SOURCE_READER_ENABLE_VIDEO_PROCESSING, 1), L"Failed to set enable video processing attribute.");
       }
 
       // Create a source reader.
@@ -443,7 +441,7 @@ HRESULT GetSourceFromCaptureDevice(DeviceType deviceType, UINT nDevice, IMFMedia
         *ppMediaSource,
         pAttributes,
         ppMediaReader);
-      CHECK_HR(hr, "Error creating media source reader.");
+      CHECK_HR(hr, L"Error creating media source reader.");
     }
   }
 
