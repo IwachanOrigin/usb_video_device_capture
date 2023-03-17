@@ -21,7 +21,7 @@ using namespace dx_engine;
 
 #define CHECKHR_GOTO(x, y) if(FAILED(x)) goto y
 
-#define SHOW_DEBUG 0
+#define SHOW_DEBUG 1
 #if SHOW_DEBUG
 static void dbg(const wchar_t* format, ...) {
   va_list argptr;
