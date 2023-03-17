@@ -91,6 +91,9 @@ bool Texture::updateFromIYUV(const uint8_t* new_data, size_t data_size)
   const uint8_t* src = new_data;
   uint8_t* dst = (uint8_t*)ms.pData;
 
+#if 1
+  memcpy(dst, src, data_size);
+#else
   // Copy the Y lines
   uint32_t nlines = m_yres / 2;
   uint32_t bytes_per_row = m_xres * bytes_per_texel;
@@ -109,7 +112,7 @@ bool Texture::updateFromIYUV(const uint8_t* new_data, size_t data_size)
     src += uv_bytes_per_row;
     dst += ms.RowPitch;
   }
-
+#endif
   DX11Base::getInstance().getDeviceContext()->Unmap(m_texture.Get(), 0);
   return true;
 }

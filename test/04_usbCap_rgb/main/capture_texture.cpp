@@ -31,6 +31,12 @@ struct CaptureTexture::InternalData
   DWORD srcVideoStreamIndex = 0, srcAudioStreamIndex = 0;
   DWORD sinkVideoStreamIndex = 0, sinkAudioStreamIndex = 0;
 
+  IMFPresentationDescriptor* pSourcePresentationDescriptor = NULL;
+  IMFStreamDescriptor* pSourceStreamDescriptor = NULL;
+  BOOL fSelected = false;
+  IMFMediaTypeHandler* pSinkMediaTypeHandler = NULL, * pSourceMediaTypeHandler = NULL;
+  IMFMediaType* videoSourceOutputType = NULL;
+
   DWORD stmIndex = 0;
   BOOL isSelected = false;
   IMFMediaType* pStmMediaType = NULL;
@@ -67,27 +73,40 @@ public:
     finished = false;
 
     // Get the sources for the video and audio capture devices.
-    CHECK_HR(GetSourceFromCaptureDevice(DeviceType::Video, videoDeviceIndex, &pVideoSource, nullptr),
+    CHECK_HR(GetSourceFromCaptureDevice(DeviceType::Video, videoDeviceIndex, &pVideoSource, &pSourceReader),
       L"Failed to get video source and reader.");
 
-    CHECK_HR(GetSourceFromCaptureDevice(DeviceType::Audio, audioDeviceIndex, &pAudioSource, nullptr),
-      L"Failed to get video source and reader.");
+    CHECK_HR(pSourceReader->GetCurrentMediaType((DWORD)MF_SOURCE_READER_FIRST_VIDEO_STREAM, &videoSourceOutputType),
+      L"Error retrieving current media type from first video stream.");
 
-    // Combine the two into an aggregate source and create a reader.
-    CHECK_HR(MFCreateCollection(&pCollection), L"Failed to create source collection.");
-    CHECK_HR(pCollection->AddElement(pVideoSource), L"Failed to add video source to collection.");
-    CHECK_HR(pCollection->AddElement(pAudioSource), L"Failed to add audio source to collection.");
+    CHECK_HR(pSourceReader->SetStreamSelection((DWORD)MF_SOURCE_READER_FIRST_VIDEO_STREAM, TRUE),
+      L"Failed to set the first video stream on the source reader.");
 
-    CHECK_HR(MFCreateAggregateSource(pCollection, &pAggSource), L"Failed to create aggregate source.");
+    CHECK_HR(pVideoSource->CreatePresentationDescriptor(&pSourcePresentationDescriptor),
+      L"Failed to create the presentation descriptor from the media source.");
 
-    CHECK_HR(MFCreateSourceReaderFromMediaSource(pAggSource, NULL, &pSourceReader), L"Error creating media source reader.");
+    CHECK_HR(pSourcePresentationDescriptor->GetStreamDescriptorByIndex(0, &fSelected, &pSourceStreamDescriptor),
+      L"Failed to get source stream descriptor from presentation descriptor.");
+
+    CHECK_HR(pSourceStreamDescriptor->GetMediaTypeHandler(&pSourceMediaTypeHandler),
+      L"Failed to get source media type handler.");
+
+    DWORD srcMediaTypeCount = 0;
+    CHECK_HR(pSourceMediaTypeHandler->GetMediaTypeCount(&srcMediaTypeCount),
+      L"Failed to get source media type count.");
 
     // Note the webcam needs to support this media type. 
     CHECK_HR(MFCreateMediaType(&pVideoSrcOut), L"Failed to create media type.");
     CHECK_HR(pVideoSrcOut->SetGUID(MF_MT_MAJOR_TYPE, MFMediaType_Video), L"Failed to set major video type.");
-    CHECK_HR(pVideoSrcOut->SetGUID(MF_MT_SUBTYPE, WMMEDIASUBTYPE_I420), L"Failed to set video sub type to I420.");
-    CHECK_HR(MFSetAttributeRatio(pVideoSrcOut, MF_MT_FRAME_RATE, OUTPUT_FRAME_RATE, 1), L"Failed to set frame rate on source reader out type.");
-    CHECK_HR(MFSetAttributeSize(pVideoSrcOut, MF_MT_FRAME_SIZE, OUTPUT_FRAME_WIDTH, OUTPUT_FRAME_HEIGHT), L"Failed to set frame size.");
+    CHECK_HR(pVideoSrcOut->SetGUID(MF_MT_SUBTYPE, WMMEDIASUBTYPE_RGB32), L"Failed to set video sub-type attribute on media type.");
+    CHECK_HR(pVideoSrcOut->SetUINT32(MF_MT_INTERLACE_MODE, MFVideoInterlace_Progressive), L"Failed to set interlace mode attribute on media type.");
+    CHECK_HR(pVideoSrcOut->SetUINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, TRUE), L"Failed to set independent samples attribute on media type.");
+    CHECK_HR(MFSetAttributeRatio(pVideoSrcOut, MF_MT_PIXEL_ASPECT_RATIO, 1, 1), L"Failed to set pixel aspect ratio attribute on media type.");
+    CHECK_HR(MFSetAttributeSize(pVideoSrcOut, MF_MT_FRAME_SIZE, OUTPUT_FRAME_WIDTH, OUTPUT_FRAME_HEIGHT), L"Failed to set the frame size attribute on media type.");
+    CHECK_HR(MFSetAttributeSize(pVideoSrcOut, MF_MT_FRAME_RATE, OUTPUT_FRAME_RATE, 1), L"Failed to set the frame rate attribute on media type.");
+    CHECK_HR(CopyAttribute(videoSourceOutputType, pVideoSrcOut, MF_MT_DEFAULT_STRIDE), L"Failed to copy default stride attribute.");
+
+
 
     CHECK_HR(pSourceReader->SetCurrentMediaType(MF_SOURCE_READER_FIRST_VIDEO_STREAM, NULL, pVideoSrcOut), L"Failed to set video media type on source reader.");
 
@@ -211,19 +230,16 @@ public:
       if (!m_targetTexture)
       {
         m_targetTexture = new Render::Texture();
-        int texture_height = height * 2;
-        if (!m_targetTexture->create(width, texture_height, DXGI_FORMAT_R8_UNORM, true))
+        int texture_height = height;
+        if (!m_targetTexture->create(width, texture_height, DXGI_FORMAT_R8G8B8A8_UNORM, true))
         {
           return;
         }
       }
 
       //dbg(L"buffer curr len = %d\n", buffCurrLen);
-      
-      Timer t;
-      dbg(L"start = %s\n", t.now().c_str());
+
       m_targetTexture->updateFromIYUV(byteBuffer, buffCurrLen);
-      dbg(L"end = %s\n", t.now().c_str());
       //dbg(L"sample %d, source stream index %d, sink stream index %d, timestamp %I64d.\n", sampleCount, streamIndex, sinkStmIndex, llSampleTimeStamp);
 
       SAFE_RELEASE(buf);
