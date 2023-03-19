@@ -40,7 +40,6 @@ set(main_src
   stdafx.h
   texture.cpp
   texture.h
-  timer.h
 )
 
 add_executable(${PROJECT_NAME} WIN32 ${main_src})

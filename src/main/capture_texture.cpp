@@ -1,7 +1,6 @@
 
 #include "capture_texture.h"
 #include "mfutility.h"
-#include "timer.h"
 
 #define OUTPUT_FRAME_WIDTH 640				// Adjust if the webcam does not support this frame width.
 #define OUTPUT_FRAME_HEIGHT 480				// Adjust if the webcam does not support this frame height.
@@ -219,11 +218,7 @@ public:
       }
 
       //dbg(L"buffer curr len = %d\n", buffCurrLen);
-      
-      Timer t;
-      dbg(L"start = %s\n", t.now().c_str());
       m_targetTexture->updateFromIYUV(byteBuffer, buffCurrLen);
-      dbg(L"end = %s\n", t.now().c_str());
       //dbg(L"sample %d, source stream index %d, sink stream index %d, timestamp %I64d.\n", sampleCount, streamIndex, sinkStmIndex, llSampleTimeStamp);
 
       SAFE_RELEASE(buf);
