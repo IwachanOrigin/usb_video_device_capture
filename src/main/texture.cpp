@@ -114,3 +114,26 @@ bool Texture::updateFromIYUV(const uint8_t* new_data, size_t data_size)
   return true;
 }
 
+bool Texture::updateFromYUY2(const uint8_t* new_data, size_t data_size)
+{
+  if (!new_data)
+  {
+    return false;
+  }
+
+  D3D11_MAPPED_SUBRESOURCE ms{};
+  HRESULT hr = DX11Base::getInstance().getDeviceContext()->Map(m_texture.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &ms);
+  if (FAILED(hr))
+  {
+    return false;
+  }
+
+  uint32_t bytes_per_texel = 1;
+  const uint8_t* src = new_data;
+  uint8_t* dst = (uint8_t*)ms.pData;
+
+  memcpy(dst, src, data_size);
+
+  DX11Base::getInstance().getDeviceContext()->Unmap(m_texture.Get(), 0);
+  return true;
+}

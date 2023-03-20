@@ -19,6 +19,7 @@ public:
   void activate(int slot) const;
   void destroy();
   bool updateFromIYUV(const uint8_t* new_data, size_t data_size);
+  bool updateFromYUY2(const uint8_t* new_data, size_t data_size);
 
 private:
   ComPtr<ID3D11Resource> m_texture;

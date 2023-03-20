@@ -6,6 +6,8 @@
 #define OUTPUT_FRAME_HEIGHT 480				// Adjust if the webcam does not support this frame height.
 #define OUTPUT_FRAME_RATE 30					// Adjust if the webcam does not support this frame rate.
 
+#define MODE_YUY2 (0)
+
 CaptureTexture::CaptureTexture()
   : m_internalData(nullptr)
 {
@@ -84,7 +86,11 @@ public:
     // Note the webcam needs to support this media type. 
     CHECK_HR(MFCreateMediaType(&pVideoSrcOut), L"Failed to create media type.");
     CHECK_HR(pVideoSrcOut->SetGUID(MF_MT_MAJOR_TYPE, MFMediaType_Video), L"Failed to set major video type.");
+#if MODE_YUY2
+    CHECK_HR(pVideoSrcOut->SetGUID(MF_MT_SUBTYPE, WMMEDIASUBTYPE_YUY2), L"Failed to set video sub type to YUY2.");
+#else
     CHECK_HR(pVideoSrcOut->SetGUID(MF_MT_SUBTYPE, WMMEDIASUBTYPE_I420), L"Failed to set video sub type to I420.");
+#endif
     CHECK_HR(MFSetAttributeRatio(pVideoSrcOut, MF_MT_FRAME_RATE, OUTPUT_FRAME_RATE, 1), L"Failed to set frame rate on source reader out type.");
     CHECK_HR(MFSetAttributeSize(pVideoSrcOut, MF_MT_FRAME_SIZE, OUTPUT_FRAME_WIDTH, OUTPUT_FRAME_HEIGHT), L"Failed to set frame size.");
 
@@ -207,6 +213,18 @@ public:
       assert(hr == S_OK);
 
       // Some videos report one resolution and after the first frame change the height to the next multiple of 16 (using the event MF_SOURCE_READERF_CURRENTMEDIATYPECHANGED)
+#if MODE_YUY2
+      if (!m_targetTexture)
+      {
+        m_targetTexture = new Render::Texture();
+        int texture_width = width * 2;
+        if (!m_targetTexture->create(texture_width, height, DXGI_FORMAT_R8_UNORM, true))
+        {
+          return;
+        }
+      }
+      m_targetTexture->updateFromYUY2(byteBuffer, buffCurrLen);
+#else
       if (!m_targetTexture)
       {
         m_targetTexture = new Render::Texture();
@@ -215,12 +233,13 @@ public:
         {
           return;
         }
+
       }
-
-      //dbg(L"buffer curr len = %d\n", buffCurrLen);
       m_targetTexture->updateFromIYUV(byteBuffer, buffCurrLen);
-      //dbg(L"sample %d, source stream index %d, sink stream index %d, timestamp %I64d.\n", sampleCount, streamIndex, sinkStmIndex, llSampleTimeStamp);
+#endif
 
+      //dbg(L"sample %d, source stream index %d, sink stream index %d, timestamp %I64d.\n", sampleCount, streamIndex, sinkStmIndex, llSampleTimeStamp);
+      
       SAFE_RELEASE(buf);
       sampleCount++;
     }
