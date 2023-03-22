@@ -199,7 +199,7 @@ public:
       {
         m_targetTexture = new Render::Texture();
         int texture_height = height;
-        if (!m_targetTexture->create(width, texture_height, DXGI_FORMAT_R8G8B8A8_UNORM, true))
+        if (!m_targetTexture->create(width, texture_height, DXGI_FORMAT_B8G8R8A8_UNORM, true))
         {
           return;
         }
