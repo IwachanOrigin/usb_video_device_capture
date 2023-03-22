@@ -3,8 +3,8 @@
 #include "mfutility.h"
 #include "timer.h"
 
-#define OUTPUT_FRAME_WIDTH 1280				// Adjust if the webcam does not support this frame width.
-#define OUTPUT_FRAME_HEIGHT 720				// Adjust if the webcam does not support this frame height.
+#define OUTPUT_FRAME_WIDTH 640				// Adjust if the webcam does not support this frame width.
+#define OUTPUT_FRAME_HEIGHT 480				// Adjust if the webcam does not support this frame height.
 #define OUTPUT_FRAME_RATE 30					// Adjust if the webcam does not support this frame rate.
 
 CaptureTexture::CaptureTexture()
