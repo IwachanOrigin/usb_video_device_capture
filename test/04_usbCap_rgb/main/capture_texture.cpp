@@ -3,8 +3,8 @@
 #include "mfutility.h"
 #include "timer.h"
 
-#define OUTPUT_FRAME_WIDTH 640				// Adjust if the webcam does not support this frame width.
-#define OUTPUT_FRAME_HEIGHT 480				// Adjust if the webcam does not support this frame height.
+#define OUTPUT_FRAME_WIDTH 1280				// Adjust if the webcam does not support this frame width.
+#define OUTPUT_FRAME_HEIGHT 720				// Adjust if the webcam does not support this frame height.
 #define OUTPUT_FRAME_RATE 30					// Adjust if the webcam does not support this frame rate.
 
 CaptureTexture::CaptureTexture()
@@ -98,7 +98,7 @@ public:
     // Note the webcam needs to support this media type. 
     CHECK_HR(MFCreateMediaType(&pVideoSrcOut), L"Failed to create media type.");
     CHECK_HR(pVideoSrcOut->SetGUID(MF_MT_MAJOR_TYPE, MFMediaType_Video), L"Failed to set major video type.");
-    CHECK_HR(pVideoSrcOut->SetGUID(MF_MT_SUBTYPE, WMMEDIASUBTYPE_RGB32), L"Failed to set video sub-type attribute on media type.");
+    CHECK_HR(pVideoSrcOut->SetGUID(MF_MT_SUBTYPE, MFVideoFormat_RGB32), L"Failed to set video sub-type attribute on media type.");
     CHECK_HR(pVideoSrcOut->SetUINT32(MF_MT_INTERLACE_MODE, MFVideoInterlace_Progressive), L"Failed to set interlace mode attribute on media type.");
     CHECK_HR(pVideoSrcOut->SetUINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, TRUE), L"Failed to set independent samples attribute on media type.");
     CHECK_HR(MFSetAttributeRatio(pVideoSrcOut, MF_MT_PIXEL_ASPECT_RATIO, 1, 1), L"Failed to set pixel aspect ratio attribute on media type.");
@@ -106,15 +106,7 @@ public:
     CHECK_HR(MFSetAttributeSize(pVideoSrcOut, MF_MT_FRAME_RATE, OUTPUT_FRAME_RATE, 1), L"Failed to set the frame rate attribute on media type.");
     CHECK_HR(CopyAttribute(videoSourceOutputType, pVideoSrcOut, MF_MT_DEFAULT_STRIDE), L"Failed to copy default stride attribute.");
 
-
-
-    CHECK_HR(pSourceReader->SetCurrentMediaType(MF_SOURCE_READER_FIRST_VIDEO_STREAM, NULL, pVideoSrcOut), L"Failed to set video media type on source reader.");
-
-    CHECK_HR(MFCreateMediaType(&pAudioSrcOut), L"Failed to create media type.");
-    CHECK_HR(pAudioSrcOut->SetGUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio), L"Failed to set major audio type.");
-    CHECK_HR(pAudioSrcOut->SetGUID(MF_MT_SUBTYPE, MFAudioFormat_Float), L"Failed to set audio sub type.");
-
-    CHECK_HR(pSourceReader->SetCurrentMediaType(MF_SOURCE_READER_FIRST_AUDIO_STREAM, NULL, pAudioSrcOut), L"Failed to set audio media type on source reader.");
+    CHECK_HR(pSourceReader->SetCurrentMediaType((DWORD)MF_SOURCE_READER_FIRST_VIDEO_STREAM, NULL, pVideoSrcOut), L"Failed to set video media type on source reader.");
 
     while (pSourceReader->GetStreamSelection(stmIndex, &isSelected) == S_OK)
     {
@@ -177,37 +169,13 @@ public:
       return;
     }
 
-    DWORD sinkStmIndex = (streamIndex == srcAudioStreamIndex) ? sinkAudioStreamIndex : sinkVideoStreamIndex;
-
-    if (sinkStmIndex == sinkAudioStreamIndex )
+    if (flags & MF_SOURCE_READERF_ENDOFSTREAM)
     {
-      if (llAudioBaseTime == 0)
-      {
-        llAudioBaseTime = llSampleTimeStamp;
-      }
-      else
-      {
-        // Re-base the time stamp.
-        llSampleTimeStamp -= llAudioBaseTime;
-      }
+      printf("End of stream.\n");
     }
-
-    if (sinkStmIndex == sinkVideoStreamIndex)
+    if (flags & MF_SOURCE_READERF_STREAMTICK)
     {
-      if (llVideoBaseTime == 0)
-      {
-        llVideoBaseTime = llSampleTimeStamp;
-      }
-      else
-      {
-        // Re-base the time stamp.
-        llSampleTimeStamp -= llVideoBaseTime;
-      }
-    }
-
-    if (streamIndex == srcAudioStreamIndex)
-    {
-      return;
+      printf("Stream tick.\n");
     }
 
     if (pSample)
