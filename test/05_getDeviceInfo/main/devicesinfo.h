@@ -11,7 +11,6 @@ class DevicesInfo
   {
     std::wstring deviceName;
     std::wstring symbolicLink;
-    std::wstring srcType;
   };
 
 public:

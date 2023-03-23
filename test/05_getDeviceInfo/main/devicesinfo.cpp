@@ -20,7 +20,10 @@ void DevicesInfo::writeDeviceNameList()
 {
   for (int i = 0; i < devicesInfo.size(); i++)
   {
-    std::wcout << L"No: " << i << " Name : " << devicesInfo[i].deviceName;
+    std::wcout << L"No: " << i << std::endl;
+    std::wcout << "Name : " << devicesInfo[i].deviceName << std::endl;
+    std::wcout << "Symbolic Link : " << devicesInfo[i].symbolicLink << std::endl;
+    std::wcout << std::endl;
   }
 }
 
@@ -55,14 +58,24 @@ int DevicesInfo::getDeviceNames()
   devicesInfo.resize(count);
   for (uint32_t i = 0; i < count; i++)
   {
-    wchar_t* buffer = nullptr;
+    wchar_t* name = nullptr;
     uint32_t length = 0;
-    hr = ppRawDevice[i]->GetAllocatedString(MF_DEVSOURCE_ATTRIBUTE_FRIENDLY_NAME, &buffer, &length);
+    hr = ppRawDevice[i]->GetAllocatedString(MF_DEVSOURCE_ATTRIBUTE_FRIENDLY_NAME, &name, &length);
     if (FAILED(hr))
     {
-      return hr;
+      std::wcout << "Failed to get the device name. index = " << i << std::endl;
+      continue;
     }
-    devicesInfo[i].deviceName = buffer;
+    devicesInfo[i].deviceName = name;
+
+    wchar_t* symlink = nullptr;
+    hr = ppRawDevice[i]->GetAllocatedString(MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_SYMBOLIC_LINK, &symlink, &length);
+    if (FAILED(hr))
+    {
+      std::wcout << "Failed to get the symbolic link. index = " << i << std::endl;
+      continue;
+    }
+    devicesInfo[i].symbolicLink = symlink;
   }
 
   if (ppRawDevice != nullptr)
