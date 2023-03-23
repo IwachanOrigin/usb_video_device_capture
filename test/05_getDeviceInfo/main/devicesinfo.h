@@ -32,14 +32,14 @@ class DevicesInfo
     bool operator==(const DeviceMediaInfo& dmi)
     {
       if (dmi.width == this->width
-        && dmi.height == this->height
-        && dmi.interlaceMode == this->interlaceMode
-        && dmi.stride == this->stride
-        && dmi.aspectRatioNumerator == this->aspectRatioNumerator
-        && dmi.aspectRatioDenominator == this->aspectRatioDenominator
-        && dmi.frameRateNumerator == this->frameRateNumerator
-        && dmi.frameRateDenominator == this->frameRateDenominator
-        && dmi.formatSubtypeGuid == this->formatSubtypeGuid)
+          && dmi.height == this->height
+          && dmi.interlaceMode == this->interlaceMode
+          && dmi.stride == this->stride
+          && dmi.aspectRatioNumerator == this->aspectRatioNumerator
+          && dmi.aspectRatioDenominator == this->aspectRatioDenominator
+          && dmi.frameRateNumerator == this->frameRateNumerator
+          && dmi.frameRateDenominator == this->frameRateDenominator
+          && dmi.formatSubtypeGuid == this->formatSubtypeGuid)
       {
         return true;
       }
@@ -49,15 +49,7 @@ class DevicesInfo
     // for std::sort
     bool operator<(const DeviceMediaInfo& dmi) const
     {
-      if (this->width < dmi.width
-        && this->height < dmi.height
-        && this->interlaceMode < dmi.interlaceMode
-        && this->stride < dmi.stride
-        && this->aspectRatioNumerator < dmi.aspectRatioNumerator
-        && this->aspectRatioDenominator < dmi.aspectRatioDenominator
-        && this->frameRateNumerator < dmi.frameRateNumerator
-        && this->frameRateDenominator < dmi.frameRateDenominator
-        && this->formatSubtypeName < dmi.formatSubtypeName)
+      if (this->formatSubtypeName < dmi.formatSubtypeName)
       {
         return true;
       }
