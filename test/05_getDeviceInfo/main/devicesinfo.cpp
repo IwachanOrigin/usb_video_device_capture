@@ -34,6 +34,18 @@ void DevicesInfo::writeDeviceNameList()
   }
 }
 
+void DevicesInfo::writeDeviceMediaInfoList()
+{
+  for (int i = 0; i < m_deviceMediaInfo.size(); i++)
+  {
+    std::wcout << L"No: " << i << std::endl;
+    std::wcout << "formatSubtypeName : " << m_deviceMediaInfo[i].formatSubtypeName << std::endl;
+    std::wcout << "width : " << m_deviceMediaInfo[i].width << std::endl;
+    std::wcout << "height : " << m_deviceMediaInfo[i].height << std::endl;
+    std::wcout << std::endl;
+  }
+}
+
 int DevicesInfo::getDeviceNames()
 {
   HRESULT hr = S_OK;;
@@ -98,13 +110,69 @@ int DevicesInfo::getDeviceNames()
   return S_OK;
 }
 
-int DevicesInfo::getDeviceMediaInfo()
+int DevicesInfo::getVideoDeviceMediaInfo()
 {
   HRESULT hr = S_OK;
-
   ComPtr<IMFMediaSource> pVideoSource = nullptr;
   ComPtr<IMFSourceReader> pVideoReader = nullptr;
+  ComPtr<IMFPresentationDescriptor> pSourcePresentationDescriptor = nullptr;
+  BOOL fSelected = false;
+
+  m_deviceMediaInfo.clear();
 
   CHECK_HR(GetVideoSourceFromDevice(m_currentVideoDeviceIndex, &pVideoSource, &pVideoReader), "Failed to get webcam video source.");
+  CHECK_HR(pVideoSource->CreatePresentationDescriptor(&pSourcePresentationDescriptor), "Failed to create the presentation descriptor from the media source.");
+  
+  DWORD streamDescCount = 0;
+  CHECK_HR(pSourcePresentationDescriptor->GetStreamDescriptorCount(&streamDescCount), "Failed to get stream descriptor count.");
 
+  for (int descIndex = 0; descIndex < (int)streamDescCount; descIndex++)
+  {
+    ComPtr<IMFStreamDescriptor> pSourceStreamDescriptor = nullptr;
+    CHECK_HR(pSourcePresentationDescriptor->GetStreamDescriptorByIndex(descIndex, &fSelected, &pSourceStreamDescriptor), "Failed to get source stream descriptor from presentation descriptor");
+    
+    ComPtr<IMFMediaTypeHandler> pSourceMediaTypeHandler = nullptr;
+    CHECK_HR(pSourceStreamDescriptor->GetMediaTypeHandler(&pSourceMediaTypeHandler), "Failed to get source media type handler.");
+
+    DWORD typeCount = 0;
+    CHECK_HR(pSourceMediaTypeHandler->GetMediaTypeCount(&typeCount), "Failed to get source media type count.");
+
+    for (int typeIndex = 0; typeIndex < (int)typeCount; typeIndex++)
+    {
+      ComPtr<IMFMediaType> pMediaType = nullptr;
+      CHECK_HR(pSourceMediaTypeHandler->GetMediaTypeByIndex(typeIndex, &pMediaType), "Error retrieving media type.");
+      DeviceMediaInfo dmi{};
+      CHECK_HR(MFGetAttributeSize(pMediaType.Get(), MF_MT_FRAME_SIZE, &dmi.width, &dmi.height), "Failed to get the frame size attribute on media type.");
+      CHECK_HR(pMediaType->GetGUID(MF_MT_SUBTYPE, &dmi.formatSubtypeGuid), "Failed to get the subtype guid on media type.");
+
+      LPCSTR pszGuidStr = "";
+      pszGuidStr = GetGUIDNameConst(dmi.formatSubtypeGuid);
+      if (pszGuidStr != nullptr)
+      {
+        std::string tempStr = pszGuidStr;
+        dmi.formatSubtypeName = std::wstring(tempStr.begin(), tempStr.end());
+      }
+      else
+      {
+        LPOLESTR guidStr = nullptr;
+
+        CHECKHR_GOTO(StringFromCLSID(dmi.formatSubtypeGuid, &guidStr), done);
+        dmi.formatSubtypeName = std::wstring(guidStr);
+        CoTaskMemFree(guidStr);
+      }
+      m_deviceMediaInfo.push_back(dmi);
+    }
+  }
+
+done:
+
+  std::wcout << "finished." << std::endl;
+
+  return hr;
+}
+
+int DevicesInfo::getAudioDeviceMediaInfo()
+{
+  HRESULT hr = S_OK;
+  return hr;
 }

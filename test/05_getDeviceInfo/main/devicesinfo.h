@@ -17,11 +17,9 @@ class DevicesInfo
 
   struct DeviceMediaInfo
   {
-    int width;
-    int height;
-    int stride;
-    int samplesize;
-    GUID formatSubtype;
+    uint32_t width;
+    uint32_t height;
+    GUID formatSubtypeGuid;
     std::wstring formatSubtypeName;
   };
 
@@ -29,14 +27,24 @@ public:
   explicit DevicesInfo();
   ~DevicesInfo();
 
-  void setCurrentVideoDeviceIndex(int index) { m_currentVideoDeviceIndex = index; }
-  void setCurrentAudioDeviceIndex(int index) { m_currentAudioDeviceIndex = index; }
+  void setCurrentVideoDeviceIndex(int index)
+  { 
+    m_currentVideoDeviceIndex = index;
+    this->getVideoDeviceMediaInfo();
+  }
+  void setCurrentAudioDeviceIndex(int index)
+  {
+    m_currentAudioDeviceIndex = index;
+    this->getAudioDeviceMediaInfo();
+  }
 
   void writeDeviceNameList();
+  void writeDeviceMediaInfoList();
 
 private:
   int getDeviceNames();
-  int getDeviceMediaInfo();
+  int getVideoDeviceMediaInfo();
+  int getAudioDeviceMediaInfo();
 
   std::vector<DeviceInfo> m_devicesInfo;
   std::vector<DeviceMediaInfo> m_deviceMediaInfo;

@@ -49,16 +49,25 @@ template <class T> void SAFE_RELEASE(T** ppT)
   if (*ppT)
   {
     (*ppT)->Release();
-    *ppT = NULL;
+    *ppT = nullptr;
   }
 }
 
 template <class T> inline void SAFE_RELEASE(T*& pT)
 {
-  if (pT != NULL)
+  if (pT != nullptr)
   {
     pT->Release();
-    pT = NULL;
+    pT = nullptr;
+  }
+}
+
+template <class T> void SAFE_RELEASE(T p)
+{
+  if (p)
+  {
+    (p)->Release();
+    p = nullptr;
   }
 }
 
