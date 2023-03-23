@@ -2,16 +2,17 @@
 #ifndef DEVICES_INFO_H_
 #define DEVICES_INFO_H_
 
+#include <vector>
 #include <string>
 
 class DevicesInfo
 {
-  struct
+  struct DeviceInfo
   {
     std::wstring deviceName;
     std::wstring symbolicLink;
     std::wstring srcType;
-  } DeviceInfo;
+  };
 
 public:
   explicit DevicesInfo();

@@ -1,7 +1,7 @@
 
 #include "devicesinfo.h"
 
-#include <vector>
+#include <iostream>
 #include <string>
 #include <memory>
 #include <mfapi.h>
@@ -20,11 +20,11 @@ void DevicesInfo::writeDeviceNameList()
 {
   for (int i = 0; i < devicesInfo.size(); i++)
   {
-    std::wcout << L"No: " << i << " Name : " << devicesInfo.deviceName;
+    std::wcout << L"No: " << i << " Name : " << devicesInfo[i].deviceName;
   }
 }
 
-int DevicesInfo::getDeviceInfo()
+int DevicesInfo::getDeviceNames()
 {
   HRESULT hr;
 
@@ -53,7 +53,7 @@ int DevicesInfo::getDeviceInfo()
   }
 
   devicesInfo.resize(count);
-  for (int i = 0; i < count; i++)
+  for (uint32_t i = 0; i < count; i++)
   {
     wchar_t* buffer = nullptr;
     uint32_t length = 0;
@@ -67,7 +67,7 @@ int DevicesInfo::getDeviceInfo()
 
   if (ppRawDevice != nullptr)
   {
-    for (int i = 0; i < count; i++)
+    for (uint32_t i = 0; i < count; i++)
     {
       ppRawDevice[i]->Release();
     }
