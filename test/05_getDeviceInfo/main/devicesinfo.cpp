@@ -1,13 +1,20 @@
 
 #include "devicesinfo.h"
 
+#include "MFUtility.h"
+
 #include <iostream>
 #include <string>
 #include <memory>
 #include <mfapi.h>
 #include <mfidl.h>
+#include <wrl/client.h>
+
+using namespace Microsoft::WRL;
 
 DevicesInfo::DevicesInfo()
+  : m_currentAudioDeviceIndex(0)
+  , m_currentVideoDeviceIndex(0)
 {
   this->getDeviceNames();
 }
@@ -18,18 +25,18 @@ DevicesInfo::~DevicesInfo()
 
 void DevicesInfo::writeDeviceNameList()
 {
-  for (int i = 0; i < devicesInfo.size(); i++)
+  for (int i = 0; i < m_devicesInfo.size(); i++)
   {
     std::wcout << L"No: " << i << std::endl;
-    std::wcout << "Name : " << devicesInfo[i].deviceName << std::endl;
-    std::wcout << "Symbolic Link : " << devicesInfo[i].symbolicLink << std::endl;
+    std::wcout << "Name : " << m_devicesInfo[i].deviceName << std::endl;
+    std::wcout << "Symbolic Link : " << m_devicesInfo[i].symbolicLink << std::endl;
     std::wcout << std::endl;
   }
 }
 
 int DevicesInfo::getDeviceNames()
 {
-  HRESULT hr;
+  HRESULT hr = S_OK;;
 
   std::shared_ptr<IMFAttributes> pAttributes;
   IMFAttributes *pRawAttributes = nullptr;
@@ -55,7 +62,8 @@ int DevicesInfo::getDeviceNames()
     return hr;
   }
 
-  devicesInfo.resize(count);
+  m_devicesInfo.clear();
+  m_devicesInfo.resize(count);
   for (uint32_t i = 0; i < count; i++)
   {
     wchar_t* name = nullptr;
@@ -66,7 +74,7 @@ int DevicesInfo::getDeviceNames()
       std::wcout << "Failed to get the device name. index = " << i << std::endl;
       continue;
     }
-    devicesInfo[i].deviceName = name;
+    m_devicesInfo[i].deviceName = name;
 
     wchar_t* symlink = nullptr;
     hr = ppRawDevice[i]->GetAllocatedString(MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_SYMBOLIC_LINK, &symlink, &length);
@@ -75,7 +83,7 @@ int DevicesInfo::getDeviceNames()
       std::wcout << "Failed to get the symbolic link. index = " << i << std::endl;
       continue;
     }
-    devicesInfo[i].symbolicLink = symlink;
+    m_devicesInfo[i].symbolicLink = symlink;
   }
 
   if (ppRawDevice != nullptr)
@@ -88,4 +96,15 @@ int DevicesInfo::getDeviceNames()
   }
 
   return S_OK;
+}
+
+int DevicesInfo::getDeviceMediaInfo()
+{
+  HRESULT hr = S_OK;
+
+  ComPtr<IMFMediaSource> pVideoSource = nullptr;
+  ComPtr<IMFSourceReader> pVideoReader = nullptr;
+
+  CHECK_HR(GetVideoSourceFromDevice(m_currentVideoDeviceIndex, &pVideoSource, &pVideoReader), "Failed to get webcam video source.");
+
 }

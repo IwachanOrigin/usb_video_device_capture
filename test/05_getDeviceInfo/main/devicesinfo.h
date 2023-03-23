@@ -5,12 +5,24 @@
 #include <vector>
 #include <string>
 
+#include <mfapi.h>
+
 class DevicesInfo
 {
   struct DeviceInfo
   {
     std::wstring deviceName;
     std::wstring symbolicLink;
+  };
+
+  struct DeviceMediaInfo
+  {
+    int width;
+    int height;
+    int stride;
+    int samplesize;
+    GUID formatSubtype;
+    std::wstring formatSubtypeName;
   };
 
 public:
@@ -24,8 +36,10 @@ public:
 
 private:
   int getDeviceNames();
+  int getDeviceMediaInfo();
 
-  std::vector<DeviceInfo> devicesInfo;
+  std::vector<DeviceInfo> m_devicesInfo;
+  std::vector<DeviceMediaInfo> m_deviceMediaInfo;
   int m_currentVideoDeviceIndex;
   int m_currentAudioDeviceIndex;
 
