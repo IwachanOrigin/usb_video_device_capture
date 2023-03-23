@@ -6,7 +6,7 @@
 #define OUTPUT_FRAME_HEIGHT 480				// Adjust if the webcam does not support this frame height.
 #define OUTPUT_FRAME_RATE 30					// Adjust if the webcam does not support this frame rate.
 
-#define MODE_YUY2 (0)
+#define MODE_YUY2 (1)
 
 CaptureTexture::CaptureTexture()
   : m_internalData(nullptr)
