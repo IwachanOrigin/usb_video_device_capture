@@ -19,6 +19,12 @@ class DevicesInfo
   {
     uint32_t width;
     uint32_t height;
+    uint32_t interlaceMode;
+    LONG stride;
+    uint32_t aspectRatioNumerator;
+    uint32_t aspectRatioDenominator;
+    uint32_t frameRateNumerator;
+    uint32_t frameRateDenominator;
     GUID formatSubtypeGuid;
     std::wstring formatSubtypeName;
   };

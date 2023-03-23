@@ -42,6 +42,10 @@ void DevicesInfo::writeDeviceMediaInfoList()
     std::wcout << "formatSubtypeName : " << m_deviceMediaInfo[i].formatSubtypeName << std::endl;
     std::wcout << "width : " << m_deviceMediaInfo[i].width << std::endl;
     std::wcout << "height : " << m_deviceMediaInfo[i].height << std::endl;
+    std::wcout << "interlaceMode : " << m_deviceMediaInfo[i].interlaceMode << std::endl;
+    std::wcout << "stride : " << m_deviceMediaInfo[i].stride << std::endl;
+    std::wcout << "aspect ratio : " << m_deviceMediaInfo[i].aspectRatioNumerator << " / " << m_deviceMediaInfo[i].aspectRatioDenominator << std::endl;
+    std::wcout << "frame rate : " << m_deviceMediaInfo[i].frameRateNumerator << " / " << m_deviceMediaInfo[i].frameRateDenominator << std::endl;
     std::wcout << std::endl;
   }
 }
@@ -144,6 +148,11 @@ int DevicesInfo::getVideoDeviceMediaInfo()
       DeviceMediaInfo dmi{};
       CHECK_HR(MFGetAttributeSize(pMediaType.Get(), MF_MT_FRAME_SIZE, &dmi.width, &dmi.height), "Failed to get the frame size attribute on media type.");
       CHECK_HR(pMediaType->GetGUID(MF_MT_SUBTYPE, &dmi.formatSubtypeGuid), "Failed to get the subtype guid on media type.");
+      CHECK_HR(pMediaType->GetUINT32(MF_MT_INTERLACE_MODE, &dmi.interlaceMode), "Failed to get the interlace mode on media type.");
+      LONG unDefault = 1;
+      dmi.stride = (LONG)MFGetAttributeUINT32(pMediaType.Get(), MF_MT_DEFAULT_STRIDE, unDefault);
+      CHECK_HR(MFGetAttributeRatio(pMediaType.Get(), MF_MT_PIXEL_ASPECT_RATIO, &dmi.aspectRatioNumerator, &dmi.aspectRatioDenominator), "Failed to get the pixel aspect ratio on media type.");
+      CHECK_HR(MFGetAttributeRatio(pMediaType.Get(), MF_MT_FRAME_RATE, &dmi.frameRateNumerator, &dmi.frameRateDenominator), "Failed to get the frame rate on media type.");
 
       LPCSTR pszGuidStr = "";
       pszGuidStr = GetGUIDNameConst(dmi.formatSubtypeGuid);
