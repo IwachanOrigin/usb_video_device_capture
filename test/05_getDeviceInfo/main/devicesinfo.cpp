@@ -1,14 +1,16 @@
 
-#include "devicesinfo.h"
-
-#include "MFUtility.h"
-
 #include <iostream>
 #include <string>
 #include <memory>
+#include <algorithm>
+
 #include <mfapi.h>
 #include <mfidl.h>
 #include <wrl/client.h>
+
+#include "MFUtility.h"
+
+#include "devicesinfo.h"
 
 using namespace Microsoft::WRL;
 
@@ -172,6 +174,10 @@ int DevicesInfo::getVideoDeviceMediaInfo()
       m_deviceMediaInfo.push_back(dmi);
     }
   }
+
+  // Remove duplicates
+  std::sort(m_deviceMediaInfo.begin(), m_deviceMediaInfo.end());
+  m_deviceMediaInfo.erase(std::unique(m_deviceMediaInfo.begin(), m_deviceMediaInfo.end()), m_deviceMediaInfo.end());
 
 done:
 
