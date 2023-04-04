@@ -19,6 +19,7 @@ struct DeviceMediaInfo
   uint32_t height;
   uint32_t interlaceMode;
   LONG stride;
+  uint32_t samplesize;
   uint32_t aspectRatioNumerator;
   uint32_t aspectRatioDenominator;
   uint32_t frameRateNumerator;

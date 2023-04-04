@@ -64,6 +64,15 @@ void DevicesInfo::writeDeviceMediaInfoList()
   }
 }
 
+void DevicesInfo::getVideoDeviceMediaList(std::vector<DeviceMediaInfo>& vec)
+{
+  vec.clear();
+  for (int i = 0; i < m_deviceMediaInfo.size(); i++)
+  {
+    vec.push_back(m_deviceMediaInfo[i]);
+  }
+}
+
 int DevicesInfo::getDeviceNames()
 {
   HRESULT hr = S_OK;;
@@ -163,6 +172,7 @@ int DevicesInfo::getVideoDeviceMediaInfo()
       CHECK_HR(MFGetAttributeSize(pMediaType.Get(), MF_MT_FRAME_SIZE, &dmi.width, &dmi.height), "Failed to get the frame size attribute on media type.");
       CHECK_HR(pMediaType->GetGUID(MF_MT_SUBTYPE, &dmi.formatSubtypeGuid), "Failed to get the subtype guid on media type.");
       CHECK_HR(pMediaType->GetUINT32(MF_MT_INTERLACE_MODE, &dmi.interlaceMode), "Failed to get the interlace mode on media type.");
+      CHECK_HR(pMediaType->GetUINT32(MF_MT_SAMPLE_SIZE, &dmi.samplesize), "Failed to get the sample size on media type.");
       LONG unDefault = 1;
       dmi.stride = (LONG)MFGetAttributeUINT32(pMediaType.Get(), MF_MT_DEFAULT_STRIDE, unDefault);
       CHECK_HR(MFGetAttributeRatio(pMediaType.Get(), MF_MT_PIXEL_ASPECT_RATIO, &dmi.aspectRatioNumerator, &dmi.aspectRatioDenominator), "Failed to get the pixel aspect ratio on media type.");

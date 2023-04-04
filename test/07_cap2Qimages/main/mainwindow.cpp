@@ -1,8 +1,10 @@
 
+#include <QDebug>
 #include "mainwindow.h"
 
 MainWindow::MainWindow(QWidget *parent)
   : QMainWindow(parent)
+  , m_currentDeviceIndex(-1)
 {
   ui.setupUi(this);
 
@@ -14,6 +16,23 @@ MainWindow::MainWindow(QWidget *parent)
     {
       QString qsItem = QString::fromStdWString(item.deviceName);
       ui.comboBoxCameras->addItem(qsItem);
+    }
+    m_currentDeviceIndex = 0;
+  }
+
+  if (m_currentDeviceIndex > -1)
+  {
+    //
+    m_vecMediaInfo.clear();
+    m_devices.setCurrentVideoDeviceIndex(m_currentDeviceIndex);
+    m_devices.getVideoDeviceMediaList(m_vecMediaInfo);
+    if (!m_vecMediaInfo.empty())
+    {
+      for (auto item : m_vecMediaInfo)
+      {
+        QString qsItem = QString("%1x%2, %3, %4, %5").arg(item.width).arg(item.height).arg("").arg(item.stride).arg(item.samplesize);
+        ui.comboBoxFormats->addItem(qsItem);
+      }
     }
   }
 }

@@ -25,6 +25,7 @@ public:
   void writeDeviceNameList();
   void writeDeviceMediaInfoList();
   void getDeviceNameList(std::vector<DeviceInfo>& vec);
+  void getVideoDeviceMediaList(std::vector<DeviceMediaInfo>& vec);
 
 private:
   int getDeviceNames();

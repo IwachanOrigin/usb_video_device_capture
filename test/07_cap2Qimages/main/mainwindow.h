@@ -22,6 +22,8 @@ private:
   Ui::MainWindow ui;
   DevicesInfo m_devices;
   std::vector<DeviceInfo> m_vecDevNames;
+  std::vector<DeviceMediaInfo> m_vecMediaInfo;
+  int m_currentDeviceIndex;
 };
 
 #endif // MAIN_WINDOW_H_
