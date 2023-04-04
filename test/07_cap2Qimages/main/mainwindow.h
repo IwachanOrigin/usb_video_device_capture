@@ -31,6 +31,8 @@ private:
 
 private slots:
   void slotChangedCamera();
+  void slotCaptureStart();
+  void slotCaptureStop();
 };
 
 #endif // MAIN_WINDOW_H_

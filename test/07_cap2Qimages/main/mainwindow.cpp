@@ -52,11 +52,15 @@ void MainWindow::updateMediaInfo()
 void MainWindow::eventConnect()
 {
   QObject::connect(ui.comboBoxCameras, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &MainWindow::slotChangedCamera);
+  QObject::connect(ui.pushButtonCapStart, &QPushButton::pressed, this, &MainWindow::slotCaptureStart);
+  QObject::connect(ui.pushButtonCapStop, &QPushButton::pressed, this, &MainWindow::slotCaptureStop);
 }
 
 void MainWindow::eventDisconnect()
 {
   QObject::disconnect(ui.comboBoxCameras, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &MainWindow::slotChangedCamera);
+  QObject::disconnect(ui.pushButtonCapStart, &QPushButton::pressed, this, &MainWindow::slotCaptureStart);
+  QObject::disconnect(ui.pushButtonCapStop, &QPushButton::pressed, this, &MainWindow::slotCaptureStop);
 }
 
 void MainWindow::slotChangedCamera()
@@ -65,4 +69,12 @@ void MainWindow::slotChangedCamera()
   m_currentDeviceIndex = ui.comboBoxCameras->currentIndex();
   this->updateMediaInfo();
   this->eventConnect();
+}
+
+void MainWindow::slotCaptureStart()
+{
+}
+
+void MainWindow::slotCaptureStop()
+{
 }

@@ -213,3 +213,11 @@ int DevicesInfo::getAudioDeviceMediaInfo()
   HRESULT hr = S_OK;
   return hr;
 }
+
+void DevicesInfo::captureStart()
+{
+}
+
+void DevicesInfo::captureStop()
+{
+}

@@ -86,8 +86,8 @@ bool MainApp::create(HWND hWnd)
 
   CaptureTexture::createAPI();
   // Input device no.
-  uint32_t videoDeviceNo = 1;
-  uint32_t audioDeviceNo = 1;
+  uint32_t videoDeviceNo = 0;
+  uint32_t audioDeviceNo = 0;
 
   if (!m_captureTexture.create(videoDeviceNo, audioDeviceNo))
   {

@@ -27,6 +27,9 @@ public:
   void getDeviceNameList(std::vector<DeviceInfo>& vec);
   void getVideoDeviceMediaList(std::vector<DeviceMediaInfo>& vec);
 
+  void captureStart();
+  void captureStop();
+
 private:
   int getDeviceNames();
   int getVideoDeviceMediaInfo();
