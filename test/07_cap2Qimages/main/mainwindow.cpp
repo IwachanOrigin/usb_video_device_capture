@@ -46,7 +46,7 @@ void MainWindow::updateMediaInfo()
       QString qsItem = QString("%1x%2, %3, %4, %5").arg(item.width).arg(item.height).arg(fmtName).arg(item.stride).arg(item.samplesize);
       ui.comboBoxFormats->addItem(qsItem);
     }
-    m_currentFormatIndex = ui.comboBoxFormats->currentIndex();
+    this->slotChangedFormat();
   }
 }
 

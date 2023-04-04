@@ -2,10 +2,13 @@
 #ifndef DEVICES_INFO_H_
 #define DEVICES_INFO_H_
 
-#include "MFUtility.h"
 #include "devicecommon.h"
 
 #include <wrl/client.h>
+
+#include <mfapi.h>
+#include <mfplay.h>
+#include <mfreadwrite.h>
 
 using namespace Microsoft::WRL;
 

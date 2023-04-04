@@ -5,6 +5,8 @@
 #include <algorithm>
 #include <cassert>
 
+#include "MFUtility.h"
+
 #include "devicesinfo.h"
 
 DevicesInfo::DevicesInfo()
