@@ -16,7 +16,7 @@ add_definitions(-DWIN32_LEAN_AND_MEAN -DNOMINMAX -DUNICODE -D_UNICODE)
 # 環境変数に以下を追加する
 # QTDIR=<Qtのインストールディレクトリ>
 # QTDIR=C:\software\Qt\5.13.1\5.13.1\msvc2017_64
-set(QTDIR "C:\\software\\Qt\\5.15.2\\msvc2019_64")
+set(QTDIR "C:\\Qt\\Qt5.15.2\\5.15.2\\msvc2019_64")
 #set(QTDIR $ENV{QTDIR})
 set(CMAKE_PREFIX_PATH ${QTDIR})
 

@@ -1,8 +1,11 @@
 
 set(main_src
+  devicesinfo.cpp
+  devicesinfo.h
   main.cpp
-  mainwindow.h
   mainwindow.cpp
+  mainwindow.h
+  MFUtility.h
 )
 
 add_executable(
