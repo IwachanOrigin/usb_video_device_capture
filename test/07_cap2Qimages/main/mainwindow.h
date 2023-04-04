@@ -24,6 +24,13 @@ private:
   std::vector<DeviceInfo> m_vecDevNames;
   std::vector<DeviceMediaInfo> m_vecMediaInfo;
   int m_currentDeviceIndex;
+
+  void updateMediaInfo();
+  void eventConnect();
+  void eventDisconnect();
+
+private slots:
+  void slotChangedCamera();
 };
 
 #endif // MAIN_WINDOW_H_
