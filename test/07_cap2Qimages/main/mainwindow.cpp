@@ -30,7 +30,8 @@ MainWindow::MainWindow(QWidget *parent)
     {
       for (auto item : m_vecMediaInfo)
       {
-        QString qsItem = QString("%1x%2, %3, %4, %5").arg(item.width).arg(item.height).arg("").arg(item.stride).arg(item.samplesize);
+        QString fmtName = QString::fromStdWString(item.formatSubtypeName);
+        QString qsItem = QString("%1x%2, %3, %4, %5").arg(item.width).arg(item.height).arg(fmtName).arg(item.stride).arg(item.samplesize);
         ui.comboBoxFormats->addItem(qsItem);
       }
     }
