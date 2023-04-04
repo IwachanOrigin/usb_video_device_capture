@@ -36,6 +36,19 @@ void DevicesInfo::writeDeviceNameList()
   }
 }
 
+void DevicesInfo::getDeviceNameList(std::vector<DeviceInfo>& vec)
+{
+  vec.clear();
+  vec.resize(m_devicesInfo.size());
+  for (int i = 0; i < m_devicesInfo.size(); i++)
+  {
+    DeviceInfo di;
+    di.deviceName = m_devicesInfo[i].deviceName;
+    di.symbolicLink = m_devicesInfo[i].symbolicLink;
+    vec.push_back(di);
+  }
+}
+
 void DevicesInfo::writeDeviceMediaInfoList()
 {
   for (int i = 0; i < m_deviceMediaInfo.size(); i++)

@@ -1,5 +1,6 @@
 
 set(main_src
+  devicecommon.h
   devicesinfo.cpp
   devicesinfo.h
   main.cpp

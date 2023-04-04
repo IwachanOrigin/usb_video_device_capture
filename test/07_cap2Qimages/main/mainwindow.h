@@ -5,19 +5,23 @@
 #include <QtWidgets/QMainWindow>
 #include "ui_mainwindow.h"
 
+#include "devicecommon.h"
+#include "devicesinfo.h"
+
 class MainWindow : public QMainWindow
 {
-    Q_OBJECT
+  Q_OBJECT
 
 public:
-    MainWindow(QWidget *parent = Q_NULLPTR);
+  MainWindow(QWidget *parent = Q_NULLPTR);
 
 protected:
-    void closeEvent(QCloseEvent* e);
+  void closeEvent(QCloseEvent* e);
 
 private:
-    Ui::MainWindow ui;
-
+  Ui::MainWindow ui;
+  DevicesInfo m_devices;
+  std::vector<DeviceInfo> m_vecDevNames;
 };
 
 #endif // MAIN_WINDOW_H_
