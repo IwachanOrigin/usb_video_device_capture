@@ -5,8 +5,8 @@
 #include <QtWidgets/QMainWindow>
 #include "ui_mainwindow.h"
 
-#include "devicecommon.h"
 #include "devicesinfo.h"
+#include "devicecommon.h"
 
 class MainWindow : public QMainWindow
 {
@@ -24,6 +24,7 @@ private:
   std::vector<DeviceInfo> m_vecDevNames;
   std::vector<DeviceMediaInfo> m_vecMediaInfo;
   int m_currentDeviceIndex;
+  int m_currentFormatIndex;
 
   void updateMediaInfo();
   void eventConnect();
@@ -31,6 +32,7 @@ private:
 
 private slots:
   void slotChangedCamera();
+  void slotChangedFormat();
   void slotCaptureStart();
   void slotCaptureStop();
 };

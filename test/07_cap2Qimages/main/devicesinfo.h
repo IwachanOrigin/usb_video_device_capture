@@ -2,7 +2,12 @@
 #ifndef DEVICES_INFO_H_
 #define DEVICES_INFO_H_
 
+#include "MFUtility.h"
 #include "devicecommon.h"
+
+#include <wrl/client.h>
+
+using namespace Microsoft::WRL;
 
 class DevicesInfo
 {
@@ -11,15 +16,19 @@ public:
   explicit DevicesInfo();
   ~DevicesInfo();
 
-  void setCurrentVideoDeviceIndex(int index)
+  void setCurrentVideoDeviceIndex(const int index)
   {
     m_currentVideoDeviceIndex = index;
     this->getVideoDeviceMediaInfo();
   }
-  void setCurrentAudioDeviceIndex(int index)
+  void setCurrentAudioDeviceIndex(const int index)
   {
     m_currentAudioDeviceIndex = index;
     this->getAudioDeviceMediaInfo();
+  }
+  void setCurrentVideoFormatIndex(const int index)
+  {
+    m_currentVideoFormatIndex = index;
   }
 
   void writeDeviceNameList();
@@ -29,6 +38,7 @@ public:
 
   void captureStart();
   void captureStop();
+  void updateImage();
 
 private:
   int getDeviceNames();
@@ -39,6 +49,19 @@ private:
   std::vector<DeviceMediaInfo> m_deviceMediaInfo;
   int m_currentVideoDeviceIndex;
   int m_currentAudioDeviceIndex;
+  int m_currentVideoFormatIndex;
+
+  ComPtr<IMFMediaSource> m_pVideoSource;
+  ComPtr<IMFSourceReader> m_pSourceReader;
+  ComPtr<IMFMediaType> m_pVideoSrcOutputType;
+  ComPtr<IMFPresentationDescriptor> m_pSrcPresentationDescriptor;
+  ComPtr<IMFStreamDescriptor> m_pSrcStreamDescriptor;
+  BOOL m_fSelected;
+  ComPtr<IMFMediaType> m_pVideoSrcOut;
+  ComPtr<IMFMediaType> m_pStreamMediaType;
+
+  bool m_finished;
+  int m_sampleCount;
 
 };
 
