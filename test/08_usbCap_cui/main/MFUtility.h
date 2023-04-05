@@ -45,7 +45,7 @@ static void dbg(const wchar_t* format, ...) {
 
 enum class DeviceType { Audio, Video };
 
-static LPCSTR GetGUIDNameConst(const GUID& guid)
+LPCSTR GetGUIDNameConst(const GUID& guid)
 {
   IF_EQUAL_RETURN(guid, MF_MT_MAJOR_TYPE);
   IF_EQUAL_RETURN(guid, MF_MT_MAJOR_TYPE);
@@ -204,7 +204,7 @@ static LPCSTR GetGUIDNameConst(const GUID& guid)
 *
 * Potential improvements https://docs.microsoft.com/en-us/windows/win32/medfound/media-type-debugging-code.
 */
-static std::string GetMediaTypeDescription(IMFMediaType* pMediaType)
+std::string GetMediaTypeDescription(IMFMediaType* pMediaType)
 {
   HRESULT hr = S_OK;
   GUID MajorType;
@@ -378,79 +378,6 @@ done:
 }
 
 /**
-* Gets a video source reader from a device such as a webcam.
-* @param[in] nDevice: the video device index to attempt to get the source reader for.
-* @param[out] ppVideoSource: will be set with the source for the reader if successful.
-* @param[out] ppVideoReader: will be set with the reader if successful. Set this parameter
-*  to nullptr if no reader is required and only the source is needed.
-* @@Returns S_OK if successful or an error code if not.
-*/
-static HRESULT GetVideoSourceFromDevice(UINT nDevice, IMFMediaSource** ppVideoSource, IMFSourceReader** ppVideoReader)
-{
-  UINT32 videoDeviceCount = 0;
-  IMFAttributes* videoConfig = NULL;
-  IMFActivate** videoDevices = NULL;
-  WCHAR* webcamFriendlyName;
-  UINT nameLength = 0;
-  IMFAttributes* pAttributes = NULL;
-
-  HRESULT hr = S_OK;
-
-  // Get the first available webcam.
-  hr = MFCreateAttributes(&videoConfig, 1);
-  CHECK_HR(hr, L"Error creating video configuration.");
-
-  // Request video capture devices.
-  hr = videoConfig->SetGUID(
-    MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE,
-    MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_GUID);
-  CHECK_HR(hr, L"Error initialising video configuration object.");
-
-  hr = MFEnumDeviceSources(videoConfig, &videoDevices, &videoDeviceCount);
-  CHECK_HR(hr, L"Error enumerating video devices.");
-
-  if (nDevice >= videoDeviceCount) {
-    printf("The device index of %d was invalid for available device count of %d.\n", nDevice, videoDeviceCount);
-    hr = E_INVALIDARG;
-  }
-  else {
-    hr = videoDevices[nDevice]->GetAllocatedString(MF_DEVSOURCE_ATTRIBUTE_FRIENDLY_NAME, &webcamFriendlyName, &nameLength);
-    CHECK_HR(hr, L"Error retrieving video device friendly name.\n");
-
-    wprintf(L"Using webcam: %s\n", webcamFriendlyName);
-
-    hr = videoDevices[nDevice]->ActivateObject(IID_PPV_ARGS(ppVideoSource));
-    CHECK_HR(hr, L"Error activating video device.");
-
-    CHECK_HR(MFCreateAttributes(&pAttributes, 1),
-      L"Failed to create attributes.");
-
-    if (ppVideoReader != nullptr) {
-      // Adding this attribute creates a video source reader that will handle
-      // colour conversion and avoid the need to manually convert between RGB24 and RGB32 etc.
-      CHECK_HR(pAttributes->SetUINT32(MF_SOURCE_READER_ENABLE_VIDEO_PROCESSING, 1),
-        L"Failed to set enable video processing attribute.");
-
-      // Create a source reader.
-      hr = MFCreateSourceReaderFromMediaSource(
-        *ppVideoSource,
-        pAttributes,
-        ppVideoReader);
-      CHECK_HR(hr, L"Error creating video source reader.");
-    }
-  }
-
-done:
-
-  SAFE_RELEASE(videoConfig);
-  SAFE_RELEASE(videoDevices);
-  SAFE_RELEASE(pAttributes);
-
-  return hr;
-}
-
-
-/**
 * Gets an audio or video source reader from a capture device such as a webcam or microphone.
 * @param[in] deviceType: the type of capture device to get a source reader for.
 * @param[in] nDevice: the capture device index to attempt to get the source reader for.
@@ -459,7 +386,7 @@ done:
 *  to nullptr if no reader is required and only the source is needed.
 * @@Returns S_OK if successful or an error code if not.
 */
-static HRESULT GetSourceFromCaptureDevice(DeviceType deviceType, UINT nDevice, IMFMediaSource** ppMediaSource, IMFSourceReader** ppMediaReader)
+HRESULT GetSourceFromCaptureDevice(DeviceType deviceType, UINT nDevice, IMFMediaSource** ppMediaSource, IMFSourceReader** ppMediaReader)
 {
   UINT32 captureDeviceCount = 0;
   IMFAttributes* pDeviceConfig = NULL;
@@ -535,7 +462,7 @@ done:
 * @param[in] pDest: the media attribute the copy of the key is being made to.
 * @param[in] key: the media attribute key to copy.
 */
-static HRESULT CopyAttribute(IMFAttributes* pSrc, IMFAttributes* pDest, const GUID& key)
+HRESULT CopyAttribute(IMFAttributes* pSrc, IMFAttributes* pDest, const GUID& key)
 {
   PROPVARIANT var;
   PropVariantInit(&var);

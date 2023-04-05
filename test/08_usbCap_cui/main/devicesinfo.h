@@ -43,6 +43,9 @@ private:
   int getVideoDeviceMediaInfo();
   int getAudioDeviceMediaInfo();
 
+  LPCSTR GetGUIDNameConst(const GUID& guid);
+  HRESULT GetVideoSourceFromDevice(UINT nDevice, IMFMediaSource** ppVideoSource, IMFSourceReader** ppVideoReader);
+
   std::vector<DeviceInfo> m_devicesInfo;
   std::vector<DeviceMediaInfo> m_deviceMediaInfo;
   int m_currentVideoDeviceIndex;

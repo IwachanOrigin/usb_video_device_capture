@@ -74,45 +74,45 @@ public:
 
     // Get the sources for the video and audio capture devices.
     CHECK_HR(GetSourceFromCaptureDevice(DeviceType::Video, videoDeviceIndex, &pVideoSource, &pSourceReader),
-      L"Failed to get video source and reader.");
+      "Failed to get video source and reader.");
 
     CHECK_HR(pSourceReader->GetCurrentMediaType((DWORD)MF_SOURCE_READER_FIRST_VIDEO_STREAM, &videoSourceOutputType),
-      L"Error retrieving current media type from first video stream.");
+      "Error retrieving current media type from first video stream.");
 
     CHECK_HR(pSourceReader->SetStreamSelection((DWORD)MF_SOURCE_READER_FIRST_VIDEO_STREAM, TRUE),
-      L"Failed to set the first video stream on the source reader.");
+      "Failed to set the first video stream on the source reader.");
 
     CHECK_HR(pVideoSource->CreatePresentationDescriptor(&pSourcePresentationDescriptor),
-      L"Failed to create the presentation descriptor from the media source.");
+      "Failed to create the presentation descriptor from the media source.");
 
     CHECK_HR(pSourcePresentationDescriptor->GetStreamDescriptorByIndex(0, &fSelected, &pSourceStreamDescriptor),
-      L"Failed to get source stream descriptor from presentation descriptor.");
+      "Failed to get source stream descriptor from presentation descriptor.");
 
     CHECK_HR(pSourceStreamDescriptor->GetMediaTypeHandler(&pSourceMediaTypeHandler),
-      L"Failed to get source media type handler.");
+      "Failed to get source media type handler.");
 
     DWORD srcMediaTypeCount = 0;
     CHECK_HR(pSourceMediaTypeHandler->GetMediaTypeCount(&srcMediaTypeCount),
-      L"Failed to get source media type count.");
+      "Failed to get source media type count.");
 
     // Note the webcam needs to support this media type. 
-    CHECK_HR(MFCreateMediaType(&pVideoSrcOut), L"Failed to create media type.");
-    CHECK_HR(pVideoSrcOut->SetGUID(MF_MT_MAJOR_TYPE, MFMediaType_Video), L"Failed to set major video type.");
-    CHECK_HR(pVideoSrcOut->SetGUID(MF_MT_SUBTYPE, MFVideoFormat_RGB32), L"Failed to set video sub-type attribute on media type.");
-    CHECK_HR(pVideoSrcOut->SetUINT32(MF_MT_INTERLACE_MODE, MFVideoInterlace_Progressive), L"Failed to set interlace mode attribute on media type.");
-    CHECK_HR(pVideoSrcOut->SetUINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, TRUE), L"Failed to set independent samples attribute on media type.");
-    CHECK_HR(MFSetAttributeRatio(pVideoSrcOut, MF_MT_PIXEL_ASPECT_RATIO, 1, 1), L"Failed to set pixel aspect ratio attribute on media type.");
-    CHECK_HR(MFSetAttributeSize(pVideoSrcOut, MF_MT_FRAME_SIZE, OUTPUT_FRAME_WIDTH, OUTPUT_FRAME_HEIGHT), L"Failed to set the frame size attribute on media type.");
-    CHECK_HR(MFSetAttributeSize(pVideoSrcOut, MF_MT_FRAME_RATE, OUTPUT_FRAME_RATE, 1), L"Failed to set the frame rate attribute on media type.");
-    CHECK_HR(CopyAttribute(videoSourceOutputType, pVideoSrcOut, MF_MT_DEFAULT_STRIDE), L"Failed to copy default stride attribute.");
+    CHECK_HR(MFCreateMediaType(&pVideoSrcOut), "Failed to create media type.");
+    CHECK_HR(pVideoSrcOut->SetGUID(MF_MT_MAJOR_TYPE, MFMediaType_Video), "Failed to set major video type.");
+    CHECK_HR(pVideoSrcOut->SetGUID(MF_MT_SUBTYPE, MFVideoFormat_RGB32), "Failed to set video sub-type attribute on media type.");
+    CHECK_HR(pVideoSrcOut->SetUINT32(MF_MT_INTERLACE_MODE, MFVideoInterlace_Progressive), "Failed to set interlace mode attribute on media type.");
+    CHECK_HR(pVideoSrcOut->SetUINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, TRUE), "Failed to set independent samples attribute on media type.");
+    CHECK_HR(MFSetAttributeRatio(pVideoSrcOut, MF_MT_PIXEL_ASPECT_RATIO, 1, 1), "Failed to set pixel aspect ratio attribute on media type.");
+    CHECK_HR(MFSetAttributeSize(pVideoSrcOut, MF_MT_FRAME_SIZE, OUTPUT_FRAME_WIDTH, OUTPUT_FRAME_HEIGHT), "Failed to set the frame size attribute on media type.");
+    CHECK_HR(MFSetAttributeSize(pVideoSrcOut, MF_MT_FRAME_RATE, OUTPUT_FRAME_RATE, 1), "Failed to set the frame rate attribute on media type.");
+    CHECK_HR(CopyAttribute(videoSourceOutputType, pVideoSrcOut, MF_MT_DEFAULT_STRIDE), "Failed to copy default stride attribute.");
 
-    CHECK_HR(pSourceReader->SetCurrentMediaType((DWORD)MF_SOURCE_READER_FIRST_VIDEO_STREAM, NULL, pVideoSrcOut), L"Failed to set video media type on source reader.");
+    CHECK_HR(pSourceReader->SetCurrentMediaType((DWORD)MF_SOURCE_READER_FIRST_VIDEO_STREAM, NULL, pVideoSrcOut), "Failed to set video media type on source reader.");
 
     while (pSourceReader->GetStreamSelection(stmIndex, &isSelected) == S_OK)
     {
       printf("Stream %d is selected %d.\n", stmIndex, isSelected);
 
-      CHECK_HR(pSourceReader->GetCurrentMediaType(stmIndex, &pStmMediaType), L"Failed to get media type for selected stream.");
+      CHECK_HR(pSourceReader->GetCurrentMediaType(stmIndex, &pStmMediaType), "Failed to get media type for selected stream.");
       std::cout << "Media type: " << GetMediaTypeDescription(pStmMediaType) << std::endl;
 
       GUID majorMediaType;
@@ -141,6 +141,10 @@ public:
     update(0.0f);
 
     return true;
+
+  done:
+    return false;
+
   }
 
   void update(float dt)
