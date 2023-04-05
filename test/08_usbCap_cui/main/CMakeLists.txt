@@ -23,12 +23,17 @@ set(main_src
   capture_texture.cpp
   capture_texture.h
   clock.h
+  devicecommon.h
+  devicesinfo.h
+  devicesinfo.cpp
   dx11base.cpp
   dx11base.h
   dxhelper.h
   main.cpp
   mainapp.cpp
   mainapp.h
+  mainwindow.h
+  mainwindow.cpp
   mesh.cpp
   mesh.h
   mfutility.h
@@ -41,6 +46,7 @@ set(main_src
   texture.cpp
   texture.h
   timer.h
+  
 )
 
 add_executable(${PROJECT_NAME} WIN32 ${main_src})
