@@ -13,6 +13,7 @@ DevicesInfo::DevicesInfo()
   : m_currentAudioDeviceIndex(0)
   , m_currentVideoDeviceIndex(0)
   , m_sampleCount(0)
+  , m_pSample(nullptr)
 {
   this->getDeviceNames();
 }
@@ -349,8 +350,6 @@ void DevicesInfo::captureStart()
     }
     stmIndex++;
   }
-
-  this->updateImage();
 }
 
 void DevicesInfo::captureStop()
@@ -358,7 +357,7 @@ void DevicesInfo::captureStop()
   m_finished = true;
 }
 
-void DevicesInfo::updateImage()
+void DevicesInfo::updateImage(unsigned char* buffer)
 {
   if (m_finished)
   {
@@ -369,8 +368,6 @@ void DevicesInfo::updateImage()
   DWORD streamIndex = 0;
   DWORD flags = 0;
   LONGLONG llSampleTimeStamp = 0;
-  ComPtr<IMFSample> pSample = NULL;
-  LONGLONG llVideoBaseTime = 0;
 
   HRESULT hr;
   hr = m_pSourceReader->ReadSample(
@@ -379,7 +376,7 @@ void DevicesInfo::updateImage()
     &streamIndex,												// Receives the actual stream index. 
     &flags,															// Receives status flags.
     &llSampleTimeStamp,									// Receives the time stamp.
-    &pSample												// Receives the sample or NULL.
+    &m_pSample												// Receives the sample or NULL.
   );
 
   if (hr != S_OK)
@@ -397,25 +394,27 @@ void DevicesInfo::updateImage()
     printf("Stream tick.\n");
   }
 
-  if (pSample)
+  if (m_pSample)
   {
-    hr = pSample->SetSampleTime(llSampleTimeStamp);
+    hr = m_pSample->SetSampleTime(llSampleTimeStamp);
     assert(hr == S_OK);
 
     ComPtr<IMFMediaBuffer> buf = nullptr;
     DWORD bufLength = 0;
 
-    hr = pSample->ConvertToContiguousBuffer(&buf);
+    hr = m_pSample->ConvertToContiguousBuffer(&buf);
     hr = buf->GetCurrentLength(&bufLength);
 
-    byte* byteBuffer = NULL;
+    byte* byteBuffer = nullptr;
     DWORD buffMaxLen = 0, buffCurrLen = 0;
     hr = buf->Lock(&byteBuffer, &buffMaxLen, &buffCurrLen);
     assert(hr == S_OK);
 
-    buf->Unlock();
+    buffer = new unsigned char[buffCurrLen];
+    memcpy(buffer, byteBuffer, buffCurrLen);
+
     SAFE_RELEASE(buf);
     m_sampleCount++;
   }
-  SAFE_RELEASE(pSample);
+  SAFE_RELEASE(m_pSample);
 }

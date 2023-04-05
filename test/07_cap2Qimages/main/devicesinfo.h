@@ -41,7 +41,7 @@ public:
 
   void captureStart();
   void captureStop();
-  void updateImage();
+  void updateImage(unsigned char* buffer);
 
 private:
   int getDeviceNames();
@@ -62,6 +62,7 @@ private:
   BOOL m_fSelected;
   ComPtr<IMFMediaType> m_pVideoSrcOut;
   ComPtr<IMFMediaType> m_pStreamMediaType;
+  ComPtr<IMFSample> m_pSample;
 
   bool m_finished;
   int m_sampleCount;

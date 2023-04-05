@@ -2,10 +2,12 @@
 #include "mainwindow.h"
 #include <QtWidgets/QApplication>
 
-#pragma comment(lib, "mfplat.lib")
-#pragma comment(lib, "mf.lib")
-#pragma comment(lib, "mfreadwrite.lib")
-#pragma comment(lib, "mfuuid.lib")
+#pragma comment(lib, "mf")
+#pragma comment(lib, "mfplat")
+#pragma comment(lib, "mfplay")
+#pragma comment(lib, "mfreadwrite")
+#pragma comment(lib, "mfuuid")
+#pragma comment(lib, "wmcodecdspuuid")
 
 int main(int argc, char *argv[])
 {

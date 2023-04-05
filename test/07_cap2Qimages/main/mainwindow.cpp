@@ -1,10 +1,12 @@
 
 #include "mainwindow.h"
+#include <QDebug>
 
 MainWindow::MainWindow(QWidget *parent)
   : QMainWindow(parent)
   , m_currentDeviceIndex(-1)
   , m_currentFormatIndex(-1)
+  , m_updateTimer(nullptr)
 {
   ui.setupUi(this);
 
@@ -83,9 +85,23 @@ void MainWindow::slotChangedFormat()
 void MainWindow::slotCaptureStart()
 {
   m_devices.captureStart();
+  m_updateTimer = new QTimer(this);
+  QObject::connect(m_updateTimer, &QTimer::timeout, this, &MainWindow::slotUpdateTexture);
+  m_updateTimer->start(500);
 }
 
 void MainWindow::slotCaptureStop()
 {
   m_devices.captureStop();
+  m_updateTimer->stop();
+  delete m_updateTimer;
+  m_updateTimer = nullptr;
+}
+
+void MainWindow::slotUpdateTexture()
+{
+  unsigned char* buffer = nullptr;
+  m_devices.updateImage(buffer);
+  qDebug() << "cap : " << buffer;
+  delete buffer;
 }
