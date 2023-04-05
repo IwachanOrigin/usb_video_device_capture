@@ -16,7 +16,7 @@ public:
   static bool createAPI();
   static void destroyAPI();
 
-  bool create(const uint32_t videoDeviceIndex, const uint32_t audioDeviceIndex);
+  bool create(const uint32_t videoDeviceIndex, const uint32_t audioDeviceIndex, const int width, const int height, const int fps);
   void destroy();
   bool update(float dt);
 

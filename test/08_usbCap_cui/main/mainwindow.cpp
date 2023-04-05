@@ -81,15 +81,18 @@ bool MainWindow::init(HINSTANCE hInst)
 		windowClass = RegisterClassEx(&wcex);
   }
 
+  RECT windowRect = { 0, 0, static_cast<LONG>(800), static_cast<LONG>(600) };
+  AdjustWindowRect(&windowRect, WS_OVERLAPPEDWINDOW, FALSE);
+
   m_hwnd = CreateWindowEx(
     WS_EX_OVERLAPPEDWINDOW
 		, (TCHAR*)windowClass
 		, nullptr
-		, WS_CLIPSIBLINGS | WS_TABSTOP | WS_VISIBLE
-		, CW_USEDEFAULT
-		, 0
-		, CW_USEDEFAULT
-		, 0
+		, WS_OVERLAPPEDWINDOW | WS_VISIBLE
+    , CW_USEDEFAULT
+    , CW_USEDEFAULT
+    , windowRect.right - windowRect.left
+    , windowRect.bottom - windowRect.top
 		, NULL
 		, NULL
 		, hInst
@@ -112,14 +115,20 @@ bool MainWindow::init(HINSTANCE hInst)
 
 void MainWindow::messageHandle()
 {
-  MSG message{};
+
+  MSG msg{};
+  while (msg.message != WM_QUIT)
   {
-    if (!GetMessage(&message, nullptr, 0, 0))
+    // Process any messages in the queue.
+    if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
     {
-      return;
+      TranslateMessage(&msg);
+      DispatchMessage(&msg);
     }
-    TranslateMessage(&message);
-    DispatchMessage(&message);
+    else
+    {
+      this->render();
+    }
   }
 }
 

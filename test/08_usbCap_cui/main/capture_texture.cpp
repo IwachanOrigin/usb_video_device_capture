@@ -48,8 +48,9 @@ struct CaptureTexture::InternalData
   int sampleCount = 0;
 
   Render::Texture* m_targetTexture = nullptr;
-  uint32_t width = OUTPUT_FRAME_WIDTH;
-  uint32_t height = OUTPUT_FRAME_HEIGHT;
+  uint32_t m_width = 0;
+  uint32_t m_height= 0;
+  uint32_t m_fps = 0;
   bool finished = false;
 
 public:
@@ -67,10 +68,13 @@ public:
     SAFE_RELEASE(pWriter);
   }
 
-  bool open(const uint32_t videoDeviceIndex, const uint32_t audioDeviceIndex)
+  bool open(const uint32_t videoDeviceIndex, const uint32_t audioDeviceIndex, const int width, const int height, const int fps)
   {
     HRESULT hr = S_OK;
     finished = false;
+    m_width = width;
+    m_height = height;
+    m_fps = fps;
 
     // Get the sources for the video and audio capture devices.
     CHECK_HR(GetSourceFromCaptureDevice(DeviceType::Video, videoDeviceIndex, &pVideoSource, &pSourceReader),
@@ -102,8 +106,8 @@ public:
     CHECK_HR(pVideoSrcOut->SetUINT32(MF_MT_INTERLACE_MODE, MFVideoInterlace_Progressive), "Failed to set interlace mode attribute on media type.");
     CHECK_HR(pVideoSrcOut->SetUINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, TRUE), "Failed to set independent samples attribute on media type.");
     CHECK_HR(MFSetAttributeRatio(pVideoSrcOut, MF_MT_PIXEL_ASPECT_RATIO, 1, 1), "Failed to set pixel aspect ratio attribute on media type.");
-    CHECK_HR(MFSetAttributeSize(pVideoSrcOut, MF_MT_FRAME_SIZE, OUTPUT_FRAME_WIDTH, OUTPUT_FRAME_HEIGHT), "Failed to set the frame size attribute on media type.");
-    CHECK_HR(MFSetAttributeSize(pVideoSrcOut, MF_MT_FRAME_RATE, OUTPUT_FRAME_RATE, 1), "Failed to set the frame rate attribute on media type.");
+    CHECK_HR(MFSetAttributeSize(pVideoSrcOut, MF_MT_FRAME_SIZE, m_width, m_height), "Failed to set the frame size attribute on media type.");
+    CHECK_HR(MFSetAttributeSize(pVideoSrcOut, MF_MT_FRAME_RATE, m_fps, 1), "Failed to set the frame rate attribute on media type.");
     CHECK_HR(CopyAttribute(videoSourceOutputType, pVideoSrcOut, MF_MT_DEFAULT_STRIDE), "Failed to copy default stride attribute.");
 
     CHECK_HR(pSourceReader->SetCurrentMediaType((DWORD)MF_SOURCE_READER_FIRST_VIDEO_STREAM, NULL, pVideoSrcOut), "Failed to set video media type on source reader.");
@@ -202,8 +206,8 @@ public:
       if (!m_targetTexture)
       {
         m_targetTexture = new Render::Texture();
-        int texture_height = height;
-        if (!m_targetTexture->create(width, texture_height, DXGI_FORMAT_B8G8R8A8_UNORM, true))
+        int texture_height = m_height;
+        if (!m_targetTexture->create(m_width, texture_height, DXGI_FORMAT_B8G8R8A8_UNORM, true))
         {
           return;
         }
@@ -233,11 +237,11 @@ void CaptureTexture::destroyAPI()
   MFShutdown();
 }
 
-bool CaptureTexture::create(const uint32_t videoDeviceIndex, const uint32_t audioDeviceIndex)
+bool CaptureTexture::create(const uint32_t videoDeviceIndex, const uint32_t audioDeviceIndex, const int width, const int height, const int fps)
 {
   assert(!m_internalData);
   m_internalData = new InternalData();
-  return m_internalData->open(videoDeviceIndex, audioDeviceIndex);
+  return m_internalData->open(videoDeviceIndex, audioDeviceIndex, width, height, fps);
 }
 
 void CaptureTexture::destroy()

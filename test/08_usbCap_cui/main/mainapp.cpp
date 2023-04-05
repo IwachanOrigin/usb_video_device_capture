@@ -88,7 +88,7 @@ bool MainApp::create(HWND hWnd, int deviceNo, int width, int height, int fps)
   // Input device no.
   uint32_t audioDeviceNo = 0;
 
-  if (!m_captureTexture.create(deviceNo, audioDeviceNo))
+  if (!m_captureTexture.create(deviceNo, audioDeviceNo, width, height, fps))
   {
     return false;
   }

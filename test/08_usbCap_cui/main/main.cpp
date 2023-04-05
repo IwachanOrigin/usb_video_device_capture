@@ -22,6 +22,8 @@ int main(int argc, char* argv[])
   }
 
   MainWindow::getInstance().setup();
+  MainWindow::getInstance().init((HINSTANCE)0);
+  MainWindow::getInstance().messageHandle();
 
   // Release
   hr = MFShutdown();
