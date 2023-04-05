@@ -13,7 +13,22 @@
 
 int main(int argc, char* argv[])
 {
+  // Initialize
+  HRESULT hr;
+  hr = MFStartup(MF_VERSION);
+  if (FAILED(hr))
+  {
+    return hr;
+  }
+
   MainWindow::getInstance().setup();
+
+  // Release
+  hr = MFShutdown();
+  if (FAILED(hr))
+  {
+    return hr;
+  }
 
   return 0;
 }

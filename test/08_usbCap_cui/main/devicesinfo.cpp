@@ -160,7 +160,7 @@ int DevicesInfo::getVideoDeviceMediaInfo()
 
   m_deviceMediaInfo.clear();
 
-  CHECK_HR(GetVideoSourceFromDevice(m_currentVideoDeviceIndex, &pVideoSource, &pVideoReader), "Failed to get webcam video source.");
+  CHECK_HR(getVideoSourceFromDevice(m_currentVideoDeviceIndex, &pVideoSource, &pVideoReader), "Failed to get webcam video source.");
   CHECK_HR(pVideoSource->CreatePresentationDescriptor(&pSourcePresentationDescriptor), "Failed to create the presentation descriptor from the media source.");
   
   DWORD streamDescCount = 0;
@@ -192,7 +192,7 @@ int DevicesInfo::getVideoDeviceMediaInfo()
       CHECK_HR(MFGetAttributeRatio(pMediaType.Get(), MF_MT_FRAME_RATE, &dmi.frameRateNumerator, &dmi.frameRateDenominator), "Failed to get the frame rate on media type.");
 
       LPCSTR pszGuidStr = "";
-      pszGuidStr = GetGUIDNameConst(dmi.formatSubtypeGuid);
+      pszGuidStr = getGUIDNameConst(dmi.formatSubtypeGuid);
       if (pszGuidStr != nullptr)
       {
         std::string tempStr = pszGuidStr;
@@ -227,7 +227,7 @@ int DevicesInfo::getAudioDeviceMediaInfo()
   return hr;
 }
 
-LPCSTR DevicesInfo::GetGUIDNameConst(const GUID& guid)
+LPCSTR DevicesInfo::getGUIDNameConst(const GUID& guid)
 {
   IF_EQUAL_RETURN(guid, MF_MT_MAJOR_TYPE);
   IF_EQUAL_RETURN(guid, MF_MT_MAJOR_TYPE);
@@ -386,7 +386,7 @@ LPCSTR DevicesInfo::GetGUIDNameConst(const GUID& guid)
 *  to nullptr if no reader is required and only the source is needed.
 * @@Returns S_OK if successful or an error code if not.
 */
-HRESULT DevicesInfo::GetVideoSourceFromDevice(UINT nDevice, IMFMediaSource** ppVideoSource, IMFSourceReader** ppVideoReader)
+HRESULT DevicesInfo::getVideoSourceFromDevice(UINT nDevice, IMFMediaSource** ppVideoSource, IMFSourceReader** ppVideoReader)
 {
   UINT32 videoDeviceCount = 0;
   IMFAttributes* videoConfig = NULL;
