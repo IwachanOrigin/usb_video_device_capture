@@ -1,47 +1,125 @@
 
-#include <iostream>
-#include <string>
+#include "stdafx.h"
 
-#include <mfapi.h>
-#include <mfidl.h>
+#include "dxhelper.h"
+#include "dx11base.h"
+#include "mainapp.h"
+#include "clock.h"
 
-#include "devicesinfo.h"
+#pragma comment(lib, "d3d11")
+#pragma comment(lib, "d3dcompiler")
+#pragma comment(lib, "mf")
+#pragma comment(lib, "mfplat")
+#pragma comment(lib, "mfplay")
+#pragma comment(lib, "mfreadwrite")
+#pragma comment(lib, "mfuuid")
+#pragma comment(lib, "wmcodecdspuuid")
 
-#pragma comment(lib, "mfplat.lib")
-#pragma comment(lib, "mf.lib")
-#pragma comment(lib, "mfreadwrite.lib")
-#pragma comment(lib, "mfuuid.lib")
 
-int main(int argc, char* argv[])
+//--------------------------------------------------------------------------------------
+// Called every time the application receives a message
+//--------------------------------------------------------------------------------------
+LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-  // Initialize
-  HRESULT hr;
-  hr = MFStartup(MF_VERSION);
-  if (FAILED(hr))
-  {
-    return hr;
+  PAINTSTRUCT ps;
+  HDC hdc;
+  switch (message) {
+  case WM_PAINT:
+    hdc = BeginPaint(hWnd, &ps);
+    EndPaint(hWnd, &ps);
+    break;
+  case WM_DESTROY:
+    PostQuitMessage(0);
+    break;
+  default:
+    return DefWindowProc(hWnd, message, wParam, lParam);
   }
-
-  DevicesInfo devices;
-  devices.writeDeviceNameList();
-
-  std::wcout << "Please Input Your USB Camera Device Index Number : ";
-
-  std::string input = "";
-  std::getline(std::cin, input);
-  int devindex = std::stoi(input);
-
-  devices.setCurrentVideoDeviceIndex(devindex);
-  //devices.setCurrentAudioDeviceIndex(devindex);
-  devices.writeDeviceMediaInfoList();
-
-
-  // Release
-  hr = MFShutdown();
-  if (FAILED(hr))
-  {
-    return hr;
-  }
-
   return 0;
+}
+
+//--------------------------------------------------------------------------------------
+// Register class and create window
+//--------------------------------------------------------------------------------------
+bool initWindow(HINSTANCE hInstance, int nCmdShow, HWND* hWnd)
+{
+  // Register class
+  WNDCLASSEX wcex;
+  wcex.cbSize = sizeof(WNDCLASSEX);
+  wcex.style = CS_HREDRAW | CS_VREDRAW;
+  wcex.lpfnWndProc = WndProc;
+  wcex.cbClsExtra = 0;
+  wcex.cbWndExtra = 0;
+  wcex.hInstance = hInstance;
+  wcex.hIcon = nullptr;
+  wcex.hCursor = LoadCursor(nullptr, IDC_ARROW);
+  wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
+  wcex.lpszMenuName = nullptr;
+  wcex.lpszClassName = L"DX11WindowClass";
+  wcex.hIconSm = nullptr;
+  if (!RegisterClassEx(&wcex))
+  {
+    return false;
+  }
+
+  // Create window
+  RECT rc = { 0, 0, 1200, 720 };
+  AdjustWindowRect(&rc, WS_OVERLAPPEDWINDOW, FALSE);
+  *hWnd = CreateWindow(
+    L"DX11WindowClass"
+    , L"Direct3D 11 Video Decoder Sample"
+    , WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX
+    , CW_USEDEFAULT
+    , CW_USEDEFAULT
+    , rc.right - rc.left, rc.bottom - rc.top
+    , nullptr
+    , nullptr
+    , hInstance
+    , nullptr);
+  if (!*hWnd)
+  {
+    return false;
+  }
+
+  ShowWindow(*hWnd, nCmdShow);
+  return true;
+}
+
+// --------------------------------------------------------------------------------------
+int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR lpCmdLine, _In_ int nCmdShow)
+{
+  UNREFERENCED_PARAMETER(hPrevInstance);
+  UNREFERENCED_PARAMETER(lpCmdLine);
+
+  HWND hWnd;
+  if (!initWindow(hInstance, nCmdShow, &hWnd))
+  {
+    return 0;
+  }
+
+  MainApp app;
+  if (!app.create(hWnd))
+  {
+    return -1;
+  }
+
+  Clock clock;
+  // Main message loop
+  MSG msg = { 0 };
+  while (WM_QUIT != msg.message)
+  {
+    if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
+    {
+      TranslateMessage(&msg);
+      DispatchMessage(&msg);
+    }
+    else
+    {
+      float elapsed = clock.elapsed();
+      app.update(elapsed);
+      app.render();
+    }
+  }
+  app.destroy();
+
+  return (int)msg.wParam;
 }
