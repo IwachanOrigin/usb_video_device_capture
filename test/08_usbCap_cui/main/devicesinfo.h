@@ -36,12 +36,7 @@ public:
 
   void writeDeviceNameList();
   void writeDeviceMediaInfoList();
-  void getDeviceNameList(std::vector<DeviceInfo>& vec);
-  void getVideoDeviceMediaList(std::vector<DeviceMediaInfo>& vec);
-
-  void captureStart();
-  void captureStop();
-  void updateImage(unsigned char* buffer);
+  bool getVideoDeviceMediaInfo(const int index, DeviceMediaInfo& dmi);
 
 private:
   int getDeviceNames();
@@ -53,19 +48,6 @@ private:
   int m_currentVideoDeviceIndex;
   int m_currentAudioDeviceIndex;
   int m_currentVideoFormatIndex;
-
-  ComPtr<IMFMediaSource> m_pVideoSource;
-  ComPtr<IMFSourceReader> m_pSourceReader;
-  ComPtr<IMFMediaType> m_pVideoSrcOutputType;
-  ComPtr<IMFPresentationDescriptor> m_pSrcPresentationDescriptor;
-  ComPtr<IMFStreamDescriptor> m_pSrcStreamDescriptor;
-  BOOL m_fSelected;
-  ComPtr<IMFMediaType> m_pVideoSrcOut;
-  ComPtr<IMFMediaType> m_pStreamMediaType;
-  ComPtr<IMFSample> m_pSample;
-
-  bool m_finished;
-  int m_sampleCount;
 
 };
 

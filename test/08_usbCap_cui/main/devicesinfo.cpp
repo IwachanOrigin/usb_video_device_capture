@@ -28,20 +28,7 @@ void DevicesInfo::writeDeviceNameList()
   {
     std::wcout << L"No: " << i << std::endl;
     std::wcout << "Name : " << m_devicesInfo[i].deviceName << std::endl;
-    std::wcout << "Symbolic Link : " << m_devicesInfo[i].symbolicLink << std::endl;
     std::wcout << std::endl;
-  }
-}
-
-void DevicesInfo::getDeviceNameList(std::vector<DeviceInfo>& vec)
-{
-  vec.clear();
-  for (int i = 0; i < m_devicesInfo.size(); i++)
-  {
-    DeviceInfo di;
-    di.deviceName = m_devicesInfo[i].deviceName;
-    di.symbolicLink = m_devicesInfo[i].symbolicLink;
-    vec.push_back(di);
   }
 }
 
@@ -49,25 +36,25 @@ void DevicesInfo::writeDeviceMediaInfoList()
 {
   for (int i = 0; i < m_deviceMediaInfo.size(); i++)
   {
-    std::wcout << "No: " << i << std::endl;
-    std::wcout << "formatSubtypeName : " << m_deviceMediaInfo[i].formatSubtypeName << std::endl;
-    std::wcout << "width : " << m_deviceMediaInfo[i].width << std::endl;
-    std::wcout << "height : " << m_deviceMediaInfo[i].height << std::endl;
-    std::wcout << "interlaceMode : " << m_deviceMediaInfo[i].interlaceMode << std::endl;
-    std::wcout << "stride : " << m_deviceMediaInfo[i].stride << std::endl;
-    std::wcout << "aspect ratio : " << m_deviceMediaInfo[i].aspectRatioNumerator << " / " << m_deviceMediaInfo[i].aspectRatioDenominator << std::endl;
-    std::wcout << "frame rate : " << m_deviceMediaInfo[i].frameRateNumerator << " / " << m_deviceMediaInfo[i].frameRateDenominator << std::endl;
-    std::wcout << std::endl;
+    std::wcout << "No: " << i
+               << ", "<< m_deviceMediaInfo[i].width << " x " << m_deviceMediaInfo[i].height
+               << ", " << m_deviceMediaInfo[i].formatSubtypeName
+               << ", " << m_deviceMediaInfo[i].stride
+               << ", " << m_deviceMediaInfo[i].samplesize
+               << std::endl;
   }
 }
 
-void DevicesInfo::getVideoDeviceMediaList(std::vector<DeviceMediaInfo>& vec)
+bool DevicesInfo::getVideoDeviceMediaInfo(const int index, DeviceMediaInfo& dmi)
 {
-  vec.clear();
-  for (int i = 0; i < m_deviceMediaInfo.size(); i++)
+  if (index < 0 || index >= m_deviceMediaInfo.size())
   {
-    vec.push_back(m_deviceMediaInfo[i]);
+    return false;
   }
+
+  dmi = m_deviceMediaInfo[index];
+
+  return true;
 }
 
 int DevicesInfo::getDeviceNames()
@@ -211,210 +198,3 @@ int DevicesInfo::getAudioDeviceMediaInfo()
   return hr;
 }
 
-void DevicesInfo::captureStart()
-{
-  HRESULT hr = S_OK;
-
-  m_finished = false;
-
-  // Get the sources for the video and audio capture devices.
-  hr = GetSourceFromCaptureDevice(DeviceType::Video, m_currentVideoDeviceIndex, &m_pVideoSource, &m_pSourceReader);
-  if (FAILED(hr))
-  {
-    std::wcout << "Failed to get video source and reader." << std::endl;
-    return;
-  }
-
-  hr = m_pSourceReader->GetCurrentMediaType((DWORD)MF_SOURCE_READER_FIRST_VIDEO_STREAM, &m_pVideoSrcOutputType);
-  if (FAILED(hr))
-  {
-    std::wcout << "Error retrieving current media type from first video stream." << std::endl;
-    return;
-  }
-
-  hr = m_pSourceReader->SetStreamSelection((DWORD)MF_SOURCE_READER_FIRST_VIDEO_STREAM, TRUE);
-  if (FAILED(hr))
-  {
-    std::wcout << "Failed to set the first video stream on the source reader." << std::endl;
-    return;
-  }
-
-  hr = m_pVideoSource->CreatePresentationDescriptor(&m_pSrcPresentationDescriptor);
-  if (FAILED(hr))
-  {
-    std::wcout << "Failed to create the presentation descriptor from the media source." << std::endl;
-    return;
-  }
-
-  m_fSelected = false;
-  hr = m_pSrcPresentationDescriptor->GetStreamDescriptorByIndex(0, &m_fSelected, &m_pSrcStreamDescriptor);
-  if (FAILED(hr))
-  {
-    std::wcout << "Failed to get source stream descriptor from presentation descriptor." << std::endl;
-    return;
-  }
-
-  //
-  //
-  //
-  hr = MFCreateMediaType(&m_pVideoSrcOut);
-  if (FAILED(hr))
-  {
-    std::wcout << "Failed to create media type." << std::endl;
-    return;
-  }
-
-  hr = m_pVideoSrcOut->SetGUID(MF_MT_MAJOR_TYPE, MFMediaType_Video);
-  if (FAILED(hr))
-  {
-    std::wcout << "Failed to set major video type." << std::endl;
-    return;
-  }
-
-  hr = m_pVideoSrcOut->SetGUID(MF_MT_SUBTYPE, MFVideoFormat_RGB32);
-  if (FAILED(hr))
-  {
-    std::wcout << "Failed to set video sub-type attribute on media type." << std::endl;
-    return;
-  }
-
-  hr = m_pVideoSrcOut->SetUINT32(MF_MT_INTERLACE_MODE, MFVideoInterlace_Progressive);
-  if (FAILED(hr))
-  {
-    std::wcout << "Failed to set interlace mode attribute on media type." << std::endl;
-    return;
-  }
-
-  hr = m_pVideoSrcOut->SetUINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, TRUE);
-  if (FAILED(hr))
-  {
-    std::wcout << "Failed to set independent samples attribute on media type." << std::endl;
-    return;
-  }
-
-  hr = MFSetAttributeRatio(m_pVideoSrcOut.Get(), MF_MT_PIXEL_ASPECT_RATIO, 1, 1);
-  if (FAILED(hr))
-  {
-    std::wcout << "Failed to set pixel aspect ratio attribute on media type" << std::endl;
-    return;
-  }
-
-  hr = MFSetAttributeSize(m_pVideoSrcOut.Get(), MF_MT_FRAME_SIZE, m_deviceMediaInfo[m_currentVideoFormatIndex].width, m_deviceMediaInfo[m_currentVideoFormatIndex].height);
-  if (FAILED(hr))
-  {
-    std::wcout << "Failed to set the frame size attribute on media type." << std::endl;
-    return;
-  }
-
-  hr = MFSetAttributeSize(m_pVideoSrcOut.Get(), MF_MT_FRAME_RATE, m_deviceMediaInfo[m_currentVideoFormatIndex].frameRateNumerator, 1);
-  if (FAILED(hr))
-  {
-    std::wcout << "Failed to set the frame rate attribute on media type." << std::endl;
-    return;
-  }
-
-  hr = CopyAttribute(m_pVideoSrcOutputType.Get(), m_pVideoSrcOut.Get(), MF_MT_DEFAULT_STRIDE);
-  if (FAILED(hr))
-  {
-    std::wcout << "Failed to copy default stride attribute." << std::endl;
-    return;
-  }
-
-  hr = m_pSourceReader->SetCurrentMediaType((DWORD)MF_SOURCE_READER_FIRST_VIDEO_STREAM, NULL, m_pVideoSrcOut.Get());
-  if (FAILED(hr))
-  {
-    std::wcout << "Failed to set video media type on source reader." << std::endl;
-    return;
-  }
-
-  DWORD stmIndex = 0;
-  BOOL isSelected = false;
-  DWORD srcVideoStreamIndex = 0;
-  while (m_pSourceReader->GetStreamSelection(stmIndex, &isSelected) == S_OK)
-  {
-    printf("Stream %d is selected %d.\n", stmIndex, isSelected);
-
-    hr = m_pSourceReader->GetCurrentMediaType(stmIndex, &m_pStreamMediaType);
-    if (FAILED(hr))
-    {
-      std::wcout << "Failed to get media type for selected stream." << std::endl;
-    }
-    std::cout << "Media type: " << GetMediaTypeDescription(m_pStreamMediaType.Get()) << std::endl;
-
-    GUID majorMediaType;
-    m_pStreamMediaType->GetGUID(MF_MT_MAJOR_TYPE, &majorMediaType);
-    if (majorMediaType == MFMediaType_Video)
-    {
-      std::cout << "Source video stream index is " << stmIndex << "." << std::endl;
-      srcVideoStreamIndex = stmIndex;
-    }
-    stmIndex++;
-  }
-}
-
-void DevicesInfo::captureStop()
-{
-  m_finished = true;
-}
-
-void DevicesInfo::updateImage(unsigned char* buffer)
-{
-  if (m_finished)
-  {
-    return;
-  }
-  assert(m_pSourceReader);
-
-  DWORD streamIndex = 0;
-  DWORD flags = 0;
-  LONGLONG llSampleTimeStamp = 0;
-
-  HRESULT hr;
-  hr = m_pSourceReader->ReadSample(
-    MF_SOURCE_READER_ANY_STREAM,
-    0,																	// Flags.
-    &streamIndex,												// Receives the actual stream index. 
-    &flags,															// Receives status flags.
-    &llSampleTimeStamp,									// Receives the time stamp.
-    &m_pSample												// Receives the sample or NULL.
-  );
-
-  if (hr != S_OK)
-  {
-    m_finished = true;
-    return;
-  }
-
-  if (flags & MF_SOURCE_READERF_ENDOFSTREAM)
-  {
-    printf("End of stream.\n");
-  }
-  if (flags & MF_SOURCE_READERF_STREAMTICK)
-  {
-    printf("Stream tick.\n");
-  }
-
-  if (m_pSample)
-  {
-    hr = m_pSample->SetSampleTime(llSampleTimeStamp);
-    assert(hr == S_OK);
-
-    ComPtr<IMFMediaBuffer> buf = nullptr;
-    DWORD bufLength = 0;
-
-    hr = m_pSample->ConvertToContiguousBuffer(&buf);
-    hr = buf->GetCurrentLength(&bufLength);
-
-    byte* byteBuffer = nullptr;
-    DWORD buffMaxLen = 0, buffCurrLen = 0;
-    hr = buf->Lock(&byteBuffer, &buffMaxLen, &buffCurrLen);
-    assert(hr == S_OK);
-
-    buffer = new unsigned char[buffCurrLen];
-    memcpy(buffer, byteBuffer, buffCurrLen);
-
-    SAFE_RELEASE(buf);
-    m_sampleCount++;
-  }
-  SAFE_RELEASE(m_pSample);
-}

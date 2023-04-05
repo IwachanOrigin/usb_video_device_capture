@@ -1,5 +1,6 @@
 
 #include "mainwindow.h"
+#include <iostream>
 
 LRESULT WINAPI MainWindow::MessageProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
@@ -15,11 +16,16 @@ LRESULT WINAPI MainWindow::MessageProcedure(HWND hWnd, UINT msg, WPARAM wParam, 
 }
 
 MainWindow::MainWindow()
+  : m_width(0)
+  , m_height(0)
+  , m_fps(0)
+  , m_currentDeviceIndex(0)
 {
 }
 
 MainWindow::~MainWindow()
 {
+  m_app.destroy();
 }
 
 MainWindow& MainWindow::getInstance()
@@ -28,7 +34,32 @@ MainWindow& MainWindow::getInstance()
   return inst;
 }
 
-void MainWindow::init(HINSTANCE hInst)
+bool MainWindow::setup()
+{
+  // step1, input device no.
+  m_devices.writeDeviceNameList();
+  std::wcout << "Please Input Your USB Camera Device Index Number : ";
+  std::string input = "";
+  std::getline(std::cin, input);
+  m_currentDeviceIndex = std::stoi(input);
+  m_devices.setCurrentVideoDeviceIndex(m_currentDeviceIndex);
+
+  // step2, input format no.
+  m_devices.writeDeviceMediaInfoList();
+  std::wcout << "Please Input Your USB Camera Device Index Number : ";
+  input = "";
+  std::getline(std::cin, input);
+  int fmtindex = std::stoi(input);
+  m_devices.setCurrentVideoFormatIndex(fmtindex);
+  m_devices.getVideoDeviceMediaInfo(fmtindex, m_dmi);
+  m_width = m_dmi.width;
+  m_height = m_dmi.height;
+  m_fps = m_dmi.frameRateNumerator;
+
+  return true;
+}
+
+bool MainWindow::init(HINSTANCE hInst)
 {
   static ATOM windowClass = 0;
   if (!windowClass)
@@ -64,7 +95,19 @@ void MainWindow::init(HINSTANCE hInst)
 		, hInst
 		, NULL);
 
+  if (!m_hwnd)
+  {
+    return false;
+  }
+
+  if (!m_app.create(m_hwnd, m_currentDeviceIndex, m_width, m_height, m_fps))
+  {
+    return false;
+  }
+
   ShowWindow(m_hwnd, SW_SHOW);
+
+  return true;
 }
 
 void MainWindow::messageHandle()
@@ -82,6 +125,9 @@ void MainWindow::messageHandle()
 
 void MainWindow::render()
 {
+  Clock clock;
+  float elapsed = clock.elapsed();
+  m_app.update(elapsed);
+  m_app.render();
 }
-
 

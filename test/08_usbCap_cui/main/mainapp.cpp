@@ -15,7 +15,7 @@ MainApp::~MainApp()
 {
 }
 
-bool MainApp::create(HWND hWnd)
+bool MainApp::create(HWND hWnd, int deviceNo, int width, int height, int fps)
 {
   if (!DX11Base::getInstance().create(hWnd))
   {
@@ -86,10 +86,9 @@ bool MainApp::create(HWND hWnd)
 
   CaptureTexture::createAPI();
   // Input device no.
-  uint32_t videoDeviceNo = 0;
   uint32_t audioDeviceNo = 0;
 
-  if (!m_captureTexture.create(videoDeviceNo, audioDeviceNo))
+  if (!m_captureTexture.create(deviceNo, audioDeviceNo))
   {
     return false;
   }

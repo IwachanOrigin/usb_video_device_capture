@@ -15,7 +15,7 @@ public:
   MainApp();
   ~MainApp();
 
-  bool create(HWND hWnd);
+  bool create(HWND hWnd, int deviceNo, int width, int height, int fps);
   void destroy();
   void update(float dt);
   void render();
