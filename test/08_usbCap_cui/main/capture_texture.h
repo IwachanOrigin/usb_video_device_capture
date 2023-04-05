@@ -2,6 +2,7 @@
 #ifndef CAPTURE_TEXTURE_H_
 #define CAPTURE_TEXTURE_H_
 
+#include "mfutility.h"
 #include "dxhelper.h"
 #include "texture.h"
 #include "dx11base.h"

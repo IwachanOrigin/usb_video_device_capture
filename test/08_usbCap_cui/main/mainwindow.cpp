@@ -75,7 +75,7 @@ bool MainWindow::init(HINSTANCE hInst)
 		wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
 		wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
 		wcex.lpszMenuName = NULL;
-		wcex.lpszClassName = "testClass";
+		wcex.lpszClassName = L"testClass";
 		wcex.hIconSm = NULL;
 
 		windowClass = RegisterClassEx(&wcex);

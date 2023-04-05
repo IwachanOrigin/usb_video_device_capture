@@ -1,6 +1,6 @@
 
+
 #include "capture_texture.h"
-#include "mfutility.h"
 #include "timer.h"
 
 #define OUTPUT_FRAME_WIDTH 640				// Adjust if the webcam does not support this frame width.

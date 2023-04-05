@@ -5,15 +5,13 @@
 #include <algorithm>
 #include <cassert>
 
-#include "MFUtility.h"
+#include "mfutility.h"
 
 #include "devicesinfo.h"
 
 DevicesInfo::DevicesInfo()
   : m_currentAudioDeviceIndex(0)
   , m_currentVideoDeviceIndex(0)
-  , m_sampleCount(0)
-  , m_pSample(nullptr)
 {
   this->getDeviceNames();
 }
@@ -131,36 +129,36 @@ int DevicesInfo::getVideoDeviceMediaInfo()
 
   m_deviceMediaInfo.clear();
 
-  CHECK_HR(GetVideoSourceFromDevice(m_currentVideoDeviceIndex, &pVideoSource, &pVideoReader), "Failed to get webcam video source.");
-  CHECK_HR(pVideoSource->CreatePresentationDescriptor(&pSourcePresentationDescriptor), "Failed to create the presentation descriptor from the media source.");
+  CHECK_HR(GetVideoSourceFromDevice(m_currentVideoDeviceIndex, &pVideoSource, &pVideoReader), L"Failed to get webcam video source.");
+  CHECK_HR(pVideoSource->CreatePresentationDescriptor(&pSourcePresentationDescriptor), L"Failed to create the presentation descriptor from the media source.");
   
   DWORD streamDescCount = 0;
-  CHECK_HR(pSourcePresentationDescriptor->GetStreamDescriptorCount(&streamDescCount), "Failed to get stream descriptor count.");
+  CHECK_HR(pSourcePresentationDescriptor->GetStreamDescriptorCount(&streamDescCount), L"Failed to get stream descriptor count.");
 
   for (int descIndex = 0; descIndex < (int)streamDescCount; descIndex++)
   {
     ComPtr<IMFStreamDescriptor> pSourceStreamDescriptor = nullptr;
-    CHECK_HR(pSourcePresentationDescriptor->GetStreamDescriptorByIndex(descIndex, &fSelected, &pSourceStreamDescriptor), "Failed to get source stream descriptor from presentation descriptor");
+    CHECK_HR(pSourcePresentationDescriptor->GetStreamDescriptorByIndex(descIndex, &fSelected, &pSourceStreamDescriptor), L"Failed to get source stream descriptor from presentation descriptor");
     
     ComPtr<IMFMediaTypeHandler> pSourceMediaTypeHandler = nullptr;
-    CHECK_HR(pSourceStreamDescriptor->GetMediaTypeHandler(&pSourceMediaTypeHandler), "Failed to get source media type handler.");
+    CHECK_HR(pSourceStreamDescriptor->GetMediaTypeHandler(&pSourceMediaTypeHandler), L"Failed to get source media type handler.");
 
     DWORD typeCount = 0;
-    CHECK_HR(pSourceMediaTypeHandler->GetMediaTypeCount(&typeCount), "Failed to get source media type count.");
+    CHECK_HR(pSourceMediaTypeHandler->GetMediaTypeCount(&typeCount), L"Failed to get source media type count.");
 
     for (int typeIndex = 0; typeIndex < (int)typeCount; typeIndex++)
     {
       ComPtr<IMFMediaType> pMediaType = nullptr;
-      CHECK_HR(pSourceMediaTypeHandler->GetMediaTypeByIndex(typeIndex, &pMediaType), "Error retrieving media type.");
+      CHECK_HR(pSourceMediaTypeHandler->GetMediaTypeByIndex(typeIndex, &pMediaType), L"Error retrieving media type.");
       DeviceMediaInfo dmi{};
-      CHECK_HR(MFGetAttributeSize(pMediaType.Get(), MF_MT_FRAME_SIZE, &dmi.width, &dmi.height), "Failed to get the frame size attribute on media type.");
-      CHECK_HR(pMediaType->GetGUID(MF_MT_SUBTYPE, &dmi.formatSubtypeGuid), "Failed to get the subtype guid on media type.");
-      CHECK_HR(pMediaType->GetUINT32(MF_MT_INTERLACE_MODE, &dmi.interlaceMode), "Failed to get the interlace mode on media type.");
-      CHECK_HR(pMediaType->GetUINT32(MF_MT_SAMPLE_SIZE, &dmi.samplesize), "Failed to get the sample size on media type.");
+      CHECK_HR(MFGetAttributeSize(pMediaType.Get(), MF_MT_FRAME_SIZE, &dmi.width, &dmi.height), L"Failed to get the frame size attribute on media type.");
+      CHECK_HR(pMediaType->GetGUID(MF_MT_SUBTYPE, &dmi.formatSubtypeGuid), L"Failed to get the subtype guid on media type.");
+      CHECK_HR(pMediaType->GetUINT32(MF_MT_INTERLACE_MODE, &dmi.interlaceMode), L"Failed to get the interlace mode on media type.");
+      CHECK_HR(pMediaType->GetUINT32(MF_MT_SAMPLE_SIZE, &dmi.samplesize), L"Failed to get the sample size on media type.");
       LONG unDefault = 1;
       dmi.stride = (LONG)MFGetAttributeUINT32(pMediaType.Get(), MF_MT_DEFAULT_STRIDE, unDefault);
-      CHECK_HR(MFGetAttributeRatio(pMediaType.Get(), MF_MT_PIXEL_ASPECT_RATIO, &dmi.aspectRatioNumerator, &dmi.aspectRatioDenominator), "Failed to get the pixel aspect ratio on media type.");
-      CHECK_HR(MFGetAttributeRatio(pMediaType.Get(), MF_MT_FRAME_RATE, &dmi.frameRateNumerator, &dmi.frameRateDenominator), "Failed to get the frame rate on media type.");
+      CHECK_HR(MFGetAttributeRatio(pMediaType.Get(), MF_MT_PIXEL_ASPECT_RATIO, &dmi.aspectRatioNumerator, &dmi.aspectRatioDenominator), L"Failed to get the pixel aspect ratio on media type.");
+      CHECK_HR(MFGetAttributeRatio(pMediaType.Get(), MF_MT_FRAME_RATE, &dmi.frameRateNumerator, &dmi.frameRateDenominator), L"Failed to get the frame rate on media type.");
 
       LPCSTR pszGuidStr = "";
       pszGuidStr = GetGUIDNameConst(dmi.formatSubtypeGuid);
