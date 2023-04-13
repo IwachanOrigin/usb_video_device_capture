@@ -65,12 +65,17 @@ void DevicesInfo::writeDeviceMediaInfoList()
 {
   for (int i = 0; i < m_deviceMediaInfo.size(); i++)
   {
+    OLECHAR* guidString = nullptr;
+    HRESULT hr = StringFromCLSID(m_deviceMediaInfo[i].formatSubtypeGuid, &guidString);
     std::wcout << "No: " << i
-               << ", "<< m_deviceMediaInfo[i].width << " x " << m_deviceMediaInfo[i].height
+               << ", " << m_deviceMediaInfo[i].width << " x " << m_deviceMediaInfo[i].height
+               << ", " << guidString
                << ", " << m_deviceMediaInfo[i].formatSubtypeName
                << ", " << m_deviceMediaInfo[i].stride
+               << ", " << m_deviceMediaInfo[i].frameRateNumerator / m_deviceMediaInfo[i].frameRateDenominator
                << ", " << m_deviceMediaInfo[i].samplesize
                << std::endl;
+    ::CoTaskMemFree(guidString);
   }
 }
 
@@ -440,8 +445,6 @@ HRESULT DevicesInfo::getVideoSourceFromDevice(UINT nDevice, IMFMediaSource** ppV
       CHECK_HR(hr, "Error creating video source reader.");
     }
   }
-
-done:
 
   SAFE_RELEASE(videoConfig);
   SAFE_RELEASE(videoDevices);
