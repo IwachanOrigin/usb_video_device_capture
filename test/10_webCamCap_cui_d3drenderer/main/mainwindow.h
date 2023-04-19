@@ -4,8 +4,11 @@
 
 #include <Windows.h>
 
+#include "capturerenderer.h"
 #include "devicesinfo.h"
 #include "devicecommon.h"
+
+using namespace Renderer;
 
 class MainWindow
 {
@@ -39,6 +42,7 @@ private:
 
   DevicesInfo m_devices;
   DeviceMediaInfo m_dmi;
+  CaptureRenderer m_captureRenderer;
 };
 
 #endif // MAIN_WINDOW_H_

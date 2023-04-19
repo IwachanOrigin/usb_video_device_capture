@@ -102,6 +102,12 @@ bool MainWindow::init(HINSTANCE hInst)
     return false;
   }
 
+  bool ret = m_captureRenderer.create(m_hwnd, m_currentDeviceIndex, m_width, m_height, m_fps, m_dmi.formatSubtypeGuid);
+  if (!ret)
+  {
+    return false;
+  }
+
   ShowWindow(m_hwnd, SW_SHOW);
 
   return true;

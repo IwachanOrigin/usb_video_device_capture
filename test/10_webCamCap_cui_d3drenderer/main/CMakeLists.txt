@@ -1,5 +1,7 @@
 
 set(main_src
+  capturerenderer.h
+  capturerenderer.cpp
   devicecommon.h
   devicesinfo.h
   devicesinfo.cpp

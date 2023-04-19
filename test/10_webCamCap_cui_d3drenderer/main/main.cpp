@@ -10,6 +10,12 @@
 #pragma comment(lib, "mfreadwrite")
 #pragma comment(lib, "mfuuid")
 #pragma comment(lib, "wmcodecdspuuid")
+#pragma comment(lib, "evr")
+#pragma comment(lib, "strmiids")
+
+// for dx9
+#pragma comment(lib, "d3d9")
+#pragma comment(lib, "dxva2")
 
 int main(int argc, char* argv[])
 {
