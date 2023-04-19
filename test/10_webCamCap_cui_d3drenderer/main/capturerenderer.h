@@ -29,6 +29,7 @@ public:
   void destroy();
 
 private:
+  ComPtr<IMFStreamSink> m_pStreamSink;
   ComPtr<IMFSample> m_pD3DVideoSample;
   ComPtr<IMFSample> m_pVideoSample;
   ComPtr<IMFMediaBuffer> m_pDstBuffer;

@@ -129,6 +129,7 @@ void MainWindow::messageHandle()
     {
       this->render();
     }
+    Sleep(1);
   }
 }
 

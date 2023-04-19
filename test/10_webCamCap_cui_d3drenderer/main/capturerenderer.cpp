@@ -8,13 +8,15 @@
 
 #include <cstdio>
 #include <iostream>
+#include <memory>
 
 #include "MFUtility.h"
 
 using namespace Renderer;
 
 CaptureRenderer::CaptureRenderer()
-  : m_pD3DVideoSample(nullptr)
+  : m_pStreamSink(nullptr)
+  , m_pD3DVideoSample(nullptr)
   , m_pVideoSample(nullptr)
   , m_pDstBuffer(nullptr)
   , m_p2DBuffer(nullptr)
@@ -92,8 +94,7 @@ bool CaptureRenderer::create(HWND hwnd, int deviceNo, int width, int height, int
     return false;
   }
 
-  ComPtr<IMFStreamSink> pStreamSink = nullptr;
-  hr = pVideoSink->GetStreamSinkByIndex(0, &pStreamSink);
+  hr = pVideoSink->GetStreamSinkByIndex(0, &m_pStreamSink);
   if (hr != S_OK)
   {
     std::cerr << "Failed to get video renderer stream by index." << std::endl;
@@ -101,7 +102,7 @@ bool CaptureRenderer::create(HWND hwnd, int deviceNo, int width, int height, int
   }
 
   ComPtr<IMFMediaTypeHandler> pSinkMediaTypeHandler = nullptr;
-  hr = pStreamSink->GetMediaTypeHandler(&pSinkMediaTypeHandler);
+  hr = m_pStreamSink->GetMediaTypeHandler(&pSinkMediaTypeHandler);
   if (hr != S_OK)
   {
     std::cerr << "Failed to get media type handler for stream sink." << std::endl;
@@ -302,7 +303,7 @@ bool CaptureRenderer::create(HWND hwnd, int deviceNo, int width, int height, int
   // Source and sink now configured. Set up remaining infrastracture.
   // Get Direct3D surface organised.
   ComPtr<IMFVideoSampleAllocator> pVideoSampleAllocator = nullptr;
-  hr = MFGetService(pStreamSink.Get(), MR_VIDEO_ACCELERATION_SERVICE, IID_PPV_ARGS(&pVideoSampleAllocator));
+  hr = MFGetService(m_pStreamSink.Get(), MR_VIDEO_ACCELERATION_SERVICE, IID_PPV_ARGS(&pVideoSampleAllocator));
   if (hr != S_OK)
   {
     std::cerr << "Failed to get IMFVideoSampleAllocator." << std::endl;
@@ -442,7 +443,117 @@ void CaptureRenderer::render()
             << std::endl;
 
   // Make Direct3D sample.
-  
+  ComPtr<IMFMediaBuffer> buf = nullptr;
+  DWORD bufLength = 0;
+  DWORD lockedBufferLength = 0;
+  //ComPtr<BYTE> pByteBuf = nullptr;
+  BYTE* pByteBuf = nullptr;
+
+  hr = m_pVideoSample->ConvertToContiguousBuffer(&buf);
+  if (hr != S_OK)
+  {
+    std::cerr << "Failed to ConvertToContiguousBuffer method." << std::endl;
+    return;
+  }
+
+  hr = buf->GetCurrentLength(&bufLength);
+  if (hr != S_OK)
+  {
+    std::cerr << "Failed to get buffer length." << std::endl;
+    return;
+  }
+
+  hr = buf->Lock(&pByteBuf, nullptr, &lockedBufferLength);
+  if (hr != S_OK)
+  {
+    std::cerr << "Failed to lock sample buffer." << std::endl;
+    return;
+  }
+
+  hr = m_pD3DVideoSample->SetSampleTime(m_evrTimeStamp);
+  if (hr != S_OK)
+  {
+    buf->Unlock();
+    std::cerr << "Failed to set D3D video sample time." << std::endl;
+    return;
+  }
+
+  hr = m_pD3DVideoSample->SetSampleDuration(sampleDuration);
+  if (hr != S_OK)
+  {
+    buf->Unlock();
+    std::cerr << "Failed to set D3D video sample duration." << std::endl;
+    return;
+  }
+
+  hr = m_pD3DVideoSample->GetBufferByIndex(0, &m_pDstBuffer);
+  if (hr != S_OK)
+  {
+    buf->Unlock();
+    std::cerr << "Failed to get destination buffer." << std::endl;
+    return;
+  }
+
+  hr = m_pDstBuffer->QueryInterface(IID_PPV_ARGS(&m_p2DBuffer));
+  if (hr != S_OK)
+  {
+    buf->Unlock();
+    std::cerr << "Failed to get pointer to 2D buffer." << std::endl;
+    return;
+  }
+
+  hr = m_p2DBuffer->ContiguousCopyFrom(pByteBuf, bufLength);
+  if (hr != S_OK)
+  {
+    buf->Unlock();
+    std::cerr << "Failed to copy D2D buffer (check the source media type matches the EVR input type)." << std::endl;
+    return;
+  }
+
+  hr = buf->Unlock();
+  if (hr != S_OK)
+  {
+    std::cerr << "Failed to unlock source buffer." << std::endl;
+    return;
+  }
+
+  UINT32 uiAttribute = 0;
+  hr = m_pVideoSample->GetUINT32(MFSampleExtension_Discontinuity, &uiAttribute);
+  if (hr != S_OK)
+  {
+    std::cerr << "Failed to get discontinuity attribute." << std::endl;
+    return;
+  }
+
+  hr = m_pD3DVideoSample->SetUINT32(MFSampleExtension_Discontinuity, uiAttribute);
+  if (hr != S_OK)
+  {
+    std::cerr << "Failed to set discontinuity attribute." << std::endl;
+    return;
+  }
+
+  hr = m_pVideoSample->GetUINT32(MFSampleExtension_CleanPoint, &uiAttribute);
+  if (hr != S_OK)
+  {
+    std::cerr << "Failed to get clean point attribute." << std::endl;
+    return;
+  }
+
+  hr = m_pD3DVideoSample->SetUINT32(MFSampleExtension_CleanPoint, uiAttribute);
+  if (hr != S_OK)
+  {
+    std::cerr << "Failed to set clean point attribute." << std::endl;
+    return;
+  }
+
+  hr = m_pStreamSink->ProcessSample(m_pD3DVideoSample.Get());
+  if (hr != S_OK)
+  {
+    std::cerr << "Streamsink process sample failed." << std::endl;
+    return;
+  }
+
+  m_evrTimeStamp += sampleDuration;
 }
 
 void CaptureRenderer::destroy()
