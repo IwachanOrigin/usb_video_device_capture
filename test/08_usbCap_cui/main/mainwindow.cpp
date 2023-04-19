@@ -103,7 +103,7 @@ bool MainWindow::init(HINSTANCE hInst)
     return false;
   }
 
-  if (!m_app.create(m_hwnd, m_currentDeviceIndex, m_width, m_height, m_fps))
+  if (!m_app.create(m_hwnd, m_currentDeviceIndex, m_width, m_height, m_fps, m_dmi.formatSubtypeGuid))
   {
     return false;
   }

@@ -2,7 +2,7 @@
 cmake_minimum_required(VERSION 3.10)
 
 # set the project name
-project(usbCap_cui CXX)
+project(webCamCap_cui_d3d CXX)
 
 # output directory
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)

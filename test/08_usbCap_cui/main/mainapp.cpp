@@ -15,7 +15,7 @@ MainApp::~MainApp()
 {
 }
 
-bool MainApp::create(HWND hWnd, int deviceNo, int width, int height, int fps)
+bool MainApp::create(HWND hWnd, int deviceNo, int width, int height, int fps, const GUID subtype)
 {
   if (!DX11Base::getInstance().create(hWnd))
   {
@@ -88,7 +88,7 @@ bool MainApp::create(HWND hWnd, int deviceNo, int width, int height, int fps)
   // Input device no.
   uint32_t audioDeviceNo = 0;
 
-  if (!m_captureTexture.create(deviceNo, audioDeviceNo, width, height, fps))
+  if (!m_captureTexture.create(deviceNo, audioDeviceNo, width, height, fps, subtype))
   {
     return false;
   }

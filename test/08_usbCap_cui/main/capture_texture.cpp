@@ -68,7 +68,7 @@ public:
     SAFE_RELEASE(pWriter);
   }
 
-  bool open(const uint32_t videoDeviceIndex, const uint32_t audioDeviceIndex, const int width, const int height, const int fps)
+  bool open(const uint32_t videoDeviceIndex, const uint32_t audioDeviceIndex, const int width, const int height, const int fps, const GUID subtype)
   {
     HRESULT hr = S_OK;
     finished = false;
@@ -99,18 +99,33 @@ public:
     CHECK_HR(pSourceMediaTypeHandler->GetMediaTypeCount(&srcMediaTypeCount),
       "Failed to get source media type count.");
 
+#if 0
     // Note the webcam needs to support this media type. 
     CHECK_HR(MFCreateMediaType(&pVideoSrcOut), "Failed to create media type.");
     CHECK_HR(pVideoSrcOut->SetGUID(MF_MT_MAJOR_TYPE, MFMediaType_Video), "Failed to set major video type.");
-    CHECK_HR(pVideoSrcOut->SetGUID(MF_MT_SUBTYPE, MFVideoFormat_RGB32), "Failed to set video sub-type attribute on media type.");
+    CHECK_HR(pVideoSrcOut->SetGUID(MF_MT_SUBTYPE, subtype), "Failed to set video sub-type attribute on media type.");
     CHECK_HR(pVideoSrcOut->SetUINT32(MF_MT_INTERLACE_MODE, MFVideoInterlace_Progressive), "Failed to set interlace mode attribute on media type.");
     CHECK_HR(pVideoSrcOut->SetUINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, TRUE), "Failed to set independent samples attribute on media type.");
     CHECK_HR(MFSetAttributeRatio(pVideoSrcOut, MF_MT_PIXEL_ASPECT_RATIO, 1, 1), "Failed to set pixel aspect ratio attribute on media type.");
     CHECK_HR(MFSetAttributeSize(pVideoSrcOut, MF_MT_FRAME_SIZE, m_width, m_height), "Failed to set the frame size attribute on media type.");
     CHECK_HR(MFSetAttributeSize(pVideoSrcOut, MF_MT_FRAME_RATE, m_fps, 1), "Failed to set the frame rate attribute on media type.");
     CHECK_HR(CopyAttribute(videoSourceOutputType, pVideoSrcOut, MF_MT_DEFAULT_STRIDE), "Failed to copy default stride attribute.");
+#else
+    CHECK_HR(MFCreateMediaType(&pVideoSrcOut), "Failed to create media type.");
+    CHECK_HR(pVideoSrcOut->SetGUID(MF_MT_MAJOR_TYPE, MFMediaType_Video), "Failed to set major video type.");
+    CHECK_HR(pVideoSrcOut->SetGUID(MF_MT_SUBTYPE, subtype), "Failed to set video sub-type attribute on media type.");
+    CHECK_HR(MFSetAttributeSize(pVideoSrcOut, MF_MT_FRAME_SIZE, m_width, m_height), "Failed to set the frame size attribute on media type.");
+    CHECK_HR(MFSetAttributeRatio(pVideoSrcOut, MF_MT_FRAME_RATE, m_fps, 1), "Failed to set the frame rate attribute on media type.");
+    CHECK_HR(pVideoSrcOut->SetUINT32(MF_MT_DEFAULT_STRIDE, UINT32(1)), "Failed to set");
+    //CHECK_HR(pVideoSrcOut->SetUINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, TRUE), "Failed to set independent samples attribute on media type.");
+    //CHECK_HR(pVideoSrcOut->SetGUID(MF_MT_SUBTYPE, subtype), "Failed to set video sub-type attribute on media type.");
+    //CHECK_HR(MFSetAttributeRatio(pVideoSrcOut, MF_MT_PIXEL_ASPECT_RATIO, 1, 1), "Failed to set pixel aspect ratio attribute on media type.");
+    //CHECK_HR(MFSetAttributeSize(pVideoSrcOut, MF_MT_FRAME_SIZE, m_width, m_height), "Failed to set the frame size attribute on media type.");
+    //CHECK_HR(MFSetAttributeRatio(pVideoSrcOut, MF_MT_FRAME_RATE, m_fps, 1), "Failed to set the frame rate attribute on media type.");
+#endif
 
-    CHECK_HR(pSourceReader->SetCurrentMediaType((DWORD)MF_SOURCE_READER_FIRST_VIDEO_STREAM, NULL, pVideoSrcOut), "Failed to set video media type on source reader.");
+    hr = pSourceReader->SetCurrentMediaType((DWORD)MF_SOURCE_READER_FIRST_VIDEO_STREAM, NULL, pVideoSrcOut);
+    //CHECK_HR(pSourceReader->SetCurrentMediaType((DWORD)MF_SOURCE_READER_FIRST_VIDEO_STREAM, NULL, pVideoSrcOut), "Failed to set video media type on source reader.");
 
     while (pSourceReader->GetStreamSelection(stmIndex, &isSelected) == S_OK)
     {
@@ -131,6 +146,12 @@ public:
         std::cout << "Video stream index is " << stmIndex << "." << std::endl;
         srcVideoStreamIndex = stmIndex;
       }
+      GUID _subtype;
+      pStmMediaType->GetGUID(MF_MT_SUBTYPE, &_subtype);
+      if (subtype == _subtype)
+      {
+        std::cout << "subtype is ==" << "." << std::endl;
+      }
 
       stmIndex++;
       SAFE_RELEASE(pStmMediaType);
@@ -145,9 +166,6 @@ public:
     update(0.0f);
 
     return true;
-
-  done:
-    return false;
 
   }
 
@@ -181,6 +199,39 @@ public:
     {
       printf("End of stream.\n");
     }
+
+    if (flags & MF_SOURCE_READERF_CURRENTMEDIATYPECHANGED)
+    {
+      // Type change. Get the new format.
+      IMFMediaType* pType = nullptr;
+      GUID subtype = { 0 };
+      HRESULT hr = S_OK;
+      hr = pSourceReader->GetCurrentMediaType((DWORD)MF_SOURCE_READER_FIRST_VIDEO_STREAM, &pType);
+      if (hr != S_OK)
+      {
+        dbg("Failed to get current media type.");
+        SAFE_RELEASE(pSample);
+        return;
+      }
+      
+      hr = pType->GetGUID(MF_MT_SUBTYPE, &subtype);
+      if (hr != S_OK)
+      {
+        dbg("Failed to get subtype.");
+        SAFE_RELEASE(pSample);
+        return;
+      }
+
+      hr = MFGetAttributeSize(pType, MF_MT_FRAME_SIZE, &m_width, &m_height);
+      if (hr != S_OK)
+      {
+        dbg("Faile to get frame size.");
+        SAFE_RELEASE(pSample);
+        return;
+      }
+      SAFE_RELEASE(pType);
+    }
+
     if (flags & MF_SOURCE_READERF_STREAMTICK)
     {
       printf("Stream tick.\n");
@@ -191,16 +242,28 @@ public:
       hr = pSample->SetSampleTime(llSampleTimeStamp);
       assert(hr == S_OK);
 
-      IMFMediaBuffer* buf = NULL;
-      DWORD bufLength;
+      IMFMediaBuffer* buf = nullptr;
+      UINT32 pitch = 3 * m_width;
 
       hr = pSample->ConvertToContiguousBuffer(&buf);
-      hr = buf->GetCurrentLength(&bufLength);
-
-      byte* byteBuffer = NULL;
-      DWORD buffMaxLen = 0, buffCurrLen = 0;
-      hr = buf->Lock(&byteBuffer, &buffMaxLen, &buffCurrLen);
-      assert(hr == S_OK);
+      if (FAILED(hr))
+      {
+        buf->Unlock();
+        SAFE_RELEASE(buf);
+        SAFE_RELEASE(pSample);
+        return;
+      }
+      byte* byteBuffer = nullptr;
+      DWORD buffCurrLen = 0;
+      hr = buf->Lock(&byteBuffer, NULL, &buffCurrLen);
+      if (FAILED(hr))
+      {
+        buf->Unlock();
+        SAFE_RELEASE(buf);
+        SAFE_RELEASE(pSample);
+        return;
+      }
+      assert(buffCurrLen == (pitch * m_height));
 
       // Some videos report one resolution and after the first frame change the height to the next multiple of 16 (using the event MF_SOURCE_READERF_CURRENTMEDIATYPECHANGED)
       if (!m_targetTexture)
@@ -209,6 +272,9 @@ public:
         int texture_height = m_height;
         if (!m_targetTexture->create(m_width, texture_height, DXGI_FORMAT_B8G8R8A8_UNORM, true))
         {
+          buf->Unlock();
+          SAFE_RELEASE(buf);
+          SAFE_RELEASE(pSample);
           return;
         }
       }
@@ -218,6 +284,7 @@ public:
       m_targetTexture->updateFromIYUV(byteBuffer, buffCurrLen);
       //dbg(L"sample %d, source stream index %d, sink stream index %d, timestamp %I64d.\n", sampleCount, streamIndex, sinkStmIndex, llSampleTimeStamp);
 
+      buf->Unlock();
       SAFE_RELEASE(buf);
       sampleCount++;
     }
@@ -237,11 +304,11 @@ void CaptureTexture::destroyAPI()
   MFShutdown();
 }
 
-bool CaptureTexture::create(const uint32_t videoDeviceIndex, const uint32_t audioDeviceIndex, const int width, const int height, const int fps)
+bool CaptureTexture::create(const uint32_t videoDeviceIndex, const uint32_t audioDeviceIndex, const int width, const int height, const int fps, const GUID subtype)
 {
   assert(!m_internalData);
   m_internalData = new InternalData();
-  return m_internalData->open(videoDeviceIndex, audioDeviceIndex, width, height, fps);
+  return m_internalData->open(videoDeviceIndex, audioDeviceIndex, width, height, fps, subtype);
 }
 
 void CaptureTexture::destroy()

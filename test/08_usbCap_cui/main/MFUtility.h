@@ -449,8 +449,6 @@ HRESULT GetSourceFromCaptureDevice(DeviceType deviceType, UINT nDevice, IMFMedia
     }
   }
 
-done:
-
   SAFE_RELEASE(pDeviceConfig);
   SAFE_RELEASE(ppCaptureDevices);
   SAFE_RELEASE(pAttributes);

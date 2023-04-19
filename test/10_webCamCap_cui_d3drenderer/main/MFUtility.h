@@ -14,10 +14,7 @@
 #include <wmsdkidl.h>
 
 #include <string>
-
-#include "dxhelper.h"
-
-using namespace dx_engine;
+#include <cassert>
 
 #define CHECK_HR(x, msg) hr = x; if( hr != S_OK ) { dbg(msg); return false; }
 
@@ -42,6 +39,34 @@ static void dbg(const char* format, ...) {
 #ifndef IF_EQUAL_RETURN
 #define IF_EQUAL_RETURN(param, val) if(val == param) return #val
 #endif
+
+template <class T> void SAFE_RELEASE(T * *ppT)
+{
+  if (*ppT)
+  {
+    (*ppT)->Release();
+    *ppT = nullptr;
+  }
+}
+
+template <class T> inline void SAFE_RELEASE(T * &pT)
+{
+  if (pT != nullptr)
+  {
+    pT->Release();
+    pT = nullptr;
+  }
+}
+
+template <class T> void SAFE_RELEASE(T p)
+{
+  if (p)
+  {
+    (p)->Release();
+    p = nullptr;
+  }
+}
+
 
 namespace
 {
