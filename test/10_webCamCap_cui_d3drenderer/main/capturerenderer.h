@@ -29,10 +29,12 @@ public:
   void destroy();
 
 private:
+  ComPtr<IMFSample> m_pD3DVideoSample;
   ComPtr<IMFSample> m_pVideoSample;
   ComPtr<IMFMediaBuffer> m_pDstBuffer;
   ComPtr<IMF2DBuffer> m_p2DBuffer;
   ComPtr<IMFSourceReader> m_pVideoReader;
+  LONGLONG m_evrTimeStamp;
 };
 
 } // Renderer

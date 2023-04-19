@@ -134,5 +134,6 @@ void MainWindow::messageHandle()
 
 void MainWindow::render()
 {
+  m_captureRenderer.render();
 }
 

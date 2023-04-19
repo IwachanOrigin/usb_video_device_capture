@@ -14,10 +14,12 @@
 using namespace Renderer;
 
 CaptureRenderer::CaptureRenderer()
-  : m_pVideoSample(nullptr)
+  : m_pD3DVideoSample(nullptr)
+  , m_pVideoSample(nullptr)
   , m_pDstBuffer(nullptr)
   , m_p2DBuffer(nullptr)
   , m_pVideoReader(nullptr)
+  , m_evrTimeStamp(0)
 {
 }
 
@@ -271,11 +273,175 @@ bool CaptureRenderer::create(HWND hwnd, int deviceNo, int width, int height, int
   std::cout << "EVR input media:" << std::endl;
   std::cout << GetMediaTypeDescription(pImfEvrSinkMediaType.Get()) << std::endl;
 
+  ComPtr<IMFMediaType> pSourceReaderType = nullptr;
+  hr = MFCreateMediaType(&pSourceReaderType);
+  if (hr != S_OK)
+  {
+    std::cerr << "Failed to source reader media type." << std::endl;
+    return false;
+  }
+
+  hr = pImfEvrSinkMediaType->CopyAllItems(pSourceReaderType.Get());
+  if (hr != S_OK)
+  {
+    std::cerr << "Error copying media type attributes from EVR input to source reader media type." << std::endl;
+    return false;
+  }
+
+  // VERY IMPORTANT: Set the media type on the source reader to match the media type on the EVR. The
+  // reader will do it's best to translate between the media type set on the webcam and the input type to the EVR.
+  // If an error occurs copying the sample in the read-loop then it's usually because the reader could not translate
+  // the types.
+  hr = m_pVideoReader->SetCurrentMediaType((DWORD)MF_SOURCE_READER_FIRST_VIDEO_STREAM, nullptr, pSourceReaderType.Get());
+  if (hr != S_OK)
+  {
+    std::cerr << "Failed to set output media type on webcam source reader." << std::endl;
+    return false;
+  }
+
+  // Source and sink now configured. Set up remaining infrastracture.
+  // Get Direct3D surface organised.
+  ComPtr<IMFVideoSampleAllocator> pVideoSampleAllocator = nullptr;
+  hr = MFGetService(pStreamSink.Get(), MR_VIDEO_ACCELERATION_SERVICE, IID_PPV_ARGS(&pVideoSampleAllocator));
+  if (hr != S_OK)
+  {
+    std::cerr << "Failed to get IMFVideoSampleAllocator." << std::endl;
+    return false;
+  }
+
+  ComPtr<IDirect3DDeviceManager9> pD3DManager = nullptr;
+  hr = MFGetService(pVideoSink.Get(), MR_VIDEO_ACCELERATION_SERVICE, IID_PPV_ARGS(&pD3DManager));
+  if (hr != S_OK)
+  {
+    std::cerr << "Failed to get Direct3D manager from EVR media sink." << std::endl;
+    return false;
+  }
+
+  hr = pVideoSampleAllocator->SetDirectXManager(pD3DManager.Get());
+  if (hr != S_OK)
+  {
+    std::cerr << "Failed to set D3DManager on video sample allocator." << std::endl;
+    return false;
+  }
+
+  hr = pVideoSampleAllocator->InitializeSampleAllocator(1, pImfEvrSinkMediaType.Get());
+  if (hr != S_OK)
+  {
+    std::cerr << "Failed to initialize video sample allocator." << std::endl;
+    return false;
+  }
+
+  hr = pVideoSampleAllocator->AllocateSample(&m_pD3DVideoSample);
+  if (hr != S_OK)
+  {
+    std::cerr << "Failed to allocate video sample." << std::endl;
+    return false;
+  }
+
+  // Get clocks organized
+  ComPtr<IMFPresentationClock> pClock = nullptr;
+  hr = MFCreatePresentationClock(&pClock);
+  if (hr != S_OK)
+  {
+    std::cerr << "Failed to create presentatin clock." << std::endl;
+    return false;
+  }
+
+  ComPtr<IMFPresentationTimeSource> pTimeSource = nullptr;
+  hr = MFCreateSystemTimeSource(&pTimeSource);
+  if (hr != S_OK)
+  {
+    std::cerr << "Failed to create system time source." << std::endl;
+    return false;
+  }
+
+  hr = pClock->SetTimeSource(pTimeSource.Get());
+  if (hr != S_OK)
+  {
+    std::cerr << "Failed to set time source." << std::endl;
+    return false;
+  }
+
+  hr = pVideoSink->SetPresentationClock(pClock.Get());
+  if (hr != S_OK)
+  {
+    std::cerr << "Failed to set presentation clock on video sink." << std::endl;
+    return false;
+  }
+
+  hr = pClock->Start(0);
+  if (hr != S_OK)
+  {
+    std::cerr << "Error starting presentation clock." << std::endl;
+    return false;
+  }
+
   return true;
 }
 
 void CaptureRenderer::render()
 {
+  HRESULT hr = S_OK;
+  DWORD streamIndex = 0;
+  DWORD flags = 0;
+  LONGLONG llTimeStamp = 0;
+
+  hr = m_pVideoReader->ReadSample(
+    MF_SOURCE_READER_FIRST_VIDEO_STREAM
+    , 0
+    , &streamIndex
+    , &flags
+    , &llTimeStamp
+    , &m_pVideoSample
+    );
+  if (hr != S_OK)
+  {
+    std::cerr << "Error reading video sample." << std::endl;
+    return;
+  }
+
+  if (flags & MF_SOURCE_READERF_ENDOFSTREAM)
+  {
+    std::cout << "End of stream." << std::endl;
+    return;
+  }
+
+  if (flags & MF_SOURCE_READERF_STREAMTICK)
+  {
+    std::cout << "Stream tick." << std::endl;
+    return;
+  }
+
+  if (!m_pVideoSample)
+  {
+    std::cerr << "Null video sample." << std::endl;
+    return;
+  }
+
+  LONGLONG sampleDuration = 0;
+  DWORD mfOutFlags = 0;
+
+  // video source sample.
+  hr = m_pVideoSample->SetSampleTime(llTimeStamp);
+  if (hr != S_OK)
+  {
+    std::cerr << "Error setting the video sample time." << std::endl;
+    return;
+  }
+
+  hr = m_pVideoSample->GetSampleDuration(&sampleDuration);
+  if (hr != S_OK)
+  {
+    std::cerr << "Failed to get video sample duration." << std::endl;
+    return;
+  }
+
+  std::cout << "Attempting to convert sample, sample duration " << sampleDuration
+            << ", sample time " << llTimeStamp
+            << ", evr timestamp " << m_evrTimeStamp
+            << std::endl;
+
+  // Make Direct3D sample.
   
 }
 
