@@ -180,6 +180,13 @@ bool CaptureRenderer::create(HWND hwnd, int deviceNo, int width, int height, int
     return false;
   }
 
+  hr = pSourceMediaTypeHandler->SetCurrentMediaType(pWebcamSourceType.Get());
+  if (hr != S_OK)
+  {
+    std::cerr << "Failed to set media type on source." << std::endl;
+    return false;
+  }
+
   ComPtr<IMFMediaType> pVideoSourceOutputType = nullptr;
   hr = pSourceMediaTypeHandler->GetCurrentMediaType(&pVideoSourceOutputType);
   if (hr != S_OK)
@@ -190,6 +197,79 @@ bool CaptureRenderer::create(HWND hwnd, int deviceNo, int width, int height, int
 
   std::cout << "Webcam media type: " << std::endl;
   std::cout << GetMediaTypeDescription(pVideoSourceOutputType.Get()) << std::endl;
+
+  // Set the video input type on the EVR sink.
+  ComPtr<IMFMediaType> pImfEvrSinkMediaType = nullptr;
+  hr = MFCreateMediaType(&pImfEvrSinkMediaType);
+  if (hr != S_OK)
+  {
+    std::cerr << "Failed to create video output media type." << std::endl;
+    return false;
+  }
+
+  hr = pImfEvrSinkMediaType->SetGUID(MF_MT_MAJOR_TYPE, MFMediaType_Video);
+  if (hr != S_OK)
+  {
+    std::cerr << "Failed to set video output media major type." << std::endl;
+    return false;
+  }
+
+  GUID rendererFormat = MFVideoFormat_RGB32;
+  if (subtype == MFVideoFormat_MJPG)
+  {
+    rendererFormat = MFVideoFormat_YUY2;
+  }
+  hr = pImfEvrSinkMediaType->SetGUID(MF_MT_SUBTYPE, rendererFormat);
+  if (hr != S_OK)
+  {
+    std::cerr << "Failed to set video sub-type attribute on meida type" << std::endl;
+    return false;
+  }
+
+  hr = pImfEvrSinkMediaType->SetUINT32(MF_MT_INTERLACE_MODE, MFVideoInterlace_Progressive);
+  if (hr != S_OK)
+  {
+    std::cerr << "Failed to set interlace mode attribute on media type." << std::endl;
+    return false;
+  }
+
+  hr = pImfEvrSinkMediaType->SetUINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, true);
+  if (hr != S_OK)
+  {
+    std::cerr << "Failed to set independent samples attribute on media type." << std::endl;
+    return false;
+  }
+
+  hr = MFSetAttributeRatio(pImfEvrSinkMediaType.Get(), MF_MT_PIXEL_ASPECT_RATIO, 1, 1);
+  if (hr != S_OK)
+  {
+    std::cerr << "Failed to set pixel aspect ratio attribute on media type." << std::endl;
+    return false;
+  }
+
+  hr = MFSetAttributeSize(pImfEvrSinkMediaType.Get(), MF_MT_FRAME_SIZE, width, height);
+  if (hr != S_OK)
+  {
+    std::cerr << "Failed to set the frame size attribute on media type." << std::endl;
+    return false;
+  }
+
+  hr = MFSetAttributeRatio(pImfEvrSinkMediaType.Get(), MF_MT_FRAME_RATE, fps, 1);
+  if (hr != S_OK)
+  {
+    std::cerr << "Failed to set the frame rate attribute on media type." << std::endl;
+    return false;
+  }
+
+  hr = pSinkMediaTypeHandler->SetCurrentMediaType(pImfEvrSinkMediaType.Get());
+  if (hr != S_OK)
+  {
+    std::cerr << "Failed to set input media type on EVR sink." << std::endl;
+    return false;
+  }
+
+  std::cout << "EVR input media:" << std::endl;
+  std::cout << GetMediaTypeDescription(pImfEvrSinkMediaType.Get()) << std::endl;
 
   return true;
 }
