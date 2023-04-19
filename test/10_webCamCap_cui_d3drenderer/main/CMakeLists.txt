@@ -6,7 +6,7 @@ set(main_src
   main.cpp
   mainwindow.h
   mainwindow.cpp
+  MFUtility.h
 )
 
 add_executable(${PROJECT_NAME} ${main_src})
-add_dependencies(${PROJECT_NAME} hlsl)
