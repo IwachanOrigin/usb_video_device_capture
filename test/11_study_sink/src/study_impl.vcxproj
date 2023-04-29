@@ -145,6 +145,7 @@
   <ItemGroup>
     <ClInclude Include="captureenginesamplecallback.h" />
     <ClInclude Include="capturemanager.h" />
+    <ClInclude Include="dx11manager.h" />
     <ClInclude Include="dxhelper.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="utils.h" />
@@ -153,6 +154,7 @@
   <ItemGroup>
     <ClCompile Include="captureenginesamplecallback.cpp" />
     <ClCompile Include="capturemanager.cpp" />
+    <ClCompile Include="dx11manager.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

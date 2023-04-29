@@ -33,6 +33,9 @@
     <ClInclude Include="captureenginesamplecallback.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="dx11manager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -48,6 +51,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="captureenginesamplecallback.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="dx11manager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

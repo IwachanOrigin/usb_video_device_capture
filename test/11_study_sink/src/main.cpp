@@ -3,6 +3,7 @@
 #include "dxhelper.h"
 #include "win32messagehandler.h"
 #include "capturemanager.h"
+#include "dx11manager.h"
 
 #pragma comment(lib, "mf")
 #pragma comment(lib, "mfplat")
@@ -10,8 +11,12 @@
 #pragma comment(lib, "shlwapi")
 #pragma comment(lib, "powrprof")
 
+#pragma comment(lib, "d3d11")
+#pragma comment(lib, "d3dcompiler")
+
 using namespace helper;
 using namespace message_handler;
+using namespace manager;
 
 void getVideoDevices(IMFActivate*** pppRawDevice, uint32_t& count)
 {
@@ -48,21 +53,30 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 HWND CreatePreviewWindow(HINSTANCE hInstance, HWND hParent)
 {
-  // Register the window class.
-  const wchar_t CLASS_NAME[] = L"Capture Engine Preview Window Class";
+  const wchar_t windowClassName[100] = L"Capture Engine Preview Window Class";
 
-  WNDCLASS wc = { };
+  WNDCLASSEXW wcex = {};
 
-  wc.lpfnWndProc = WindowProc;
-  wc.hInstance = hInstance;
-  wc.lpszClassName = CLASS_NAME;
+  wcex.lpfnWndProc = WindowProc;
+  wcex.hInstance = hInstance;
+  wcex.lpszClassName = windowClassName;
 
-  RegisterClass(&wc);
+  RegisterClassExW(&wcex);
 
   // Create the window.
-  return CreateWindowEx(0, CLASS_NAME, L"Capture Application",
-    WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
-    NULL, NULL, hInstance, NULL);
+  return CreateWindowExW(
+    0
+    , windowClassName
+    , L"Capture Application"
+    , WS_OVERLAPPEDWINDOW
+    , CW_USEDEFAULT
+    , CW_USEDEFAULT
+    , CW_USEDEFAULT
+    , CW_USEDEFAULT
+    , nullptr
+    , nullptr
+    , hInstance
+    , nullptr);
 }
 
 int main(int argc, char* argv[])
@@ -92,7 +106,7 @@ int main(int argc, char* argv[])
       std::wcout << "No. " << i << " : " << buffer << std::endl;
     }
   }
-  
+
   if (deviceCount == 0)
   {
     CoTaskMemFree(devices);
@@ -110,8 +124,8 @@ int main(int argc, char* argv[])
 
   HPOWERNOTIFY hPowerNotify = nullptr;
   HPOWERNOTIFY hPowerNotifyMonitor = nullptr;
-  SYSTEM_POWER_CAPABILITIES pwrCaps;
-  HWND previewWnd;
+  SYSTEM_POWER_CAPABILITIES pwrCaps{};
+  HWND previewWnd = nullptr;
 
   std::wcout << "Please input device no : ";
   std::wcin >> selectionNo;
@@ -135,8 +149,71 @@ int main(int argc, char* argv[])
   // Start preview
   ThrowIfFailed(g_pEngine->startPreview());
 
-  // window message handle
-  Win32MessageHandler::getInstance().run((HINSTANCE)0, 1);
+  // Create main window.
+  bool result = Win32MessageHandler::getInstance().init((HINSTANCE)0, 1);
+  if (!result)
+  {
+    ThrowIfFailed(g_pEngine->stopPreview());
+
+    if (g_pEngine)
+    {
+      delete g_pEngine;
+      g_pEngine = nullptr;
+    }
+
+    if (hPowerNotify)
+    {
+      UnregisterSuspendResumeNotification(hPowerNotify);
+      hPowerNotify = NULL;
+    }
+
+    if (devices != nullptr)
+    {
+      for (uint32_t i = 0; i < deviceCount; i++)
+      {
+        devices[i]->Release();
+      }
+      CoTaskMemFree(devices);
+    }
+
+    ThrowIfFailed(MFShutdown());
+    CoUninitialize();
+  }
+
+  // Create dx11 device, context, swapchain
+  HWND wkHwnd = Win32MessageHandler::getInstance().hwnd();
+  result = DX11Manager::getInstance().init(wkHwnd);
+  if (!result)
+  {
+    ThrowIfFailed(g_pEngine->stopPreview());
+
+    if (g_pEngine)
+    {
+      delete g_pEngine;
+      g_pEngine = nullptr;
+    }
+
+    if (hPowerNotify)
+    {
+      UnregisterSuspendResumeNotification(hPowerNotify);
+      hPowerNotify = NULL;
+    }
+
+    if (devices != nullptr)
+    {
+      for (uint32_t i = 0; i < deviceCount; i++)
+      {
+        devices[i]->Release();
+      }
+      CoTaskMemFree(devices);
+    }
+
+    ThrowIfFailed(MFShutdown());
+    CoUninitialize();
+  }
+
+  // Start message loop
+  Win32MessageHandler::getInstance().run();
 
   // Stop preview
   ThrowIfFailed(g_pEngine->stopPreview());

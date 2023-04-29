@@ -19,27 +19,30 @@ Win32MessageHandler& Win32MessageHandler::getInstance()
   return inst;
 }
 
-int Win32MessageHandler::run(HINSTANCE hinst, int nCmdShow)
+bool Win32MessageHandler::init(HINSTANCE hinst, int nCmdShow)
 {
   // Parse the command line parameters
   // TODO
 
+  const WCHAR className[100] = L"MainWindow";
+
   // Initialize the window class.
-  WNDCLASSEX windowClass = {0};
+  WNDCLASSEXW windowClass = {0};
   windowClass.cbSize = sizeof(WNDCLASSEX);
   windowClass.style = CS_HREDRAW | CS_VREDRAW;
   windowClass.lpfnWndProc = this->MessageProcedure;
   windowClass.hInstance = hinst;
   windowClass.hCursor = LoadCursor(NULL, IDC_ARROW);
-  windowClass.lpszClassName = L"MainWindow";
-  RegisterClassEx(&windowClass);
+  windowClass.lpszClassName = className;
+  RegisterClassExW(&windowClass);
 
   RECT windowRect = {0, 0, static_cast<LONG>(800), static_cast<LONG>(600)};
   AdjustWindowRect(&windowRect, WS_OVERLAPPEDWINDOW, FALSE);
 
   // Create the window and store a handle to it.
-  m_hwnd = CreateWindow(
-      windowClass.lpszClassName
+  m_hwnd = CreateWindowExW(
+    0
+    , windowClass.lpszClassName
     , L"Test"
     , WS_OVERLAPPEDWINDOW
     , CW_USEDEFAULT
@@ -52,10 +55,20 @@ int Win32MessageHandler::run(HINSTANCE hinst, int nCmdShow)
     , nullptr
   );
 
-  // Initialize the window.
-  //window->onInit();
+  if (m_hwnd == nullptr)
+  {
+    return false;
+  }
 
   ShowWindow(m_hwnd, nCmdShow);
+
+  return true;
+}
+
+int Win32MessageHandler::run()
+{
+  // Initialize the window.
+  //window->onInit();
 
   // Main loop.
   MSG msg = {};

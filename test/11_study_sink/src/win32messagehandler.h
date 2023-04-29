@@ -2,6 +2,8 @@
 #ifndef WIN32_MESSAGE_HANDLER_H_
 #define WIN32_MESSAGE_HANDLER_H_
 
+#include "stdafx.h"
+
 namespace message_handler
 {
 
@@ -10,7 +12,8 @@ class Win32MessageHandler
 public:
   static Win32MessageHandler &getInstance();
 
-  int run(HINSTANCE hinst, int nCmdShow);
+  bool init(HINSTANCE hinst, int nCmdShow);
+  int run();
   HWND hwnd() { return m_hwnd; }
 
 protected:
