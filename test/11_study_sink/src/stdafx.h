@@ -19,7 +19,7 @@
 #include <string>
 #include <memory>
 
-#include <wrl.h>
+#include <wrl/client.h>
 #include <shellapi.h>
 #include <shlobj.h>
 #include <shlwapi.h>
