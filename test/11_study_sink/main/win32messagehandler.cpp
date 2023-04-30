@@ -75,7 +75,7 @@ int Win32MessageHandler::run()
   while (msg.message != WM_QUIT)
   {
     // Process any messages in the queue.
-    if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+    if (GetMessage(&msg, NULL, 0, 0))
     {
       TranslateMessage(&msg);
       DispatchMessage(&msg);
