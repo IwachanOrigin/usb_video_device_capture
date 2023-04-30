@@ -233,6 +233,27 @@ bool DX11Manager::updateTexture(const uint8_t* new_data, size_t data_size)
   return true;
 }
 
+bool DX11Manager::render()
+{
+  HRESULT hr = E_FAIL;
+
+  // Clear back buffer
+  float clearColor[4] = { 0.0f, 0.0f, 0.2f, 1.0f }; // red,green,blue,alpha
+  m_immediateContext->ClearRenderTargetView(m_renderTargetView.Get(), clearColor);
+
+  //
+  if (m_swapchain)
+  {
+    hr = m_swapchain->Present(1, 0);
+    if (FAILED(hr))
+    {
+      MessageBoxW(nullptr, L"Failed to present in Swap Chain.", L"Error", MB_OK);
+      return false;
+    }
+  }
+  return true;
+}
+
 bool DX11Manager::createPipeline()
 {
   D3D11_INPUT_ELEMENT_DESC layout[] = {

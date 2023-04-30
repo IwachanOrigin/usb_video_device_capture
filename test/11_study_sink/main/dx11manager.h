@@ -18,6 +18,7 @@ public:
 
   bool init(const HWND hwnd);
   bool updateTexture(const uint8_t* new_data, size_t data_size);
+  bool render();
 
   ComPtr<ID3D11Device> getDevice() { return m_d3dDevice; }
   ComPtr<ID3D11DeviceContext> getDeviceContext() { return m_immediateContext; }

@@ -73,7 +73,16 @@ STDMETHODIMP CaptureEngineSampleCB::OnSample(_In_ IMFSample* sample)
     buf->Unlock();
     return E_FAIL;
   }
-  // I'm not sending events to MainWindow now, so I'm release here.
+
+  // Rendering
+  result = manager::DX11Manager::getInstance().render();
+  if (!result)
+  {
+    sample->Release();
+    buf->Unlock();
+    return E_FAIL;
+  }
+
   sample->Release();
   buf->Unlock();
 
