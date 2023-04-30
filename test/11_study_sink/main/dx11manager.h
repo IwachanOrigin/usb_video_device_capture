@@ -3,6 +3,8 @@
 #define DX11_MANAGER_H_
 
 #include "stdafx.h"
+#include "pipeline.h"
+#include "mesh.h"
 #include <d3d11.h>
 #include <d3dcompiler.h>
 
@@ -32,12 +34,16 @@ private:
   ComPtr<ID3D11Resource> m_texture;
   uint32_t m_renderWidth;
   uint32_t m_renderHeight;
+  Pipeline m_pipeline;
+  Mesh m_quad;
 
   explicit DX11Manager();
   ~DX11Manager();
   explicit DX11Manager(const DX11Manager &);
   DX11Manager &operator=(const DX11Manager &);
   bool createTexture();
+  bool createPipeline();
+  bool createMesh();
 };
 
 } // manager

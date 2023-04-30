@@ -1,7 +1,9 @@
 
 #include "stdafx.h"
+#include "SimpleMath.h"
 #include "dx11manager.h"
 
+using namespace DirectX;
 using namespace manager;
 
 DX11Manager::DX11Manager()
@@ -141,13 +143,33 @@ bool DX11Manager::init(const HWND hwnd)
   hr = m_d3dDevice->CreateSamplerState(&sampDesc, m_samplerClampLinear.GetAddressOf());
   if (FAILED(hr))
   {
+    MessageBoxW(nullptr, L"Failed to create SamplerState.", L"Error", MB_OK);
     return false;
   }
   m_immediateContext->PSSetSamplers(0, 1, m_samplerClampLinear.GetAddressOf());
 
   bool result = this->createTexture();
+  if (!result)
+  {
+    MessageBoxW(nullptr, L"Failed to create texture.", L"Error", MB_OK);
+    return false;
+  }
 
-  return result;
+  result = this->createPipeline();
+  if (!result)
+  {
+    MessageBoxW(nullptr, L"Failed to create pipeline.", L"Error", MB_OK);
+    return false;
+  }
+
+  result = this->createMesh();
+  if (!result)
+  {
+    MessageBoxW(nullptr, L"Failed to create quad mesh.", L"Error", MB_OK);
+    return false;
+  }
+
+  return true;
 }
 
 bool DX11Manager::createTexture()
@@ -208,6 +230,77 @@ bool DX11Manager::updateTexture(const uint8_t* new_data, size_t data_size)
 
   std::memcpy(dst, src, data_size);
   m_immediateContext->Unmap(m_texture.Get(), 0);
+
+  return true;
+}
+
+bool DX11Manager::createPipeline()
+{
+  D3D11_INPUT_ELEMENT_DESC layout[] = {
+    { "POSITION",  0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+    { "TEXCOORD",  0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+  };
+
+  if (!m_pipeline.create(layout, ARRAYSIZE(layout)))
+  {
+    MessageBoxW(nullptr, L"Failed to create Pipeline.", L"Error", MB_OK);
+    return false;
+  }
+
+  return true;
+}
+
+bool DX11Manager::createMesh()
+{
+  struct Vertex {
+    float x, y, z;
+    float u, v;
+  };
+
+  {
+    /* texture vertex(x, y, z)
+     *              ^
+     *              |
+     *   -1,1       |        1,1
+     *              |
+     *              |
+     *   ----------0,0------------->
+     *              |
+     *              |
+     *  -1,-1       |        1,-1
+     *              |
+     *              |
+     *
+     */
+
+    /* texture color(u, v)
+     *
+     *           U
+     *   0,0-------------> 1,0
+     *    |
+     *    |
+     *    |
+     *  V |
+     *    |
+     *    |
+     *    v
+     *   1,0               1,1
+     */
+    SimpleMath::Vector4 white(1, 1, 1, 1);
+    std::vector<Vertex> vtxs = {
+      { -1.0f, -1.0f, 0.0f, 0.0f, 1.0f },
+      { -1.0f,  1.0f, 0.0f, 0.0f, 0.0f },
+      {  1.0f, -1.0f, 0.0f, 1.0f, 1.0f },
+      { -1.0f,  1.0f, 0.0f, 0.0f, 0.0f },
+      {  1.0f,  1.0f, 0.0f, 1.0f, 0.0f },
+      {  1.0f, -1.0f, 0.0f, 1.0f, 1.0f },
+    };
+    if (!m_quad.create(vtxs.data(), (uint32_t)vtxs.size(), sizeof(Vertex), manager::eTopology::TRIANGLE_LIST))
+    {
+      MessageBoxW(nullptr, L"Failed to create Quad Mesh.", L"Error", MB_OK);
+      return false;
+    }
+  }
 
   return true;
 }

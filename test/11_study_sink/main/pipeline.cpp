@@ -26,21 +26,21 @@ bool Pipeline::create(D3D11_INPUT_ELEMENT_DESC* input_elements, uint32_t ninput_
 {
   HRESULT hr = S_OK;
   // Create the vertex shader
-  hr = DX11Manager::getInstance().getDevice()->CreateVertexShader(g_videoVS, sizeof(g_videoVS), nullptr, m_vs.GetAddressOf());
+  hr = DX11Manager::getInstance().getDevice()->CreateVertexShader(g_videoVS, sizeof(g_videoVS), nullptr, &m_vs);
   if (FAILED(hr))
   {
     return hr;
   }
 
   // Create the input layout
-  hr = DX11Manager::getInstance().getDevice()->CreateInputLayout(input_elements, ninput_elements, g_videoVS, sizeof(g_videoVS), m_inputLayout.GetAddressOf());
+  hr = DX11Manager::getInstance().getDevice()->CreateInputLayout(input_elements, ninput_elements, g_videoVS, sizeof(g_videoVS), &m_inputLayout);
   if (FAILED(hr))
   {
     return hr;
   }
 
   // Create the pixel shader
-  hr = DX11Manager::getInstance().getDevice()->CreatePixelShader(g_videoPS, sizeof(g_videoPS), nullptr, m_ps.GetAddressOf());
+  hr = DX11Manager::getInstance().getDevice()->CreatePixelShader(g_videoPS, sizeof(g_videoPS), nullptr, &m_ps);
   if (FAILED(hr))
   {
     return hr;

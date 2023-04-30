@@ -28,6 +28,8 @@ set(main_src
   dx11manager.h
   dxhelper.h
   main.cpp
+  mesh.h
+  mesh.cpp
   pipeline.cpp
   pipeline.h
   SimpleMath.cpp
