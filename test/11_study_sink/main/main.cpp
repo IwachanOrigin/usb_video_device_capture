@@ -125,48 +125,22 @@ int main(int argc, char* argv[])
   HPOWERNOTIFY hPowerNotify = nullptr;
   HPOWERNOTIFY hPowerNotifyMonitor = nullptr;
   SYSTEM_POWER_CAPABILITIES pwrCaps{};
-  HWND previewWnd = nullptr;
 
   std::wcout << "Please input device no : ";
   std::wcin >> selectionNo;
-  if (selectionNo < deviceCount)
-  {
-    ThrowIfFailed(g_pEngine->initCaptureManager(devices[selectionNo]));
-    devices[selectionNo]->AddRef();
-
-    previewWnd = CreatePreviewWindow(GetModuleHandle(NULL), nullptr);
-    // Information cannot be obtained from the device without the following process.
-    hPowerNotify = RegisterSuspendResumeNotification((HANDLE)previewWnd, DEVICE_NOTIFY_WINDOW_HANDLE);
-    hPowerNotifyMonitor = RegisterPowerSettingNotification((HANDLE)previewWnd, &GUID_MONITOR_POWER_ON, DEVICE_NOTIFY_WINDOW_HANDLE);
-    ZeroMemory(&pwrCaps, sizeof(pwrCaps));
-    GetPwrCapabilities(&pwrCaps);
-  }
-  else
+  if (selectionNo > deviceCount)
   {
     std::wcout << "Failed device select.";
+    return -1;
   }
 
-  // Start preview
-  ThrowIfFailed(g_pEngine->startPreview());
+  ThrowIfFailed(g_pEngine->initCaptureManager(devices[selectionNo]));
+  devices[selectionNo]->AddRef();
 
   // Create main window.
   bool result = Win32MessageHandler::getInstance().init((HINSTANCE)0, 1);
   if (!result)
   {
-    ThrowIfFailed(g_pEngine->stopPreview());
-
-    if (g_pEngine)
-    {
-      delete g_pEngine;
-      g_pEngine = nullptr;
-    }
-
-    if (hPowerNotify)
-    {
-      UnregisterSuspendResumeNotification(hPowerNotify);
-      hPowerNotify = NULL;
-    }
-
     if (devices != nullptr)
     {
       for (uint32_t i = 0; i < deviceCount; i++)
@@ -175,14 +149,25 @@ int main(int argc, char* argv[])
       }
       CoTaskMemFree(devices);
     }
-
     ThrowIfFailed(MFShutdown());
     CoUninitialize();
+
+    MessageBoxW(nullptr, L"Failed to create main window.", L"Error", MB_OK);
+    return -1;
   }
 
-  // Create dx11 device, context, swapchain
-  HWND wkHwnd = Win32MessageHandler::getInstance().hwnd();
-  result = DX11Manager::getInstance().init(wkHwnd);
+  HWND previewWnd = Win32MessageHandler::getInstance().hwnd();
+  // Information cannot be obtained from the device without the following process.
+  hPowerNotify = RegisterSuspendResumeNotification((HANDLE)previewWnd, DEVICE_NOTIFY_WINDOW_HANDLE);
+  hPowerNotifyMonitor = RegisterPowerSettingNotification((HANDLE)previewWnd, &GUID_MONITOR_POWER_ON, DEVICE_NOTIFY_WINDOW_HANDLE);
+  ZeroMemory(&pwrCaps, sizeof(pwrCaps));
+  GetPwrCapabilities(&pwrCaps);
+
+  // Start preview
+  ThrowIfFailed(g_pEngine->startPreview());
+
+  // Create dx11 device, context, swapchain  
+  result = DX11Manager::getInstance().init(previewWnd);
   if (!result)
   {
     ThrowIfFailed(g_pEngine->stopPreview());

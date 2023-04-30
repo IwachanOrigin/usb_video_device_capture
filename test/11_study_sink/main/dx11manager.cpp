@@ -107,20 +107,20 @@ bool DX11Manager::init(const HWND hwnd)
 
   // Create a render target view
   ComPtr<ID3D11Texture2D> backBuffer = nullptr;
-  hr = m_swapchain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&backBuffer);
+  hr = m_swapchain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)backBuffer.GetAddressOf());
   if (FAILED(hr))
   {
     MessageBoxW(nullptr, L"Failed to get the back buffer from the swap chain.", L"Error", MB_OK);
     return false;
   }
 
-  hr = m_d3dDevice->CreateRenderTargetView(backBuffer.Get(), nullptr, &m_renderTargetView);
+  hr = m_d3dDevice->CreateRenderTargetView(backBuffer.Get(), nullptr, m_renderTargetView.GetAddressOf());
   if (FAILED(hr))
   {
     MessageBoxW(nullptr, L"Failed to create render target view.", L"Error", MB_OK);
     return false;
   }
-  m_immediateContext->OMSetRenderTargets(1, &m_renderTargetView, nullptr);
+  m_immediateContext->OMSetRenderTargets(1, m_renderTargetView.GetAddressOf(), nullptr);
 
   D3D11_VIEWPORT vp{};
   vp.Width = (FLOAT)sd.BufferDesc.Width;
@@ -140,13 +140,13 @@ bool DX11Manager::init(const HWND hwnd)
   sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
   sampDesc.MinLOD = 0;
   sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
-  hr = m_d3dDevice->CreateSamplerState(&sampDesc, &m_samplerClampLinear);
+  hr = m_d3dDevice->CreateSamplerState(&sampDesc, m_samplerClampLinear.GetAddressOf());
   if (FAILED(hr))
   {
     MessageBoxW(nullptr, L"Failed to create SamplerState.", L"Error", MB_OK);
     return false;
   }
-  m_immediateContext->PSSetSamplers(0, 1, &m_samplerClampLinear);
+  m_immediateContext->PSSetSamplers(0, 1, m_samplerClampLinear.GetAddressOf());
 
   bool result = this->createTexture();
   if (!result)
@@ -201,7 +201,7 @@ bool DX11Manager::createTexture()
   srv_desc.Format = desc.Format;
   srv_desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
   srv_desc.Texture2D.MipLevels = desc.MipLevels;
-  hr = m_d3dDevice->CreateShaderResourceView(m_texture.Get(), &srv_desc, &m_srv);
+  hr = m_d3dDevice->CreateShaderResourceView(m_texture.Get(), &srv_desc, m_srv.GetAddressOf());
   if (FAILED(hr))
   {
     MessageBoxW(nullptr, L"Failed to create shader resource view.", L"Error", MB_OK);
@@ -245,7 +245,7 @@ bool DX11Manager::render()
     m_pipeline.activate();
     if (m_texture && m_immediateContext)
     {
-      m_immediateContext->PSSetShaderResources(0, 1, &m_srv);
+      m_immediateContext->PSSetShaderResources(0, 1, m_srv.GetAddressOf());
     }
     m_quad.activateAndRender();
   }

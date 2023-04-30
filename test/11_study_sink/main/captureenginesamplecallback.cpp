@@ -71,6 +71,7 @@ STDMETHODIMP CaptureEngineSampleCB::OnSample(_In_ IMFSample* sample)
   {
     sample->Release();
     buf->Unlock();
+    MessageBoxW(nullptr, L"Failed to update texture.", L"Error", MB_OK);
     return E_FAIL;
   }
 
@@ -80,6 +81,7 @@ STDMETHODIMP CaptureEngineSampleCB::OnSample(_In_ IMFSample* sample)
   {
     sample->Release();
     buf->Unlock();
+    MessageBoxW(nullptr, L"Failed to rendering.", L"Error", MB_OK);
     return E_FAIL;
   }
 

@@ -108,6 +108,9 @@ LRESULT WINAPI Win32MessageHandler::MessageProcedure(HWND hwnd, UINT message, WP
 
   case WM_PAINT:
   {
+    PAINTSTRUCT ps{};
+    HDC hdc = BeginPaint(hwnd, &ps);
+    EndPaint(hwnd, &ps);
   }
   return 0;
 
