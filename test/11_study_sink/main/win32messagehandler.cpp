@@ -36,7 +36,7 @@ bool Win32MessageHandler::init(HINSTANCE hinst, int nCmdShow)
   windowClass.lpszClassName = className;
   RegisterClassExW(&windowClass);
 
-  RECT windowRect = {0, 0, static_cast<LONG>(800), static_cast<LONG>(600)};
+  RECT windowRect = {0, 0, static_cast<LONG>(1280), static_cast<LONG>(720)};
   AdjustWindowRect(&windowRect, WS_OVERLAPPEDWINDOW, FALSE);
 
   // Create the window and store a handle to it.

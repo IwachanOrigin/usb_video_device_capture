@@ -117,6 +117,7 @@ bool DX11Manager::init(const HWND hwnd)
   hr = m_d3dDevice->CreateRenderTargetView(backBuffer.Get(), nullptr, &m_renderTargetView);
   if (FAILED(hr))
   {
+    MessageBoxW(nullptr, L"Failed to create render target view.", L"Error", MB_OK);
     return false;
   }
   m_immediateContext->OMSetRenderTargets(1, &m_renderTargetView, nullptr);
@@ -139,13 +140,13 @@ bool DX11Manager::init(const HWND hwnd)
   sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
   sampDesc.MinLOD = 0;
   sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
-  hr = m_d3dDevice->CreateSamplerState(&sampDesc, m_samplerClampLinear.GetAddressOf());
+  hr = m_d3dDevice->CreateSamplerState(&sampDesc, &m_samplerClampLinear);
   if (FAILED(hr))
   {
     MessageBoxW(nullptr, L"Failed to create SamplerState.", L"Error", MB_OK);
     return false;
   }
-  m_immediateContext->PSSetSamplers(0, 1, m_samplerClampLinear.GetAddressOf());
+  m_immediateContext->PSSetSamplers(0, 1, &m_samplerClampLinear);
 
   bool result = this->createTexture();
   if (!result)
@@ -235,16 +236,24 @@ bool DX11Manager::updateTexture(const uint8_t* new_data, size_t data_size)
 
 bool DX11Manager::render()
 {
-  HRESULT hr = E_FAIL;
-
   // Clear back buffer
-  float clearColor[4] = { 0.0f, 0.0f, 0.2f, 1.0f }; // red,green,blue,alpha
+  float clearColor[4] = { 0.0f, 0.0f, 1.0f, 1.0f }; // red,green,blue,alpha
   m_immediateContext->ClearRenderTargetView(m_renderTargetView.Get(), clearColor);
 
-  //
+  {
+    // Set the shader's
+    m_pipeline.activate();
+    if (m_texture && m_immediateContext)
+    {
+      m_immediateContext->PSSetShaderResources(0, 1, &m_srv);
+    }
+    m_quad.activateAndRender();
+  }
+
+  // Present swapchain
   if (m_swapchain)
   {
-    hr = m_swapchain->Present(1, 0);
+    HRESULT hr = m_swapchain->Present(1, 0);
     if (FAILED(hr))
     {
       MessageBoxW(nullptr, L"Failed to present in Swap Chain.", L"Error", MB_OK);
