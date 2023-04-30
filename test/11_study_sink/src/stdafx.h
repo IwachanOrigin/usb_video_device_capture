@@ -18,6 +18,7 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <cassert>
 
 #include <wrl/client.h>
 #include <shellapi.h>

@@ -17,19 +17,25 @@ public:
   static DX11Manager& getInstance();
 
   bool init(const HWND hwnd);
-  ID3D11Texture2D* getBackBuffer() { return m_backBuffer.Get(); }
+  bool updateTexture(const uint8_t* new_data, size_t data_size);
 
 private:
   ComPtr<ID3D11Device> m_d3dDevice;
   ComPtr<ID3D11DeviceContext> m_immediateContext;
-  ComPtr<IDXGISwapChain> m_swapchain;
   ComPtr<ID3D11RenderTargetView> m_renderTargetView;
-  ComPtr<ID3D11Texture2D> m_backBuffer;
+  ComPtr<IDXGISwapChain> m_swapchain;
+  ComPtr<ID3D11SamplerState> m_samplerClampLinear;
+  ComPtr<ID3D11ShaderResourceView> m_srv;
+  ComPtr<ID3D11Resource> m_texture;
+  uint32_t m_renderWidth;
+  uint32_t m_renderHeight;
 
   explicit DX11Manager();
   ~DX11Manager();
   explicit DX11Manager(const DX11Manager &);
   DX11Manager &operator=(const DX11Manager &);
+  ComPtr<ID3D11Device> getDevice() { return m_d3dDevice; }
+  bool createTexture();
 };
 
 } // manager

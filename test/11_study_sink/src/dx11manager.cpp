@@ -5,6 +5,15 @@
 using namespace manager;
 
 DX11Manager::DX11Manager()
+  : m_d3dDevice(nullptr)
+  , m_immediateContext(nullptr)
+  , m_swapchain(nullptr)
+  , m_renderTargetView(nullptr)
+  , m_srv(nullptr)
+  , m_samplerClampLinear(nullptr)
+  , m_texture(nullptr)
+  , m_renderWidth(0)
+  , m_renderHeight(0)
 {
 }
 
@@ -20,7 +29,18 @@ DX11Manager& DX11Manager::getInstance()
 
 bool DX11Manager::init(const HWND hwnd)
 {
-   D3D_DRIVER_TYPE driverTypes[] = {
+  if (hwnd == nullptr)
+  {
+    MessageBoxW(nullptr, L"hwnd is NULL.", L"Error", MB_OK);
+    return false;
+  }
+
+  RECT rc{};
+  GetClientRect(hwnd, &rc);
+  m_renderWidth = rc.right - rc.left;
+  m_renderHeight = rc.bottom - rc.top;
+
+  D3D_DRIVER_TYPE driverTypes[] = {
     D3D_DRIVER_TYPE_HARDWARE
     , D3D_DRIVER_TYPE_WARP
     , D3D_DRIVER_TYPE_REFERENCE
@@ -31,8 +51,8 @@ bool DX11Manager::init(const HWND hwnd)
   DXGI_SWAP_CHAIN_DESC sd{};
   ZeroMemory(&sd, sizeof(sd));
   sd.BufferCount = 1;
-  sd.BufferDesc.Width = 800;
-  sd.BufferDesc.Height = 600;
+  sd.BufferDesc.Width = 1280;
+  sd.BufferDesc.Height = 720;
   sd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
   sd.BufferDesc.RefreshRate.Numerator = 60;
   sd.BufferDesc.RefreshRate.Denominator = 1;
@@ -84,23 +104,110 @@ bool DX11Manager::init(const HWND hwnd)
     return false;
   }
 
-  hr = m_swapchain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&m_backBuffer);
+  // Create a render target view
+  ComPtr<ID3D11Texture2D> backBuffer = nullptr;
+  hr = m_swapchain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&backBuffer);
   if (FAILED(hr))
   {
     MessageBoxW(nullptr, L"Failed to get the back buffer from the swap chain.", L"Error", MB_OK);
     return false;
   }
 
+  hr = m_d3dDevice->CreateRenderTargetView(backBuffer.Get(), nullptr, &m_renderTargetView);
+  if (FAILED(hr))
+  {
+    return false;
+  }
   m_immediateContext->OMSetRenderTargets(1, &m_renderTargetView, nullptr);
 
   D3D11_VIEWPORT vp{};
-  vp.Width = 800;
-  vp.Height = 600;
+  vp.Width = (FLOAT)sd.BufferDesc.Width;
+  vp.Height = (FLOAT)sd.BufferDesc.Height;
   vp.MinDepth = 0.0f;
   vp.MaxDepth = 1.0f;
   vp.TopLeftX = 0;
   vp.TopLeftY = 0;
   m_immediateContext->RSSetViewports(1, &vp);
+
+  // Create the sample state
+  D3D11_SAMPLER_DESC sampDesc{};
+  sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+  sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
+  sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+  sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+  sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+  sampDesc.MinLOD = 0;
+  sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
+  hr = m_d3dDevice->CreateSamplerState(&sampDesc, m_samplerClampLinear.GetAddressOf());
+  if (FAILED(hr))
+  {
+    return false;
+  }
+  m_immediateContext->PSSetSamplers(0, 1, m_samplerClampLinear.GetAddressOf());
+
+  bool result = this->createTexture();
+
+  return result;
+}
+
+bool DX11Manager::createTexture()
+{
+  D3D11_TEXTURE2D_DESC desc{};
+  desc.Width = 1280;
+  desc.Height = 720;
+  desc.MipLevels = 1;
+  desc.ArraySize = 1;
+  desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+  desc.SampleDesc.Count = 1;
+  desc.SampleDesc.Quality = 0;
+  desc.Usage = D3D11_USAGE_DEFAULT;
+  desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+  desc.CPUAccessFlags = 0;
+  desc.MiscFlags = 0;
+  desc.Usage = D3D11_USAGE_DYNAMIC;
+  desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+
+  HRESULT hr = m_d3dDevice->CreateTexture2D(&desc, nullptr, (ID3D11Texture2D**)m_texture.GetAddressOf());
+  if (FAILED(hr))
+  {
+    MessageBoxW(nullptr, L"Failed to create ID3D11Texture2D.", L"Error", MB_OK);
+    return false;
+  }
+
+  // Create a resource view so we can use the data in a shader
+  D3D11_SHADER_RESOURCE_VIEW_DESC srv_desc{};
+  srv_desc.Format = desc.Format;
+  srv_desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+  srv_desc.Texture2D.MipLevels = desc.MipLevels;
+  hr = m_d3dDevice->CreateShaderResourceView(m_texture.Get(), &srv_desc, &m_srv);
+  if (FAILED(hr))
+  {
+    MessageBoxW(nullptr, L"Failed to create shader resource view.", L"Error", MB_OK);
+    return false;
+  }
+  return true;
+}
+
+bool DX11Manager::updateTexture(const uint8_t* new_data, size_t data_size)
+{
+  if (!new_data)
+  {
+    return false;
+  }
+
+  D3D11_MAPPED_SUBRESOURCE ms{};
+  HRESULT hr = m_immediateContext->Map(m_texture.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &ms);
+  if (FAILED(hr))
+  {
+    return false;
+  }
+
+  uint32_t bytes_per_texel = 1;
+  const uint8_t* src = new_data;
+  uint8_t* dst = (uint8_t*)ms.pData;
+
+  std::memcpy(dst, src, data_size);
+  m_immediateContext->Unmap(m_texture.Get(), 0);
 
   return true;
 }
