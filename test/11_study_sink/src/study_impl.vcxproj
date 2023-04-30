@@ -147,6 +147,8 @@
     <ClInclude Include="capturemanager.h" />
     <ClInclude Include="dx11manager.h" />
     <ClInclude Include="dxhelper.h" />
+    <ClInclude Include="pipeline.h" />
+    <ClInclude Include="SimpleMath.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="utils.h" />
     <ClInclude Include="win32messagehandler.h" />
@@ -156,6 +158,8 @@
     <ClCompile Include="capturemanager.cpp" />
     <ClCompile Include="dx11manager.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="pipeline.cpp" />
+    <ClCompile Include="SimpleMath.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
     </ClCompile>

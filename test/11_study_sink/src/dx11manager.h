@@ -19,6 +19,9 @@ public:
   bool init(const HWND hwnd);
   bool updateTexture(const uint8_t* new_data, size_t data_size);
 
+  ComPtr<ID3D11Device> getDevice() { return m_d3dDevice; }
+  ComPtr<ID3D11DeviceContext> getDeviceContext() { return m_immediateContext; }
+
 private:
   ComPtr<ID3D11Device> m_d3dDevice;
   ComPtr<ID3D11DeviceContext> m_immediateContext;
@@ -34,7 +37,6 @@ private:
   ~DX11Manager();
   explicit DX11Manager(const DX11Manager &);
   DX11Manager &operator=(const DX11Manager &);
-  ComPtr<ID3D11Device> getDevice() { return m_d3dDevice; }
   bool createTexture();
 };
 
