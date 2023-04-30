@@ -5,8 +5,6 @@
 #include "stdafx.h"
 #include "pipeline.h"
 #include "mesh.h"
-#include <d3d11.h>
-#include <d3dcompiler.h>
 
 using namespace Microsoft::WRL;
 

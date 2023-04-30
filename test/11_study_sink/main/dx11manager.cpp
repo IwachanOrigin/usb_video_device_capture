@@ -1,6 +1,5 @@
 
 #include "stdafx.h"
-#include "SimpleMath.h"
 #include "dx11manager.h"
 
 using namespace DirectX;
