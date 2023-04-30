@@ -23,5 +23,5 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 set_property(GLOBAL PROPERTY AUTOGEN_TARGETS_FOLDER AutoGenFiles)
 set_property(GLOBAL PROPERTY AUTOGEN_SOURCE_GROUP AutoGenFiles)
 
-add_subdirectory(src)
+add_subdirectory(main)
 
