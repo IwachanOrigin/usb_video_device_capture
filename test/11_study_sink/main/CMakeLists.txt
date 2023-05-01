@@ -37,6 +37,7 @@ set(main_src
   SimpleMath.inl
   stdafx.cpp
   stdafx.h
+  timer.h
   utils.h
   win32messagehandler.cpp
   win32messagehandler.h
