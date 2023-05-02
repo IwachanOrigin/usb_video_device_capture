@@ -51,34 +51,6 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
   return DefWindowProc(hwnd, uMsg, wParam, lParam);
 }
 
-HWND CreatePreviewWindow(HINSTANCE hInstance, HWND hParent)
-{
-  const wchar_t windowClassName[100] = L"Capture Engine Preview Window Class";
-
-  WNDCLASSEXW wcex = {};
-
-  wcex.lpfnWndProc = WindowProc;
-  wcex.hInstance = hInstance;
-  wcex.lpszClassName = windowClassName;
-
-  RegisterClassExW(&wcex);
-
-  // Create the window.
-  return CreateWindowExW(
-    0
-    , windowClassName
-    , L"Capture Application"
-    , WS_OVERLAPPEDWINDOW
-    , CW_USEDEFAULT
-    , CW_USEDEFAULT
-    , CW_USEDEFAULT
-    , CW_USEDEFAULT
-    , nullptr
-    , nullptr
-    , hInstance
-    , nullptr);
-}
-
 int main(int argc, char* argv[])
 {
   // INIT
@@ -128,11 +100,28 @@ int main(int argc, char* argv[])
 
   std::wcout << "Please input device no : ";
   std::wcin >> selectionNo;
+  std::wcout << std::endl;
   if (selectionNo > deviceCount)
   {
     std::wcout << "Failed device select.";
     return -1;
   }
+
+  // Input capture size of width, height, fps
+  uint32_t capWidth = 0, capHeight = 0, capFps = 0;
+  std::wcout << "Please input capture size of width, height, fps." << std::endl;
+  std::wcout << "ex. 3840 2160 30" << std::endl;
+  std::wcout << " > ";
+  std::wcin >> capWidth >> capHeight >> capFps;
+  std::wcout << std::endl;
+  // TODO : Check whether the selected USB device supports the input resolution and frame rate.
+  //
+
+  uint32_t windowWidth = 0, windowHeight = 0;
+  std::wcout << "Please input Display size of window width and height." << std::endl;
+  std::wcout << "ex. 1920 1080" << std::endl;
+  std::wcout << " > ";
+  std::wcin >> windowWidth >> windowHeight;
 
   ThrowIfFailed(g_pEngine->initCaptureManager(devices[selectionNo]));
   devices[selectionNo]->AddRef();
