@@ -7,9 +7,11 @@
 class CaptureEngineSampleCB : public IMFCaptureEngineOnSampleCallback
 {
   long m_ref;
+  uint32_t m_capWidth;
+  uint32_t m_capHeight;
 
 public:
-  CaptureEngineSampleCB() : m_ref(1) {}
+  CaptureEngineSampleCB(const uint32_t& width, const uint32_t& height) : m_ref(1), m_capWidth(width), m_capHeight(height) {}
 
   // IUnknown
   STDMETHODIMP QueryInterface(REFIID riid, void** ppv);

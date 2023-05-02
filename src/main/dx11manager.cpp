@@ -15,6 +15,8 @@ DX11Manager::DX11Manager()
   , m_texture(nullptr)
   , m_renderWidth(0)
   , m_renderHeight(0)
+  , m_textuerWidth(0)
+  , m_textureHeight(0)
 {
 }
 
@@ -36,6 +38,9 @@ bool DX11Manager::init(const HWND hwnd, const uint32_t& width, const uint32_t& h
     return false;
   }
 
+  m_textuerWidth = width;
+  m_textureHeight = height;
+
   RECT rc{};
   GetClientRect(hwnd, &rc);
   m_renderWidth = rc.right - rc.left;
@@ -52,8 +57,8 @@ bool DX11Manager::init(const HWND hwnd, const uint32_t& width, const uint32_t& h
   DXGI_SWAP_CHAIN_DESC sd{};
   ZeroMemory(&sd, sizeof(sd));
   sd.BufferCount = 1;
-  sd.BufferDesc.Width = width;
-  sd.BufferDesc.Height = height;
+  sd.BufferDesc.Width = m_textuerWidth;
+  sd.BufferDesc.Height = m_textureHeight;
   sd.BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
   sd.BufferDesc.RefreshRate.Numerator = fpsNum;
   sd.BufferDesc.RefreshRate.Denominator = 1;
@@ -175,8 +180,8 @@ bool DX11Manager::init(const HWND hwnd, const uint32_t& width, const uint32_t& h
 bool DX11Manager::createTexture()
 {
   D3D11_TEXTURE2D_DESC desc{};
-  desc.Width = 3840;
-  desc.Height = 2160;
+  desc.Width = m_textuerWidth;
+  desc.Height = m_textureHeight;
   desc.MipLevels = 1;
   desc.ArraySize = 1;
   desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
@@ -212,6 +217,11 @@ bool DX11Manager::createTexture()
 
 bool DX11Manager::updateTexture(const uint8_t* new_data, size_t data_size)
 {
+  if (!m_immediateContext)
+  {
+    return false;
+  }
+
   if (!new_data)
   {
     return false;

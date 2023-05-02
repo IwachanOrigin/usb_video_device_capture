@@ -366,9 +366,6 @@ int main(int argc, char* argv[])
   ZeroMemory(&pwrCaps, sizeof(pwrCaps));
   GetPwrCapabilities(&pwrCaps);
 
-  // Start preview
-  ThrowIfFailed(g_pEngine->startPreview(capWidth, capHeight, capFps));
-
   // Create dx11 device, context, swapchain
   result = DX11Manager::getInstance().init(previewWnd, capWidth, capHeight, capFps);
   if (!result)
@@ -399,6 +396,9 @@ int main(int argc, char* argv[])
     ThrowIfFailed(MFShutdown());
     CoUninitialize();
   }
+
+  // Start preview
+  ThrowIfFailed(g_pEngine->startPreview(capWidth, capHeight, capFps));
 
   // Start message loop
   Win32MessageHandler::getInstance().run();

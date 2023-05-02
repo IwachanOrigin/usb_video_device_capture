@@ -333,7 +333,7 @@ HRESULT CaptureManager::startPreview(const uint32_t& width, const uint32_t& heig
       return hr;
     }
 
-    hr = m_capPrevSink->SetSampleCallback(dwSinkStreamIndex, new CaptureEngineSampleCB());
+    hr = m_capPrevSink->SetSampleCallback(dwSinkStreamIndex, new CaptureEngineSampleCB(width, height));
     if (FAILED(hr))
     {
       return hr;

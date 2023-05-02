@@ -33,6 +33,8 @@ private:
   ComPtr<ID3D11Resource> m_texture;
   uint32_t m_renderWidth;
   uint32_t m_renderHeight;
+  uint32_t m_textuerWidth;
+  uint32_t m_textureHeight;
   Pipeline m_pipeline;
   Mesh m_quad;
 

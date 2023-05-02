@@ -39,7 +39,7 @@ STDMETHODIMP CaptureEngineSampleCB::OnSample(_In_ IMFSample* sample)
   }
 
   Timer timer;
-#if 1
+
   DWORD dwTotalLength = 0;
   HRESULT hr = sample->GetTotalLength(&dwTotalLength);
   if (SUCCEEDED(hr))
@@ -49,8 +49,9 @@ STDMETHODIMP CaptureEngineSampleCB::OnSample(_In_ IMFSample* sample)
 
   sample->AddRef();
 
+  // RGB32 is 4 bit per pixel
+  UINT32 pitch = 4 * m_capWidth;
   ComPtr<IMFMediaBuffer> buf = nullptr;
-  UINT32 pitch = 4 * 3840;
   hr = sample->ConvertToContiguousBuffer(&buf);
   if (FAILED(hr))
   {
@@ -67,7 +68,7 @@ STDMETHODIMP CaptureEngineSampleCB::OnSample(_In_ IMFSample* sample)
     sample->Release();
     return E_FAIL;
   }
-  assert(buffCurrLen == (pitch * 2160));
+  assert(buffCurrLen == (pitch * m_capHeight));
 
   bool result = manager::DX11Manager::getInstance().updateTexture(byteBuffer, buffCurrLen);
   if (!result)
@@ -90,7 +91,7 @@ STDMETHODIMP CaptureEngineSampleCB::OnSample(_In_ IMFSample* sample)
 
   sample->Release();
   buf->Unlock();
-#endif
+
   std::wcout << "Timer : " << timer.elapsed() << std::endl;
 
   return S_OK;
