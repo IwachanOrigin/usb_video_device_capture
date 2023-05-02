@@ -127,7 +127,7 @@ int main(int argc, char* argv[])
   devices[selectionNo]->AddRef();
 
   // Create main window.
-  bool result = Win32MessageHandler::getInstance().init((HINSTANCE)0, 1);
+  bool result = Win32MessageHandler::getInstance().init((HINSTANCE)0, 1, windowWidth, windowHeight);
   if (!result)
   {
     if (devices != nullptr)
