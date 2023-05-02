@@ -117,8 +117,8 @@ CaptureManager::~CaptureManager()
 HRESULT CaptureManager::initCaptureManager(IUnknown* pUnk)
 {
   HRESULT hr = S_OK;
-  IMFAttributes* attributes = nullptr;
-  IMFCaptureEngineClassFactory* factory = nullptr;
+  ComPtr<IMFAttributes> attributes = nullptr;
+  ComPtr<IMFCaptureEngineClassFactory> factory = nullptr;
 
   this->destroyCapEngine();
 
@@ -126,55 +126,42 @@ HRESULT CaptureManager::initCaptureManager(IUnknown* pUnk)
   if (nullptr == m_event)
   {
     hr = HRESULT_FROM_WIN32(GetLastError());
-    goto Exit;
+    return hr;
   }
 
   m_capCallback = new (std::nothrow)CaptureEngineCB();
   if (nullptr == m_capCallback)
   {
     hr = E_OUTOFMEMORY;
-    goto Exit;
+    return hr;
   }
 
   m_capCallback->setCaptureManager(this);
 
-  hr = MFCreateAttributes(&attributes, 1);
+  hr = MFCreateAttributes(attributes.GetAddressOf(), 1);
   if (FAILED(hr))
   {
-    goto Exit;
+    return hr;
   }
 
   // Create the factory object for the capture engine.
-  hr = CoCreateInstance(CLSID_MFCaptureEngineClassFactory, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&factory));
+  hr = CoCreateInstance(CLSID_MFCaptureEngineClassFactory, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(factory.GetAddressOf()));
   if (FAILED(hr))
   {
-    goto Exit;
+    return hr;
   }
 
   // Create and initialize the capture engine.
   hr = factory->CreateInstance(CLSID_MFCaptureEngine, IID_PPV_ARGS(m_captureEngine.GetAddressOf()));
   if (FAILED(hr))
   {
-    goto Exit;
+    return hr;
   }
 
-  hr = m_captureEngine->Initialize(m_capCallback.Get(), attributes, nullptr, pUnk);
+  hr = m_captureEngine->Initialize(m_capCallback.Get(), attributes.Get(), nullptr, pUnk);
   if (FAILED(hr))
   {
-    goto Exit;
-  }
-
-Exit:
-  if (nullptr != attributes)
-  {
-    attributes->Release();
-    attributes = nullptr;
-  }
-
-  if (nullptr != factory)
-  {
-    factory->Release();
-    factory = nullptr;
+    return hr;
   }
 
   return hr;
