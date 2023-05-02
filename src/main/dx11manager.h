@@ -16,7 +16,7 @@ class DX11Manager
 public:
   static DX11Manager& getInstance();
 
-  bool init(const HWND hwnd);
+  bool init(const HWND hwnd, const uint32_t& width, const uint32_t& height, const uint32_t& fpsNum);
   bool updateTexture(const uint8_t* new_data, size_t data_size);
   bool render();
 

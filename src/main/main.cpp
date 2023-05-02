@@ -7,6 +7,7 @@
 
 #pragma comment(lib, "mf")
 #pragma comment(lib, "mfplat")
+#pragma comment(lib, "mfreadwrite")
 #pragma comment(lib, "mfuuid")
 #pragma comment(lib, "shlwapi")
 #pragma comment(lib, "powrprof")
@@ -39,6 +40,213 @@ void getVideoDevices(IMFActivate*** pppRawDevice, uint32_t& count)
     std::wcout << "No. " << i << " : " << buffer << std::endl;
   }
   pppRawDevice = &ppRawDevice;
+}
+
+/**
+ * Gets a video source reader from a device such as a webcam.
+ * @param[in] nDevice: the video device index to attempt to get the source reader for.
+ * @param[out] ppVideoSource: will be set with the source for the reader if successful.
+ * @param[out] ppVideoReader: will be set with the reader if successful. Set this parameter
+ *  to nullptr if no reader is required and only the source is needed.
+ * @@Returns S_OK if successful or an error code if not.
+ */
+HRESULT GetVideoSourceFromDevice(UINT nDevice, IMFMediaSource** ppVideoSource, IMFSourceReader** ppVideoReader)
+{
+  UINT32 videoDeviceCount = 0;
+  ComPtr<IMFAttributes> videoConfig = nullptr;
+  IMFActivate** videoDevices = nullptr;
+  UINT nameLength = 0;
+  ComPtr<IMFAttributes> pAttributes = nullptr;
+
+  HRESULT hr = S_OK;
+
+  // Get the first available webcam.
+  hr = MFCreateAttributes(videoConfig.GetAddressOf(), 1);
+  if (FAILED(hr))
+  {
+    MessageBoxW(nullptr, L"Failed to create video configuration.", L"Error", MB_OK);
+    return hr;
+  }
+
+  // Request video capture devices.
+  hr = videoConfig->SetGUID(MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE, MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_GUID);
+  if (FAILED(hr))
+  {
+    MessageBoxW(nullptr, L"Failed to set GUID to video config.", L"Error", MB_OK);
+    return hr;
+  }
+
+  hr = MFEnumDeviceSources(videoConfig.Get(), &videoDevices, &videoDeviceCount);
+  if (FAILED(hr))
+  {
+    MessageBoxW(nullptr, L"Failed to get device sources.", L"Error", MB_OK);
+    return hr;
+  }
+
+  if (nDevice >= videoDeviceCount)
+  {
+    printf("The device index of %d was invalid for available device count of %d.\n", nDevice, videoDeviceCount);
+    hr = E_INVALIDARG;
+  }
+  else
+  {
+    hr = videoDevices[nDevice]->ActivateObject(IID_PPV_ARGS(ppVideoSource));
+    if (FAILED(hr))
+    {
+      MessageBoxW(nullptr, L"Failed to activate device..", L"Error", MB_OK);
+      return hr;
+    }
+
+    hr = MFCreateAttributes(pAttributes.GetAddressOf(), 1);
+    if (FAILED(hr))
+    {
+      MessageBoxW(nullptr, L"Failed to create attribute.", L"Error", MB_OK);
+      return hr;
+    }
+
+    if (ppVideoReader != nullptr)
+    {
+      // Adding this attribute creates a video source reader that will handle
+      // colour conversion and avoid the need to manually convert between RGB24 and RGB32 etc.
+      hr = pAttributes->SetUINT32(MF_SOURCE_READER_ENABLE_VIDEO_PROCESSING, 1);
+      if (FAILED(hr))
+      {
+        MessageBoxW(nullptr, L"Failed to set MF_SOURCE_READER_ENABLE_VIDEO_PROCESSING to attribute.", L"Error", MB_OK);
+        return hr;
+      }
+
+      // Create a source reader.
+      hr = MFCreateSourceReaderFromMediaSource(*ppVideoSource, pAttributes.Get(), ppVideoReader);
+      if (FAILED(hr))
+      {
+        MessageBoxW(nullptr, L"Failed to MFCreateSourceReaderFromMediaSource.", L"Error", MB_OK);
+        return hr;
+      }
+    }
+  }
+
+  // Device release
+  if (videoDevices != nullptr)
+  {
+    for (uint32_t i = 0; i < videoDeviceCount; i++)
+    {
+      videoDevices[i]->Release();
+    }
+    CoTaskMemFree(videoDevices);
+  }
+
+  return hr;
+}
+
+bool findMatchFormatTypes(const uint32_t& capWidth, const uint32_t& capHeight, const uint32_t& capFps)
+{
+  HRESULT hr = S_OK;
+  ComPtr<IMFMediaSource> pVideoSource = nullptr;
+  ComPtr<IMFSourceReader> pVideoReader = nullptr;
+  ComPtr<IMFPresentationDescriptor> pSourcePresentationDescriptor = nullptr;
+  BOOL fSelected = false;
+  int currentVideoDeviceIndex = 0;
+  //int currentAudioDeviceIndex = 0;
+
+  hr = GetVideoSourceFromDevice(currentVideoDeviceIndex, &pVideoSource, &pVideoReader);
+  if (FAILED(hr))
+  {
+    std::wcout << "Failed to GetVideoSourceFromDevice func." << std::endl;
+    return false;
+  }
+  hr = pVideoSource->CreatePresentationDescriptor(&pSourcePresentationDescriptor);
+  if (FAILED(hr))
+  {
+    std::wcout << "Failed to create the presentation descriptor from the media source." << std::endl;
+    return false;
+  }
+
+  DWORD streamDescCount = 0;
+  hr = pSourcePresentationDescriptor->GetStreamDescriptorCount(&streamDescCount);
+  if (FAILED(hr))
+  {
+    std::wcout << "Failed to get stream descriptor count." << std::endl;
+    return false;
+  }
+
+  for (int descIndex = 0; descIndex < (int)streamDescCount; descIndex++)
+  {
+    ComPtr<IMFStreamDescriptor> pSourceStreamDescriptor = nullptr;
+    hr = pSourcePresentationDescriptor->GetStreamDescriptorByIndex(descIndex, &fSelected, &pSourceStreamDescriptor);
+    if (FAILED(hr))
+    {
+      std::wcout << "Failed to get source stream descriptor from presentation descriptor" << std::endl;
+      return false;
+    }
+
+    ComPtr<IMFMediaTypeHandler> pSourceMediaTypeHandler = nullptr;
+    hr = pSourceStreamDescriptor->GetMediaTypeHandler(&pSourceMediaTypeHandler);
+    if (FAILED(hr))
+    {
+      std::wcout << "Failed to get source media type handler." << std::endl;
+      return false;
+    }
+
+    DWORD typeCount = 0;
+    hr = pSourceMediaTypeHandler->GetMediaTypeCount(&typeCount);
+    if (FAILED(hr))
+    {
+      std::wcout << "Failed to get source media type count." << std::endl;
+      return false;
+    }
+
+    for (int typeIndex = 0; typeIndex < (int)typeCount; typeIndex++)
+    {
+      ComPtr<IMFMediaType> pMediaType = nullptr;
+      hr = pSourceMediaTypeHandler->GetMediaTypeByIndex(typeIndex, pMediaType.GetAddressOf());
+      if (FAILED(hr))
+      {
+        // "Error retrieving media type."
+        continue;
+      }
+
+      uint32_t width = 0, height = 0;
+      hr = MFGetAttributeSize(pMediaType.Get(), MF_MT_FRAME_SIZE, &width, &height);
+      if (FAILED(hr))
+      {
+        // "Failed to get the frame size attribute on media type."
+        continue;
+      }
+
+      GUID formatType{};
+      hr = pMediaType->GetGUID(MF_MT_SUBTYPE, &formatType);
+      if (FAILED(hr))
+      {
+        // "Failed to get the subtype guid on media type."
+        continue;
+      }
+
+      uint32_t interlaceMode = 0;
+      hr = pMediaType->GetUINT32(MF_MT_INTERLACE_MODE, &interlaceMode);
+      if (FAILED(hr))
+      {
+        // "Failed to get the interlace mode on media type."
+        continue;
+      }
+
+      uint32_t fpsNum = 0, fpsDen = 0;
+      hr = MFGetAttributeRatio(pMediaType.Get(), MF_MT_FRAME_RATE, &fpsNum, &fpsDen);
+      if (FAILED(hr))
+      {
+        // "Failed to get the frame rate on media type."
+        continue;
+      }
+
+      // Check it!
+      if(IsEqualGUID(MFVideoFormat_RGB32, formatType) && width == capWidth && height == capHeight && fpsNum == capFps && fpsDen == 1)
+      {
+        hr = S_OK;
+        break;
+      }
+    }
+  }
+
+  return true;
 }
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -118,8 +326,13 @@ int main(int argc, char* argv[])
   std::wcout << " > ";
   std::wcin >> capWidth >> capHeight >> capFps;
   std::wcout << std::endl;
-  // TODO : Check whether the selected USB device supports the input resolution and frame rate.
-  //
+  // Check whether the selected USB device supports the input resolution and frame rate.
+  bool result = findMatchFormatTypes(capWidth, capHeight, capFps);
+  if (!result)
+  {
+    std::wcout << "No matching format." << std::endl;
+    return -1;
+  }
 
   uint32_t windowWidth = 0, windowHeight = 0;
   std::wcout << "Please input Display size of window width and height." << std::endl;
@@ -128,7 +341,7 @@ int main(int argc, char* argv[])
   std::wcin >> windowWidth >> windowHeight;
 
   // Create main window.
-  bool result = Win32MessageHandler::getInstance().init((HINSTANCE)0, 1, windowWidth, windowHeight);
+  result = Win32MessageHandler::getInstance().init((HINSTANCE)0, 1, windowWidth, windowHeight);
   if (!result)
   {
     if (devices != nullptr)
@@ -154,10 +367,10 @@ int main(int argc, char* argv[])
   GetPwrCapabilities(&pwrCaps);
 
   // Start preview
-  ThrowIfFailed(g_pEngine->startPreview());
+  ThrowIfFailed(g_pEngine->startPreview(capWidth, capHeight, capFps));
 
   // Create dx11 device, context, swapchain
-  result = DX11Manager::getInstance().init(previewWnd);
+  result = DX11Manager::getInstance().init(previewWnd, capWidth, capHeight, capFps);
   if (!result)
   {
     ThrowIfFailed(g_pEngine->stopPreview());

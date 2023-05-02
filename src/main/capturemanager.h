@@ -101,8 +101,8 @@ public:
   UINT errorID() const { return m_errorID; }
 
   HRESULT onCapEvent(WPARAM wParam, LPARAM lParam);
-  HRESULT setVideoDevice(IUnknown* pUnk);
-  HRESULT startPreview();
+  //HRESULT setVideoDevice(IUnknown* pUnk);
+  HRESULT startPreview(const uint32_t& width, const uint32_t& height, const uint32_t& fpsNum);
   HRESULT stopPreview();
   HRESULT startRecord(PCWSTR destinationFile);
   HRESULT stopRecord();

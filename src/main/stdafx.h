@@ -28,6 +28,7 @@
 
 #include <mfapi.h>
 #include <mfidl.h>
+#include <mfreadwrite.h>
 #include <mferror.h>
 #include <mfcaptureengine.h>
 #include <powrprof.h>

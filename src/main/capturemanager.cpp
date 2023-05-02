@@ -183,9 +183,6 @@ HRESULT CaptureManager::onCapEvent(WPARAM wParam, LPARAM lParam)
   hr = mediaEvent->GetExtendedType(&guidType);
   if (SUCCEEDED(hr))
   {
-    // DEBUG CODE
-
-    //
     if (guidType == MF_CAPTURE_ENGINE_INITIALIZED)
     {
       this->onCapEngineInited(hrStatus);
@@ -253,7 +250,7 @@ void CaptureManager::onRecordStopped(HRESULT& hr)
   m_isRecording = false;
 }
 
-HRESULT CaptureManager::startPreview()
+HRESULT CaptureManager::startPreview(const uint32_t& width, const uint32_t& height, const uint32_t& fpsNum)
 {
   if (m_captureEngine == nullptr)
   {
@@ -309,14 +306,14 @@ HRESULT CaptureManager::startPreview()
     }
 
     // frame size
-    hr = MFSetAttributeSize(outputMediaType.Get(), MF_MT_FRAME_SIZE, 3840, 2160);
+    hr = MFSetAttributeSize(outputMediaType.Get(), MF_MT_FRAME_SIZE, width, height);
     if (FAILED(hr))
     {
       return hr;
     }
 
     // fps
-    hr = MFSetAttributeRatio(outputMediaType.Get(), MF_MT_FRAME_RATE, 30, 1);
+    hr = MFSetAttributeRatio(outputMediaType.Get(), MF_MT_FRAME_RATE, fpsNum, 1);
     if (FAILED(hr))
     {
       return hr;

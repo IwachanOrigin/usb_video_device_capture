@@ -28,7 +28,7 @@ DX11Manager& DX11Manager::getInstance()
   return inst;
 }
 
-bool DX11Manager::init(const HWND hwnd)
+bool DX11Manager::init(const HWND hwnd, const uint32_t& width, const uint32_t& height, const uint32_t& fpsNum)
 {
   if (hwnd == nullptr)
   {
@@ -52,10 +52,10 @@ bool DX11Manager::init(const HWND hwnd)
   DXGI_SWAP_CHAIN_DESC sd{};
   ZeroMemory(&sd, sizeof(sd));
   sd.BufferCount = 1;
-  sd.BufferDesc.Width = 3840;
-  sd.BufferDesc.Height = 2160;
+  sd.BufferDesc.Width = width;
+  sd.BufferDesc.Height = height;
   sd.BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
-  sd.BufferDesc.RefreshRate.Numerator = 60;
+  sd.BufferDesc.RefreshRate.Numerator = fpsNum;
   sd.BufferDesc.RefreshRate.Denominator = 1;
   sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
   sd.SampleDesc.Count = 1;
