@@ -2,12 +2,11 @@
 #ifndef DX_HELPER_H_
 #define DX_HELPER_H_
 
-#include "stdafx.h"
 #include <stdexcept>
 
 using Microsoft::WRL::ComPtr;
 
-namespace dx_engine
+namespace helper
 {
 
 inline std::string HrToString(HRESULT hr)
@@ -26,6 +25,8 @@ private:
   const HRESULT m_hr;
 };
 
+#define SAFE_RELEASE(p) if (p) (p)->Release()
+
 inline void ThrowIfFailed(HRESULT hr)
 {
   if (FAILED(hr))
@@ -34,32 +35,6 @@ inline void ThrowIfFailed(HRESULT hr)
   }
 }
 
-template <class T> void SAFE_RELEASE(T** ppT)
-{
-  if (*ppT)
-  {
-    (*ppT)->Release();
-    *ppT = NULL;
-  }
-}
-
-template <class T> inline void SAFE_RELEASE(T*& pT)
-{
-  if (pT != NULL)
-  {
-    pT->Release();
-    pT = NULL;
-  }
-}
-
-template <class T> inline void SAFE_RELEASE(T t)
-{
-  if (t)
-  {
-    t->Release();
-  }
-}
-
-} // dx_engine
+} // helper
 
 #endif // DX_HELPER_H_

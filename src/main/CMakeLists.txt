@@ -20,27 +20,28 @@ set_source_files_properties(videoPS.hlsl
 add_custom_target(hlsl SOURCES ${hlsl_srcs})
 
 set(main_src
-  capture_texture.cpp
-  capture_texture.h
-  clock.h
-  dx11base.cpp
-  dx11base.h
+  captureenginesamplecallback.cpp
+  captureenginesamplecallback.h
+  capturemanager.cpp
+  capturemanager.h
+  dx11manager.cpp
+  dx11manager.h
   dxhelper.h
   main.cpp
-  mainapp.cpp
-  mainapp.h
-  mesh.cpp
   mesh.h
-  mfutility.h
+  mesh.cpp
   pipeline.cpp
   pipeline.h
   SimpleMath.cpp
   SimpleMath.h
+  SimpleMath.inl
   stdafx.cpp
   stdafx.h
-  texture.cpp
-  texture.h
+  timer.h
+  utils.h
+  win32messagehandler.cpp
+  win32messagehandler.h
 )
 
-add_executable(${PROJECT_NAME} WIN32 ${main_src})
+add_executable(${PROJECT_NAME} ${main_src})
 add_dependencies(${PROJECT_NAME} hlsl)

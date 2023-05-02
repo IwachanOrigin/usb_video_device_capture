@@ -4,9 +4,9 @@
 
 #include "stdafx.h"
 
-using Microsoft::WRL::ComPtr;
+using namespace Microsoft::WRL;
 
-namespace Render
+namespace manager
 {
 
 class Pipeline
@@ -21,12 +21,12 @@ public:
 
 private:
   ComPtr<ID3D11VertexShader> m_vs;
-  ComPtr<ID3D11InputLayout>  m_input_layout;
+  ComPtr<ID3D11InputLayout>  m_inputLayout;
   ComPtr<ID3D11PixelShader>  m_ps;
 
   bool compileShaderFromFile(const char* szFileName, const char* szEntryPoint, const char* szShaderModel, ID3DBlob** ppBlobOut);
 };
 
-} // Render
+} // manager
 
 #endif // PIPELINE_H_

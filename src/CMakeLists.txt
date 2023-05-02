@@ -2,7 +2,7 @@
 cmake_minimum_required(VERSION 3.10)
 
 # set the project name
-project(dx11player CXX)
+project(studySink CXX)
 
 # output directory
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)

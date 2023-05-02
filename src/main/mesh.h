@@ -5,9 +5,9 @@
 
 #include "stdafx.h"
 
-using Microsoft::WRL::ComPtr;
+using namespace Microsoft::WRL;
 
-namespace Render
+namespace manager
 {
 
 enum class eTopology
@@ -24,8 +24,6 @@ public:
   ~Mesh();
 
   bool create(const void* vertices, uint32_t new_nvertices, uint32_t new_bytes_per_vertex, eTopology new_topology);
-  void activate() const;
-  void render() const;
   void activateAndRender() const;
   void destroy();
 
@@ -35,8 +33,10 @@ private:
   uint32_t m_bytesPerVertex;
   eTopology m_topology;
 
+  void activate() const;
+  void render() const;
 };
 
-} // Render
+} // manager
 
 #endif // MESH_H_

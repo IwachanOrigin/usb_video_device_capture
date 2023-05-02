@@ -80,7 +80,7 @@ bool MainWindow::init(HINSTANCE hInst)
 		windowClass = RegisterClassEx(&wcex);
   }
 
-  RECT windowRect = { 0, 0, static_cast<LONG>(800), static_cast<LONG>(600) };
+  RECT windowRect = { 0, 0, static_cast<LONG>(1920), static_cast<LONG>(1080) };
   AdjustWindowRect(&windowRect, WS_OVERLAPPEDWINDOW, FALSE);
 
   m_hwnd = CreateWindowEx(

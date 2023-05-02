@@ -1,22 +1,20 @@
 
 #include <d3dcompiler.h>
 
-#include "dx11base.h"
+#include "dx11manager.h"
 #include "pipeline.h"
-#include "dxhelper.h"
 
 // Header files automatically generated when compiling HLSL.
 // See set_source_files_properties on CMakeLists.txt.
 #include "videoPS.h"
 #include "videoVS.h"
 
-using namespace Render;
-using namespace dx_engine;
+using namespace manager;
 
 Pipeline::Pipeline()
   : m_vs(nullptr)
   , m_ps(nullptr)
-  , m_input_layout(nullptr)
+  , m_inputLayout(nullptr)
 {
 }
 
@@ -28,24 +26,24 @@ bool Pipeline::create(D3D11_INPUT_ELEMENT_DESC* input_elements, uint32_t ninput_
 {
   HRESULT hr = S_OK;
   // Create the vertex shader
-  hr = DX11Base::getInstance().getDevice()->CreateVertexShader(g_videoVS, sizeof(g_videoVS), nullptr, m_vs.GetAddressOf());
+  hr = DX11Manager::getInstance().getDevice()->CreateVertexShader(g_videoVS, sizeof(g_videoVS), nullptr, m_vs.GetAddressOf());
   if (FAILED(hr))
   {
-    return hr;
+    return false;
   }
 
   // Create the input layout
-  hr = DX11Base::getInstance().getDevice()->CreateInputLayout(input_elements, ninput_elements, g_videoVS, sizeof(g_videoVS), m_input_layout.GetAddressOf());
+  hr = DX11Manager::getInstance().getDevice()->CreateInputLayout(input_elements, ninput_elements, g_videoVS, sizeof(g_videoVS), m_inputLayout.GetAddressOf());
   if (FAILED(hr))
   {
-    return hr;
+    return false;
   }
 
   // Create the pixel shader
-  hr = DX11Base::getInstance().getDevice()->CreatePixelShader(g_videoPS, sizeof(g_videoPS), nullptr, m_ps.GetAddressOf());
+  hr = DX11Manager::getInstance().getDevice()->CreatePixelShader(g_videoPS, sizeof(g_videoPS), nullptr, m_ps.GetAddressOf());
   if (FAILED(hr))
   {
-    return hr;
+    return false;
   }
 
   return true;
@@ -53,16 +51,28 @@ bool Pipeline::create(D3D11_INPUT_ELEMENT_DESC* input_elements, uint32_t ninput_
 
 void Pipeline::activate() const
 {
-  DX11Base::getInstance().getDeviceContext()->IASetInputLayout(m_input_layout.Get());
-  DX11Base::getInstance().getDeviceContext()->VSSetShader(m_vs.Get(), nullptr, 0);
-  DX11Base::getInstance().getDeviceContext()->PSSetShader(m_ps.Get(), nullptr, 0);
+  DX11Manager::getInstance().getDeviceContext()->IASetInputLayout(m_inputLayout.Get());
+  DX11Manager::getInstance().getDeviceContext()->VSSetShader(m_vs.Get(), nullptr, 0);
+  DX11Manager::getInstance().getDeviceContext()->PSSetShader(m_ps.Get(), nullptr, 0);
 }
 
 void Pipeline::destroy()
 {
-  SAFE_RELEASE(m_vs);
-  SAFE_RELEASE(m_ps);
-  SAFE_RELEASE(m_input_layout);
+  if (m_vs)
+  {
+    m_vs->Release();
+    m_vs = nullptr;
+  }
+  if (m_ps)
+  {
+    m_ps->Release();
+    m_ps = nullptr;
+  }
+  if (m_inputLayout)
+  {
+    m_inputLayout->Release();
+    m_inputLayout = nullptr;
+  }
 }
 
 bool Pipeline::compileShaderFromFile(const char* szFileName, const char* szEntryPoint, const char* szShaderModel, ID3DBlob** ppBlobOut)
@@ -75,7 +85,7 @@ bool Pipeline::compileShaderFromFile(const char* szFileName, const char* szEntry
   dwShaderFlags |= D3DCOMPILE_SKIP_OPTIMIZATION;
 #endif
 
-  ID3DBlob* pErrorBlob = nullptr;
+  ComPtr<ID3DBlob> pErrorBlob = nullptr;
 
   wchar_t wFilename[MAX_PATH]{};
   size_t convertedCount = 0;
@@ -101,11 +111,7 @@ bool Pipeline::compileShaderFromFile(const char* szFileName, const char* szEntry
     }
     return false;
   }
-  if (pErrorBlob)
-  {
-    pErrorBlob->Release();
-  }
+
   return true;
 }
-
 

@@ -1,10 +1,9 @@
 
+#include "stdafx.h"
+#include "dx11manager.h"
 #include "mesh.h"
-#include "dx11base.h"
-#include "dxhelper.h"
 
-using namespace Render;
-using namespace dx_engine;
+using namespace manager;
 
 Mesh::Mesh()
   : m_vb(nullptr)
@@ -32,7 +31,7 @@ bool Mesh::create(const void* vertices, uint32_t new_nvertices, uint32_t new_byt
 
   D3D11_SUBRESOURCE_DATA subresourceData = {};
   subresourceData.pSysMem = vertices;
-  HRESULT hr = DX11Base::getInstance().getDevice()->CreateBuffer(&bufferDesc, &subresourceData, m_vb.GetAddressOf());
+  HRESULT hr = DX11Manager::getInstance().getDevice()->CreateBuffer(&bufferDesc, &subresourceData, m_vb.GetAddressOf());
   if (FAILED(hr))
   {
     return false;
@@ -46,13 +45,13 @@ void Mesh::activate() const
   // Set vertex buffer
   UINT stride = m_bytesPerVertex;
   UINT offset = 0;
-  DX11Base::getInstance().getDeviceContext()->IASetVertexBuffers(0, 1, m_vb.GetAddressOf(), &stride, &offset);
-  DX11Base::getInstance().getDeviceContext()->IASetPrimitiveTopology((D3D_PRIMITIVE_TOPOLOGY)m_topology);
+  DX11Manager::getInstance().getDeviceContext()->IASetVertexBuffers(0, 1, m_vb.GetAddressOf(), &stride, &offset);
+  DX11Manager::getInstance().getDeviceContext()->IASetPrimitiveTopology((D3D_PRIMITIVE_TOPOLOGY)m_topology);
 }
 
 void Mesh::render() const
 {
-  DX11Base::getInstance().getDeviceContext()->Draw(m_vertices, 0);
+  DX11Manager::getInstance().getDeviceContext()->Draw(m_vertices, 0);
 }
 
 void Mesh::activateAndRender() const
@@ -63,6 +62,10 @@ void Mesh::activateAndRender() const
 
 void Mesh::destroy()
 {
-  SAFE_RELEASE(m_vb);
+  if (m_vb)
+  {
+    m_vb->Release();
+    m_vb = nullptr;
+  }
 }
 

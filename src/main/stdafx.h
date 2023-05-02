@@ -14,25 +14,25 @@
 
 #include <windows.h>
 
-#include <cstdint>
-#include <d3d11.h>
-
-#include <wrl.h>
-#include <shellapi.h>
-#include <shlobj.h>
-#include <shlwapi.h>
-#include <tchar.h>
-
 #include <iostream>
 #include <vector>
 #include <string>
 #include <memory>
+#include <cassert>
+
+#include <wrl/client.h>
+#include <shellapi.h>
+#include <shlobj.h>
+#include <shlwapi.h>
+#include <tchar.h>
 
 #include <mfapi.h>
 #include <mfidl.h>
 #include <mferror.h>
 #include <mfcaptureengine.h>
 #include <powrprof.h>
+
+#include <d3d11.h>
 
 #include "SimpleMath.h"
 
