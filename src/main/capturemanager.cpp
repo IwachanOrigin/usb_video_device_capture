@@ -88,6 +88,32 @@ STDMETHODIMP CaptureManager::CaptureEngineCB::OnEvent(_In_ IMFMediaEvent* event)
 
 // CaptureManager
 
+CaptureManager::CaptureManager()
+  : m_captureEngine(nullptr)
+  , m_capPrevSink(nullptr)
+  , m_capCallback(nullptr)
+  , m_isRecording(false)
+  , m_isPreviewing(false)
+  , m_isPhotoPending(false)
+  , m_errorID(0)
+  , m_event(nullptr)
+  , m_pwrRequest(INVALID_HANDLE_VALUE)
+  , m_isPowerRequestSet(false)
+{
+  WCHAR srs[] = L"CaptureEngine is recording!";
+  REASON_CONTEXT powerContext = {};
+  powerContext.Version = POWER_REQUEST_CONTEXT_VERSION;
+  powerContext.Flags = POWER_REQUEST_CONTEXT_SIMPLE_STRING;
+  powerContext.Reason.SimpleReasonString = srs;
+
+  m_pwrRequest = PowerCreateRequest(&powerContext);
+}
+
+CaptureManager::~CaptureManager()
+{
+  this->destroyCapEngine();
+}
+
 HRESULT CaptureManager::initCaptureManager(IUnknown* pUnk)
 {
   HRESULT hr = S_OK;
@@ -118,8 +144,6 @@ HRESULT CaptureManager::initCaptureManager(IUnknown* pUnk)
     goto Exit;
   }
 
-  // DXGI
-
   // Create the factory object for the capture engine.
   hr = CoCreateInstance(CLSID_MFCaptureEngineClassFactory, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&factory));
   if (FAILED(hr))
@@ -128,13 +152,13 @@ HRESULT CaptureManager::initCaptureManager(IUnknown* pUnk)
   }
 
   // Create and initialize the capture engine.
-  hr = factory->CreateInstance(CLSID_MFCaptureEngine, IID_PPV_ARGS(&m_captureEngine));
+  hr = factory->CreateInstance(CLSID_MFCaptureEngine, IID_PPV_ARGS(m_captureEngine.GetAddressOf()));
   if (FAILED(hr))
   {
     goto Exit;
   }
 
-  hr = m_captureEngine->Initialize(m_capCallback, attributes, nullptr, pUnk);
+  hr = m_captureEngine->Initialize(m_capCallback.Get(), attributes, nullptr, pUnk);
   if (FAILED(hr))
   {
     goto Exit;
@@ -161,7 +185,7 @@ HRESULT CaptureManager::onCapEvent(WPARAM wParam, LPARAM lParam)
 {
   GUID guidType;
   HRESULT hrStatus = S_OK;
-  
+
   IMFMediaEvent* mediaEvent = reinterpret_cast<IMFMediaEvent*>(wParam);
   HRESULT hr = mediaEvent->GetStatus(&hrStatus);
   if (FAILED(hr))
@@ -264,35 +288,34 @@ HRESULT CaptureManager::startPreview()
   // Get a pointer to the preview sink.
   if (m_capPrevSink == nullptr)
   {
-    hr = m_captureEngine->GetSink(MF_CAPTURE_ENGINE_SINK_TYPE_PREVIEW, &sink);
+    hr = m_captureEngine->GetSink(MF_CAPTURE_ENGINE_SINK_TYPE_PREVIEW, sink.GetAddressOf());
     if (FAILED(hr))
     {
       return hr;
     }
 
-    hr = sink->QueryInterface(IID_PPV_ARGS(&m_capPrevSink));
+    hr = sink->QueryInterface(IID_PPV_ARGS(m_capPrevSink.GetAddressOf()));
     if (FAILED(hr))
     {
       return hr;
     }
 
-    // RendarHandle
-
-    hr = m_captureEngine->GetSource(&captureSource);
+    // Get a pointer to the capture source.
+    hr = m_captureEngine->GetSource(captureSource.GetAddressOf());
     if (FAILED(hr))
     {
       return hr;
     }
 
     // Configure the video format for the preview sink.
-    hr = captureSource->GetCurrentDeviceMediaType((DWORD)MF_CAPTURE_ENGINE_PREFERRED_SOURCE_STREAM_FOR_VIDEO_PREVIEW, &mediatype);
+    hr = captureSource->GetCurrentDeviceMediaType((DWORD)MF_CAPTURE_ENGINE_PREFERRED_SOURCE_STREAM_FOR_VIDEO_PREVIEW, mediatype.GetAddressOf());
     if (FAILED(hr))
     {
       return hr;
     }
 
     // format
-    hr = utilCloneVideomediaType(mediatype.Get(), MFVideoFormat_RGB32, &outputMediaType);
+    hr = utilCloneVideomediaType(mediatype.Get(), MFVideoFormat_RGB32, outputMediaType.GetAddressOf());
     if (FAILED(hr))
     {
       return hr;

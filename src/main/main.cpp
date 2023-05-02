@@ -107,6 +107,10 @@ int main(int argc, char* argv[])
     return -1;
   }
 
+  // Initialize capture manager.
+  ThrowIfFailed(g_pEngine->initCaptureManager(devices[selectionNo]));
+  devices[selectionNo]->AddRef();
+
   // Input capture size of width, height, fps
   uint32_t capWidth = 0, capHeight = 0, capFps = 0;
   std::wcout << "Please input capture size of width, height, fps." << std::endl;
@@ -122,9 +126,6 @@ int main(int argc, char* argv[])
   std::wcout << "ex. 1920 1080" << std::endl;
   std::wcout << " > ";
   std::wcin >> windowWidth >> windowHeight;
-
-  ThrowIfFailed(g_pEngine->initCaptureManager(devices[selectionNo]));
-  devices[selectionNo]->AddRef();
 
   // Create main window.
   bool result = Win32MessageHandler::getInstance().init((HINSTANCE)0, 1, windowWidth, windowHeight);
@@ -155,7 +156,7 @@ int main(int argc, char* argv[])
   // Start preview
   ThrowIfFailed(g_pEngine->startPreview());
 
-  // Create dx11 device, context, swapchain  
+  // Create dx11 device, context, swapchain
   result = DX11Manager::getInstance().init(previewWnd);
   if (!result)
   {

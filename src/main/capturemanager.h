@@ -33,9 +33,9 @@ class CaptureManager
     CaptureManager* m_manager;
   };
 
-  IMFCaptureEngine* m_captureEngine;
-  IMFCapturePreviewSink *m_capPrevSink;
-  CaptureEngineCB* m_capCallback;
+  ComPtr<IMFCaptureEngine> m_captureEngine;
+  ComPtr<IMFCapturePreviewSink> m_capPrevSink;
+  ComPtr<CaptureEngineCB> m_capCallback;
   bool m_isPreviewing;
   bool m_isRecording;
   bool m_isPhotoPending;
@@ -45,32 +45,10 @@ class CaptureManager
   HANDLE m_pwrRequest;
   bool m_isPowerRequestSet;
 
-  CaptureManager()
-  {
-    m_captureEngine = nullptr;
-    m_capPrevSink = nullptr;
-    m_capCallback = nullptr;
-    m_isRecording = false;
-    m_isPreviewing = false;
-    m_isPhotoPending = false;
-    m_errorID = 0;
-    m_event = nullptr;
-    m_pwrRequest = INVALID_HANDLE_VALUE;
-    m_isPowerRequestSet = false;
+  // Constractor
+  explicit CaptureManager();
 
-    WCHAR srs[] = L"CaptureEngine is recording!";
-    REASON_CONTEXT powerContext = {};
-    powerContext.Version = POWER_REQUEST_CONTEXT_VERSION;
-    powerContext.Flags = POWER_REQUEST_CONTEXT_SIMPLE_STRING;
-    powerContext.Reason.SimpleReasonString = srs;
-
-    m_pwrRequest = PowerCreateRequest(&powerContext);
-  }
-
-  void setErrorID(HRESULT hr, UINT id)
-  {
-    m_errorID = SUCCEEDED(hr) ? 0 : id;
-  }
+  void setErrorID(HRESULT hr, UINT id) { m_errorID = SUCCEEDED(hr) ? 0 : id; }
 
   // Capture engine event handlers
   void onCapEngineInited(HRESULT& hr);
@@ -78,16 +56,10 @@ class CaptureManager
   void onPreviewStopped(HRESULT& hr);
   void onRecordStarted(HRESULT& hr);
   void onRecordStopped(HRESULT& hr);
-  void waitForResult()
-  {
-    WaitForSingleObject(m_event, INFINITE);
-  }
+  void waitForResult() { WaitForSingleObject(m_event, INFINITE); }
 
 public:
-  ~CaptureManager()
-  {
-    this->destroyCapEngine();
-  }
+  ~CaptureManager();
 
   static HRESULT createInst(CaptureManager** ppEngine)
   {
@@ -115,19 +87,14 @@ public:
       m_event = nullptr;
     }
 
-    SAFE_RELEASE(m_capPrevSink);
-    SAFE_RELEASE(m_captureEngine);
-    SAFE_RELEASE(m_capCallback);
-
     m_isPreviewing = false;
     m_isRecording = false;
     m_isPhotoPending = false;
     m_errorID = 0;
   }
 
-
   HRESULT initCaptureManager(IUnknown* pUnk);
-  
+
   bool isPreviewing() const { return m_isPreviewing; }
   bool isRecording() const { return m_isRecording; }
   bool isPhotoPending() const { return m_isPhotoPending; }
