@@ -138,17 +138,15 @@ HRESULT GetVideoSourceFromDevice(UINT nDevice, IMFMediaSource** ppVideoSource, I
   return hr;
 }
 
-bool findMatchFormatTypes(const uint32_t& capWidth, const uint32_t& capHeight, const uint32_t& capFps)
+bool findMatchFormatTypes(const int& deviceIndex, const uint32_t& capWidth, const uint32_t& capHeight, const uint32_t& capFps)
 {
   HRESULT hr = S_OK;
   ComPtr<IMFMediaSource> pVideoSource = nullptr;
   ComPtr<IMFSourceReader> pVideoReader = nullptr;
   ComPtr<IMFPresentationDescriptor> pSourcePresentationDescriptor = nullptr;
   BOOL fSelected = false;
-  int currentVideoDeviceIndex = 0;
-  //int currentAudioDeviceIndex = 0;
 
-  hr = GetVideoSourceFromDevice(currentVideoDeviceIndex, &pVideoSource, &pVideoReader);
+  hr = GetVideoSourceFromDevice(deviceIndex, &pVideoSource, &pVideoReader);
   if (FAILED(hr))
   {
     std::wcout << "Failed to GetVideoSourceFromDevice func." << std::endl;
@@ -327,7 +325,7 @@ int main(int argc, char* argv[])
   std::wcin >> capWidth >> capHeight >> capFps;
   std::wcout << std::endl;
   // Check whether the selected USB device supports the input resolution and frame rate.
-  bool result = findMatchFormatTypes(capWidth, capHeight, capFps);
+  bool result = findMatchFormatTypes(selectionNo, capWidth, capHeight, capFps);
   if (!result)
   {
     std::wcout << "No matching format." << std::endl;
