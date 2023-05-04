@@ -393,6 +393,7 @@ int main(int argc, char* argv[])
 
     ThrowIfFailed(MFShutdown());
     CoUninitialize();
+    return -1;
   }
 
   // Start preview
