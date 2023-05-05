@@ -15,6 +15,8 @@
 #pragma comment(lib, "d3d11")
 #pragma comment(lib, "d3dcompiler")
 
+#pragma comment(lib, "SDL2")
+
 using namespace helper;
 using namespace message_handler;
 using namespace manager;

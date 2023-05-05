@@ -20,6 +20,8 @@ set_source_files_properties(videoPS.hlsl
 add_custom_target(hlsl SOURCES ${hlsl_srcs})
 
 set(main_src
+  audiodevicemanager.h
+  audiodevicemanager.cpp
   captureenginevideocallback.cpp
   captureenginevideocallback.h
   capturemanager.cpp

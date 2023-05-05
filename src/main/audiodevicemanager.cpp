@@ -13,7 +13,7 @@ AudioDeviceManager::~AudioDeviceManager()
 {
 	if (m_deviceID > 0)
 	{
-		SDL_CloseAudioDeviceManager(m_deviceID);
+		SDL_CloseAudioDevice(m_deviceID);
 	}
 	SDL_Quit();
 }
@@ -36,8 +36,8 @@ int AudioDeviceManager::init(const int audio_device_index)
   wants.channels = 2;
   wants.samples = 4096;
 
-  const char* audioDeviceName = SDL_GetAudioDeviceManagerName(audio_device_index, 0);
-  m_deviceID = SDL_OpenAudioDeviceManager(audioDeviceName, false, &wants, &spec, 0);
+  const char* audioDeviceName = SDL_GetAudioDeviceName(audio_device_index, 0);
+  m_deviceID = SDL_OpenAudioDevice(audioDeviceName, false, &wants, &spec, 0);
 
   if (m_deviceID <= 0)
   {
@@ -60,7 +60,7 @@ int AudioDeviceManager::start()
   {
     SDL_ClearQueuedAudio(m_deviceID);
   }
-  SDL_PauseAudioDeviceManager(m_deviceID, 0);
+  SDL_PauseAudioDevice(m_deviceID, 0);
 
   return 0;
 }
@@ -77,7 +77,7 @@ int AudioDeviceManager::stop()
   {
     SDL_ClearQueuedAudio(m_deviceID);
   }
-  SDL_PauseAudioDeviceManager(m_deviceID, 1);
+  SDL_PauseAudioDevice(m_deviceID, 1);
 
   return 0;
 }
