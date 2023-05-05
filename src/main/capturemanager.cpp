@@ -92,8 +92,8 @@ CaptureManager::CaptureManager()
   : m_captureEngine(nullptr)
   , m_capPrevSink(nullptr)
   , m_capCallback(nullptr)
-  , m_isRecording(false)
   , m_isPreviewing(false)
+  , m_isRecording(false)
   , m_isPhotoPending(false)
   , m_errorID(0)
   , m_event(nullptr)
@@ -263,8 +263,8 @@ HRESULT CaptureManager::startPreview(const uint32_t& width, const uint32_t& heig
   }
 
   ComPtr<IMFCaptureSink> sink = nullptr;
-  ComPtr<IMFMediaType> mediatype = nullptr;
-  ComPtr<IMFMediaType> outputMediaType = nullptr;
+  ComPtr<IMFMediaType> inputVideoMediatype = nullptr;
+  ComPtr<IMFMediaType> outputVideoMediaType = nullptr;
   ComPtr<IMFCaptureSource> captureSource = nullptr;
 
   HRESULT hr = S_OK;
@@ -292,52 +292,60 @@ HRESULT CaptureManager::startPreview(const uint32_t& width, const uint32_t& heig
     }
 
     // Configure the video format for the preview sink.
-    hr = captureSource->GetCurrentDeviceMediaType((DWORD)MF_CAPTURE_ENGINE_PREFERRED_SOURCE_STREAM_FOR_VIDEO_PREVIEW, mediatype.GetAddressOf());
+    hr = captureSource->GetCurrentDeviceMediaType((DWORD)MF_CAPTURE_ENGINE_PREFERRED_SOURCE_STREAM_FOR_VIDEO_PREVIEW, inputVideoMediatype.GetAddressOf());
     if (FAILED(hr))
     {
       return hr;
     }
 
     // format
-    hr = utilCloneVideomediaType(mediatype.Get(), MFVideoFormat_RGB32, outputMediaType.GetAddressOf());
+    hr = utilCloneVideomediaType(inputVideoMediatype.Get(), MFVideoFormat_RGB32, outputVideoMediaType.GetAddressOf());
     if (FAILED(hr))
     {
       return hr;
     }
 
     // frame size
-    hr = MFSetAttributeSize(outputMediaType.Get(), MF_MT_FRAME_SIZE, width, height);
+    hr = MFSetAttributeSize(outputVideoMediaType.Get(), MF_MT_FRAME_SIZE, width, height);
     if (FAILED(hr))
     {
       return hr;
     }
 
     // fps
-    hr = MFSetAttributeRatio(outputMediaType.Get(), MF_MT_FRAME_RATE, fpsNum, 1);
+    hr = MFSetAttributeRatio(outputVideoMediaType.Get(), MF_MT_FRAME_RATE, fpsNum, 1);
     if (FAILED(hr))
     {
       return hr;
     }
 
-    hr = outputMediaType->SetUINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, true);
+    hr = outputVideoMediaType->SetUINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, true);
     if (FAILED(hr))
     {
       return hr;
     }
 
     // Connect the video stream to the preview sink.
-    DWORD dwSinkStreamIndex = 0;
-    hr = m_capPrevSink->AddStream((DWORD)MF_CAPTURE_ENGINE_PREFERRED_SOURCE_STREAM_FOR_VIDEO_PREVIEW, outputMediaType.Get(), nullptr, &dwSinkStreamIndex);
+    DWORD dwSinkStreamVideoIndex = 0;
+    hr = m_capPrevSink->AddStream((DWORD)MF_CAPTURE_ENGINE_PREFERRED_SOURCE_STREAM_FOR_VIDEO_PREVIEW, outputVideoMediaType.Get(), nullptr, &dwSinkStreamVideoIndex);
     if (FAILED(hr))
     {
       return hr;
     }
 
-    hr = m_capPrevSink->SetSampleCallback(dwSinkStreamIndex, new CaptureEngineVideoCB(width, height));
+    hr = m_capPrevSink->SetSampleCallback(dwSinkStreamVideoIndex, new CaptureEngineVideoCB(width, height));
     if (FAILED(hr))
     {
       return hr;
     }
+#if 0
+    DWORD dwSinkStreamAudioIndex = 0;
+    hr = m_capPrevSink->AddStream((DWORD)MF_CAPTURE_ENGINE_PREFERRED_SOURCE_STREAM_FOR_AUDIO, outputVideoMediaType.Get(), nullptr, &dwSinkStreamAudioIndex);
+    if (FAILED(hr))
+    {
+      return hr;
+    }
+#endif
   }
 
   hr = m_captureEngine->StartPreview();
