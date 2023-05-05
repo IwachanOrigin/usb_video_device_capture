@@ -23,5 +23,9 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 set_property(GLOBAL PROPERTY AUTOGEN_TARGETS_FOLDER AutoGenFiles)
 set_property(GLOBAL PROPERTY AUTOGEN_SOURCE_GROUP AutoGenFiles)
 
+# add external lib/headers
+include_directories(assets/lib/sdl2/include)
+link_directories(assets/lib/sdl2/lib/x64)
+
 add_subdirectory(main)
 
