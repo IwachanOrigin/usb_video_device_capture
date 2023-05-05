@@ -52,7 +52,7 @@ STDMETHODIMP CaptureEngineVideoCB::OnSample(_In_ IMFSample* sample)
   // RGB32 is 4 bit per pixel
   UINT32 pitch = 4 * m_capWidth;
   ComPtr<IMFMediaBuffer> buf = nullptr;
-  hr = sample->ConvertToContiguousBuffer(&buf);
+  hr = sample->ConvertToContiguousBuffer(buf.GetAddressOf());
   if (FAILED(hr))
   {
     sample->Release();

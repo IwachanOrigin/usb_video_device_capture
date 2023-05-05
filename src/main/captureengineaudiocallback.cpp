@@ -36,7 +36,38 @@ STDMETHODIMP CaptureEngineAudioCB::OnSample(_In_ IMFSample* sample)
     return S_OK;
   }
 
+  DWORD dwTotalLength = 0;
+  HRESULT hr = sample->GetTotalLength(&dwTotalLength);
+  if (SUCCEEDED(hr))
+  {
+    std::wcout << "Buffer size : " << dwTotalLength << std::endl;
+  }
+
+  sample->AddRef();
+
+  ComPtr<IMFMediaBuffer> buf = nullptr;
+  hr = sample->ConvertToContiguousBuffer(buf.GetAddressOf());
+  if (FAILED(hr))
+  {
+    sample->Release();
+    return E_FAIL;
+  }
+
+  byte* byteBuffer = nullptr;
+  DWORD buffCurrLen = 0;
+  hr = buf->Lock(&byteBuffer, NULL, &buffCurrLen);
+  if (FAILED(hr))
+  {
+    buf->Unlock();
+    sample->Release();
+    return E_FAIL;
+  }
+
+  // Audio rendering
+
+
   sample->Release();
+  buf->Unlock();
 
   return S_OK;
 }
