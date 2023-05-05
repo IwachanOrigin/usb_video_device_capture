@@ -28,20 +28,39 @@ void getVideoDevices(IMFActivate*** pppRawDevice, uint32_t& count)
 {
   std::shared_ptr<IMFAttributes> pAttributes;
   IMFAttributes* pRawAttributes = nullptr;
-  ThrowIfFailed(MFCreateAttributes(&pRawAttributes, 1));
+  HRESULT hr = MFCreateAttributes(&pRawAttributes, 1);
+  if (FAILED(hr))
+  {
+    MessageBoxW(nullptr, L"Failed to create attributes.", L"Error", MB_OK);
+    return;
+  }
   pAttributes = std::shared_ptr<IMFAttributes>(pRawAttributes, [](auto* p) { p->Release(); });
 
-  ThrowIfFailed(pAttributes->SetGUID(MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE, MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_GUID));
+  hr = pAttributes->SetGUID(MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE, MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_GUID);
+  if (FAILED(hr))
+  {
+    MessageBoxW(nullptr, L"Failed to set MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE for attribute.", L"Error", MB_OK);
+    return;
+  }
 
   count = 0;
   IMFActivate** ppRawDevice = nullptr;
-  ThrowIfFailed(MFEnumDeviceSources(pAttributes.get(), &ppRawDevice, &count));
+  hr = MFEnumDeviceSources(pAttributes.get(), &ppRawDevice, &count);
+  if (FAILED(hr))
+  {
+    MessageBoxW(nullptr, L"Failed to Enumerate device sources.", L"Error", MB_OK);
+    return;
+  }
 
   for (uint32_t i = 0; i < count; i++)
   {
     wchar_t* buffer = nullptr;
     uint32_t length = 0;
-    ThrowIfFailed(ppRawDevice[i]->GetAllocatedString(MF_DEVSOURCE_ATTRIBUTE_FRIENDLY_NAME, &buffer, &length));
+    hr = ppRawDevice[i]->GetAllocatedString(MF_DEVSOURCE_ATTRIBUTE_FRIENDLY_NAME, &buffer, &length);
+    if (FAILED(hr))
+    {
+      continue;
+    }
     std::wcout << "No. " << i << " : " << buffer << std::endl;
   }
   pppRawDevice = &ppRawDevice;
@@ -265,8 +284,18 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 int main(int argc, char* argv[])
 {
   // INIT
-  ThrowIfFailed(CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE));
-  ThrowIfFailed(MFStartup(MF_VERSION));
+  HRESULT hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+  if (FAILED(hr))
+  {
+    std::wcout << "Failed to initialize the COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE" << std::endl;
+    return -1;
+  }
+  hr = MFStartup(MF_VERSION);
+  if (FAILED(hr))
+  {
+    std::wcout << "Failed to initialize the media foundation." << std::endl;
+    return -1;
+  }
 
   // Get devices.
   uint32_t deviceCount = 0;
@@ -277,9 +306,19 @@ int main(int argc, char* argv[])
     ThrowIfFailed(MFCreateAttributes(&pRawAttributes, 1));
     pAttributes = std::shared_ptr<IMFAttributes>(pRawAttributes, [](auto* p) { p->Release(); });
 
-    ThrowIfFailed(pAttributes->SetGUID(MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE, MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_GUID));
+    hr = pAttributes->SetGUID(MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE, MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_GUID);
+    if (FAILED(hr))
+    {
+      std::wcout << "Failed to set attribute to MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE." << std::endl;
+      return -1;
+    }
 
-    ThrowIfFailed(MFEnumDeviceSources(pAttributes.get(), &devices, &deviceCount));
+    hr = MFEnumDeviceSources(pAttributes.get(), &devices, &deviceCount);
+    if (FAILED(hr))
+    {
+      std::wcout << "Failed to initialize the media foundation." << std::endl;
+      return -1;
+    }
 
     for (uint32_t i = 0; i < deviceCount; i++)
     {
@@ -319,7 +358,12 @@ int main(int argc, char* argv[])
   }
 
   // Initialize capture manager.
-  ThrowIfFailed(g_pEngine->initCaptureManager(devices[selectionNo]));
+  hr = g_pEngine->initCaptureManager(devices[selectionNo]);
+  if (FAILED(hr))
+  {
+    std::wcout << "Failed to init capture manager." << std::endl;
+    return -1;
+  }
   devices[selectionNo]->AddRef();
 
   // Input capture size of width, height, fps
@@ -417,7 +461,12 @@ int main(int argc, char* argv[])
   }
 
   // Start preview
-  ThrowIfFailed(g_pEngine->startPreview(capWidth, capHeight, capFps));
+  hr = g_pEngine->startPreview(capWidth, capHeight, capFps);
+  if (FAILED(hr))
+  {
+    std::wcout << "Failed to start device preview." << std::endl;
+    return -1;
+  }
 
   // Start message loop
   Win32MessageHandler::getInstance().run();

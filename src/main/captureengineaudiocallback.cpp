@@ -63,7 +63,7 @@ STDMETHODIMP CaptureEngineAudioCB::OnSample(_In_ IMFSample* sample)
     sample->Release();
     return E_FAIL;
   }
-#if 1
+
   // Audio rendering
   if (AudioDeviceManager::getInstance().getStatus())
   {
@@ -73,7 +73,6 @@ STDMETHODIMP CaptureEngineAudioCB::OnSample(_In_ IMFSample* sample)
       std::wcout << "Failed to render audio." << std::endl;
     }
   }
-#endif
 
   sample->Release();
   buf->Unlock();
