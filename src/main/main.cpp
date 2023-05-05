@@ -4,6 +4,7 @@
 #include "win32messagehandler.h"
 #include "capturemanager.h"
 #include "dx11manager.h"
+#include "audiodevicemanager.h"
 
 #pragma comment(lib, "mf")
 #pragma comment(lib, "mfplat")
@@ -16,6 +17,8 @@
 #pragma comment(lib, "d3dcompiler")
 
 #pragma comment(lib, "SDL2")
+
+#undef main // for SDL2
 
 using namespace helper;
 using namespace message_handler;
@@ -397,6 +400,9 @@ int main(int argc, char* argv[])
     CoUninitialize();
     return -1;
   }
+
+  // Setup audio device
+  AudioDeviceManager::getInstance().init(0);
 
   // Start preview
   ThrowIfFailed(g_pEngine->startPreview(capWidth, capHeight, capFps));

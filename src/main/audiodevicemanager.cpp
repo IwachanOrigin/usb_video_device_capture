@@ -18,6 +18,12 @@ AudioDeviceManager::~AudioDeviceManager()
 	SDL_Quit();
 }
 
+AudioDeviceManager& AudioDeviceManager::getInstance()
+{
+  static AudioDeviceManager inst;
+  return inst;
+}
+
 int AudioDeviceManager::init(const int audio_device_index)
 {
   if (audio_device_index < 0)
@@ -42,6 +48,8 @@ int AudioDeviceManager::init(const int audio_device_index)
   if (m_deviceID <= 0)
   {
     m_status = false;
+    delete audioDeviceName;
+    audioDeviceName = nullptr;
     return -1;
   }
   m_status = true;
