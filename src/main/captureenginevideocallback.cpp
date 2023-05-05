@@ -6,22 +6,22 @@
 
 using namespace Microsoft::WRL;
 
-STDMETHODIMP CaptureEngineSampleCB::QueryInterface(REFIID riid, void** ppv)
+STDMETHODIMP CaptureEngineVideoCB::QueryInterface(REFIID riid, void** ppv)
 {
   static const QITAB qit[] =
   {
-    QITABENT(CaptureEngineSampleCB, IMFCaptureEngineOnSampleCallback)
+    QITABENT(CaptureEngineVideoCB, IMFCaptureEngineOnSampleCallback)
     , { 0 }
   };
   return QISearch(this, qit, riid, ppv);
 }
 
-STDMETHODIMP_(ULONG) CaptureEngineSampleCB::AddRef()
+STDMETHODIMP_(ULONG) CaptureEngineVideoCB::AddRef()
 {
   return InterlockedIncrement(&m_ref);
 }
 
-STDMETHODIMP_(ULONG) CaptureEngineSampleCB::Release()
+STDMETHODIMP_(ULONG) CaptureEngineVideoCB::Release()
 {
   LONG ref = InterlockedDecrement(&m_ref);
   if (ref == 0)
@@ -31,7 +31,7 @@ STDMETHODIMP_(ULONG) CaptureEngineSampleCB::Release()
   return ref;
 }
 
-STDMETHODIMP CaptureEngineSampleCB::OnSample(_In_ IMFSample* sample)
+STDMETHODIMP CaptureEngineVideoCB::OnSample(_In_ IMFSample* sample)
 {
   if (sample == nullptr)
   {
