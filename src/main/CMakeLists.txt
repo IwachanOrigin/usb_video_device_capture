@@ -22,6 +22,8 @@ add_custom_target(hlsl SOURCES ${hlsl_srcs})
 set(main_src
   audiodevicemanager.h
   audiodevicemanager.cpp
+  captureengineaudiocallback.cpp
+  captureengineaudiocallback.h
   captureenginevideocallback.cpp
   captureenginevideocallback.h
   capturemanager.cpp

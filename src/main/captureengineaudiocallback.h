@@ -10,6 +10,7 @@ class CaptureEngineAudioCB : public IMFCaptureEngineOnSampleCallback
 
 public:
   CaptureEngineAudioCB() : m_ref(1) {}
+  virtual ~CaptureEngineAudioCB() = default;
 
   // IUnknown
   STDMETHODIMP QueryInterface(REFIID riid, void** ppv);

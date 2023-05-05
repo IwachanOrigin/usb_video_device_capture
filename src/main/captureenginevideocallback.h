@@ -12,6 +12,7 @@ class CaptureEngineVideoCB : public IMFCaptureEngineOnSampleCallback
 
 public:
   CaptureEngineVideoCB(const uint32_t& width, const uint32_t& height) : m_ref(1), m_capWidth(width), m_capHeight(height) {}
+  virtual ~CaptureEngineVideoCB() = default;
 
   // IUnknown
   STDMETHODIMP QueryInterface(REFIID riid, void** ppv);

@@ -1,5 +1,6 @@
 
 #include "stdafx.h"
+#include "audiodevicemanager.h"
 #include "captureengineaudiocallback.h"
 
 using namespace Microsoft::WRL;
@@ -40,7 +41,7 @@ STDMETHODIMP CaptureEngineAudioCB::OnSample(_In_ IMFSample* sample)
   HRESULT hr = sample->GetTotalLength(&dwTotalLength);
   if (SUCCEEDED(hr))
   {
-    std::wcout << "Buffer size : " << dwTotalLength << std::endl;
+    //std::wcout << "Buffer size : " << dwTotalLength << std::endl;
   }
 
   sample->AddRef();
@@ -62,9 +63,17 @@ STDMETHODIMP CaptureEngineAudioCB::OnSample(_In_ IMFSample* sample)
     sample->Release();
     return E_FAIL;
   }
-
+#if 0
   // Audio rendering
-
+  if (AudioDeviceManager::getInstance().getStatus())
+  {
+    bool result = AudioDeviceManager::getInstance().render(byteBuffer, buffCurrLen);
+    if (!result)
+    {
+      std::wcout << "Failed to render audio." << std::endl;
+    }
+  }
+#endif
 
   sample->Release();
   buf->Unlock();

@@ -14,6 +14,7 @@ public:
 
   int init(const int audio_device_index);
   int start();
+  bool render(const uint8_t* new_data, size_t data_size);
   int stop();
 
   SDL_AudioDeviceID getAudioID() { return m_deviceID; }

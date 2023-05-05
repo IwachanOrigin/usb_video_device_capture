@@ -2,6 +2,7 @@
 #include "stdafx.h"
 #include "utils.h"
 #include "captureenginevideocallback.h"
+#include "captureengineaudiocallback.h"
 #include "capturemanager.h"
 
 using namespace helper;
@@ -263,8 +264,9 @@ HRESULT CaptureManager::startPreview(const uint32_t& width, const uint32_t& heig
   }
 
   ComPtr<IMFCaptureSink> sink = nullptr;
-  ComPtr<IMFMediaType> inputVideoMediatype = nullptr;
+  ComPtr<IMFMediaType> inputVideoMediaType = nullptr;
   ComPtr<IMFMediaType> outputVideoMediaType = nullptr;
+  ComPtr<IMFMediaType> audioMediaType = nullptr;
   ComPtr<IMFCaptureSource> captureSource = nullptr;
 
   HRESULT hr = S_OK;
@@ -292,14 +294,14 @@ HRESULT CaptureManager::startPreview(const uint32_t& width, const uint32_t& heig
     }
 
     // Configure the video format for the preview sink.
-    hr = captureSource->GetCurrentDeviceMediaType((DWORD)MF_CAPTURE_ENGINE_PREFERRED_SOURCE_STREAM_FOR_VIDEO_PREVIEW, inputVideoMediatype.GetAddressOf());
+    hr = captureSource->GetCurrentDeviceMediaType((DWORD)MF_CAPTURE_ENGINE_PREFERRED_SOURCE_STREAM_FOR_VIDEO_PREVIEW, inputVideoMediaType.GetAddressOf());
     if (FAILED(hr))
     {
       return hr;
     }
 
     // format
-    hr = utilCloneVideomediaType(inputVideoMediatype.Get(), MFVideoFormat_RGB32, outputVideoMediaType.GetAddressOf());
+    hr = utilCloneVideomediaType(inputVideoMediaType.Get(), MFVideoFormat_RGB32, outputVideoMediaType.GetAddressOf());
     if (FAILED(hr))
     {
       return hr;
@@ -319,7 +321,15 @@ HRESULT CaptureManager::startPreview(const uint32_t& width, const uint32_t& heig
       return hr;
     }
 
+    // https://learn.microsoft.com/ja-jp/windows/win32/medfound/mf-mt-all-samples-independent-attribute
     hr = outputVideoMediaType->SetUINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, true);
+    if (FAILED(hr))
+    {
+      return hr;
+    }
+
+    // Configure the audio format for the preview sink.
+    hr = captureSource->GetCurrentDeviceMediaType((DWORD)MF_CAPTURE_ENGINE_PREFERRED_SOURCE_STREAM_FOR_AUDIO, audioMediaType.GetAddressOf());
     if (FAILED(hr))
     {
       return hr;
@@ -338,14 +348,19 @@ HRESULT CaptureManager::startPreview(const uint32_t& width, const uint32_t& heig
     {
       return hr;
     }
-#if 0
+
     DWORD dwSinkStreamAudioIndex = 0;
-    hr = m_capPrevSink->AddStream((DWORD)MF_CAPTURE_ENGINE_PREFERRED_SOURCE_STREAM_FOR_AUDIO, outputVideoMediaType.Get(), nullptr, &dwSinkStreamAudioIndex);
+    hr = m_capPrevSink->AddStream((DWORD)MF_CAPTURE_ENGINE_PREFERRED_SOURCE_STREAM_FOR_AUDIO, audioMediaType.Get(), nullptr, &dwSinkStreamAudioIndex);
     if (FAILED(hr))
     {
       return hr;
     }
-#endif
+
+    hr = m_capPrevSink->SetSampleCallback(dwSinkStreamAudioIndex, new CaptureEngineAudioCB());
+    if (FAILED(hr))
+    {
+      return hr;
+    }
   }
 
   hr = m_captureEngine->StartPreview();

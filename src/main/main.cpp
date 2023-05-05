@@ -402,7 +402,19 @@ int main(int argc, char* argv[])
   }
 
   // Setup audio device
-  AudioDeviceManager::getInstance().init(0);
+  int errCode = AudioDeviceManager::getInstance().init(0);
+  if (errCode == 0)
+  {
+    errCode = AudioDeviceManager::getInstance().start();
+    if (errCode != 0)
+    {
+      std::wcout << "Failed to start audio device." << std::endl;
+    }
+  }
+  else
+  {
+    std::wcout << "Failed to initialize the audio device." << std::endl;
+  }
 
   // Start preview
   ThrowIfFailed(g_pEngine->startPreview(capWidth, capHeight, capFps));
@@ -412,6 +424,13 @@ int main(int argc, char* argv[])
 
   // Stop preview
   ThrowIfFailed(g_pEngine->stopPreview());
+
+  // Stop audio
+  errCode = AudioDeviceManager::getInstance().stop();
+  if (errCode != 0)
+  {
+    std::wcout << "Failed to stop audio device." << std::endl;
+  }
 
   // Release
   if (g_pEngine)

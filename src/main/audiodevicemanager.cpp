@@ -32,8 +32,8 @@ int AudioDeviceManager::init(const int audio_device_index)
   }
 	SDL_Init(SDL_INIT_AUDIO);
 
-  SDL_AudioSpec wants;
-  SDL_AudioSpec spec;
+  SDL_AudioSpec wants{};
+  SDL_AudioSpec spec{};
 
   SDL_memset(&wants, '\0', sizeof(wants));
 
@@ -71,6 +71,13 @@ int AudioDeviceManager::start()
   SDL_PauseAudioDevice(m_deviceID, 0);
 
   return 0;
+}
+
+bool AudioDeviceManager::render(const uint8_t* new_data, size_t data_size)
+{
+  // Returns 0 on success or a negative error code on failure.
+  int result = SDL_QueueAudio(m_deviceID, new_data, data_size);
+  return result == 0 ? true : false;
 }
 
 int AudioDeviceManager::stop()
