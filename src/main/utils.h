@@ -90,6 +90,66 @@ inline HRESULT utilCloneVideomediaType(IMFMediaType* srcMediaType, REFGUID guidS
   return hr;
 }
 
+// Create a compatible audio format with a different subtype.
+inline HRESULT utilCloneAudiomediaType(IMFMediaType* srcMediaType, REFGUID guidSubType, IMFMediaType** ppNewMediaType)
+{
+  ComPtr<IMFMediaType> newMediaType = nullptr;
+
+  HRESULT hr = MFCreateMediaType(newMediaType.GetAddressOf());
+  if (FAILED(hr))
+  {
+    return hr;
+  }
+
+  hr = newMediaType->SetGUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio);
+  if (FAILED(hr))
+  {
+    return hr;
+  }
+
+  hr = newMediaType->SetGUID(MF_MT_SUBTYPE, guidSubType);
+  if (FAILED(hr))
+  {
+    return hr;
+  }
+
+  hr = utilCopyAttribute(srcMediaType, newMediaType.Get(), MF_MT_AUDIO_NUM_CHANNELS);
+  if (FAILED(hr))
+  {
+    return hr;
+  }
+
+  hr = utilCopyAttribute(srcMediaType, newMediaType.Get(), MF_MT_AUDIO_SAMPLES_PER_SECOND);
+  if (FAILED(hr))
+  {
+    return hr;
+  }
+
+  hr = utilCopyAttribute(srcMediaType, newMediaType.Get(), MF_MT_AUDIO_BLOCK_ALIGNMENT);
+  if (FAILED(hr))
+  {
+    return hr;
+  }
+
+  hr = utilCopyAttribute(srcMediaType, newMediaType.Get(), MF_MT_AUDIO_AVG_BYTES_PER_SECOND);
+  if (FAILED(hr))
+  {
+    return hr;
+  }
+
+  hr = utilCopyAttribute(srcMediaType, newMediaType.Get(), MF_MT_AUDIO_BITS_PER_SAMPLE);
+  if (FAILED(hr))
+  {
+    return hr;
+  }
+
+  *ppNewMediaType = newMediaType.Get();
+  (*ppNewMediaType)->AddRef();
+
+  return hr;
+}
+
+
 // Helper function to get the frame size from a video media type.
 inline HRESULT utilGetFrameSize(IMFMediaType* type, UINT32* width, UINT32* height)
 {

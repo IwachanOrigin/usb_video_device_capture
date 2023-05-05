@@ -63,7 +63,7 @@ STDMETHODIMP CaptureEngineAudioCB::OnSample(_In_ IMFSample* sample)
     sample->Release();
     return E_FAIL;
   }
-#if 0
+#if 1
   // Audio rendering
   if (AudioDeviceManager::getInstance().getStatus())
   {

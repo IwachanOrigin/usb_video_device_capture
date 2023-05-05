@@ -266,7 +266,8 @@ HRESULT CaptureManager::startPreview(const uint32_t& width, const uint32_t& heig
   ComPtr<IMFCaptureSink> sink = nullptr;
   ComPtr<IMFMediaType> inputVideoMediaType = nullptr;
   ComPtr<IMFMediaType> outputVideoMediaType = nullptr;
-  ComPtr<IMFMediaType> audioMediaType = nullptr;
+  ComPtr<IMFMediaType> inputAudioMediaType = nullptr;
+  ComPtr<IMFMediaType> outputAudioMediaType = nullptr;
   ComPtr<IMFCaptureSource> captureSource = nullptr;
 
   HRESULT hr = S_OK;
@@ -329,7 +330,56 @@ HRESULT CaptureManager::startPreview(const uint32_t& width, const uint32_t& heig
     }
 
     // Configure the audio format for the preview sink.
-    hr = captureSource->GetCurrentDeviceMediaType((DWORD)MF_CAPTURE_ENGINE_PREFERRED_SOURCE_STREAM_FOR_AUDIO, audioMediaType.GetAddressOf());
+    hr = captureSource->GetCurrentDeviceMediaType((DWORD)MF_CAPTURE_ENGINE_PREFERRED_SOURCE_STREAM_FOR_AUDIO, inputAudioMediaType.GetAddressOf());
+    if (FAILED(hr))
+    {
+      return hr;
+    }
+
+    // audio format
+    hr = utilCloneAudiomediaType(inputAudioMediaType.Get(), MFAudioFormat_PCM, outputAudioMediaType.GetAddressOf());
+    if (FAILED(hr))
+    {
+      return hr;
+    }
+#if 1
+    // channel count
+    hr = outputAudioMediaType->SetUINT32(MF_MT_AUDIO_NUM_CHANNELS, 2);
+    if (FAILED(hr))
+    {
+      return hr;
+    }
+
+    // 
+    hr = outputAudioMediaType->SetUINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 48000);
+    if (FAILED(hr))
+    {
+      return hr;
+    }
+
+    // 
+    hr = outputAudioMediaType->SetUINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, 4);
+    if (FAILED(hr))
+    {
+      return hr;
+    }
+
+    // 
+    hr = outputAudioMediaType->SetUINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 48000 * 4);
+    if (FAILED(hr))
+    {
+      return hr;
+    }
+
+    // 
+    hr = outputAudioMediaType->SetUINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 16);
+    if (FAILED(hr))
+    {
+      return hr;
+    }
+#endif
+    // 
+    hr = outputAudioMediaType->SetUINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, true);
     if (FAILED(hr))
     {
       return hr;
@@ -349,8 +399,9 @@ HRESULT CaptureManager::startPreview(const uint32_t& width, const uint32_t& heig
       return hr;
     }
 
+    // Connect the audio stream to the preview sink.
     DWORD dwSinkStreamAudioIndex = 0;
-    hr = m_capPrevSink->AddStream((DWORD)MF_CAPTURE_ENGINE_PREFERRED_SOURCE_STREAM_FOR_AUDIO, audioMediaType.Get(), nullptr, &dwSinkStreamAudioIndex);
+    hr = m_capPrevSink->AddStream((DWORD)MF_CAPTURE_ENGINE_PREFERRED_SOURCE_STREAM_FOR_AUDIO, outputAudioMediaType.Get(), nullptr, &dwSinkStreamAudioIndex);
     if (FAILED(hr))
     {
       return hr;
