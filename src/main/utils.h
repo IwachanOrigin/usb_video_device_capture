@@ -5,6 +5,8 @@
 #include "stdafx.h"
 #include "dxhelper.h"
 
+using Microsoft::WRL::ComPtr;
+
 namespace helper
 {
 
@@ -22,7 +24,7 @@ HRESULT utilGetCollectionObject(IMFCollection* collection, DWORD index, IFACE** 
   return hr;
 }
 
-HRESULT utilCopyAttribute(IMFAttributes* srcAttribute, IMFAttributes* dstAttribute, const GUID& key)
+inline HRESULT utilCopyAttribute(IMFAttributes* srcAttribute, IMFAttributes* dstAttribute, const GUID& key)
 {
   PROPVARIANT var;
   PropVariantInit(&var);
@@ -36,57 +38,54 @@ HRESULT utilCopyAttribute(IMFAttributes* srcAttribute, IMFAttributes* dstAttribu
 }
 
 // Create a compatible video format with a different subtype.
-HRESULT utilCloneVideomediaType(IMFMediaType* srcMediaType, REFGUID guidSubType, IMFMediaType** ppNewMediaType)
+inline HRESULT utilCloneVideomediaType(IMFMediaType* srcMediaType, REFGUID guidSubType, IMFMediaType** ppNewMediaType)
 {
-  IMFMediaType* newMediaType = nullptr;
+  ComPtr<IMFMediaType> newMediaType = nullptr;
 
-  HRESULT hr = MFCreateMediaType(&newMediaType);
+  HRESULT hr = MFCreateMediaType(newMediaType.GetAddressOf());
   if (FAILED(hr))
   {
-    goto Exit;
+    return hr;
   }
 
   hr = newMediaType->SetGUID(MF_MT_MAJOR_TYPE, MFMediaType_Video);
   if (FAILED(hr))
   {
-    goto Exit;
+    return hr;
   }
 
   hr = newMediaType->SetGUID(MF_MT_SUBTYPE, guidSubType);
   if (FAILED(hr))
   {
-    goto Exit;
+    return hr;
   }
 
-  hr = utilCopyAttribute(srcMediaType, newMediaType, MF_MT_FRAME_SIZE);
+  hr = utilCopyAttribute(srcMediaType, newMediaType.Get(), MF_MT_FRAME_SIZE);
   if (FAILED(hr))
   {
-    goto Exit;
+    return hr;
   }
 
-  hr = utilCopyAttribute(srcMediaType, newMediaType, MF_MT_FRAME_RATE);
+  hr = utilCopyAttribute(srcMediaType, newMediaType.Get(), MF_MT_FRAME_RATE);
   if (FAILED(hr))
   {
-    goto Exit;
+    return hr;
   }
 
-  hr = utilCopyAttribute(srcMediaType, newMediaType, MF_MT_PIXEL_ASPECT_RATIO);
+  hr = utilCopyAttribute(srcMediaType, newMediaType.Get(), MF_MT_PIXEL_ASPECT_RATIO);
   if (FAILED(hr))
   {
-    goto Exit;
+    return hr;
   }
 
-  hr = utilCopyAttribute(srcMediaType, newMediaType, MF_MT_INTERLACE_MODE);
+  hr = utilCopyAttribute(srcMediaType, newMediaType.Get(), MF_MT_INTERLACE_MODE);
   if (FAILED(hr))
   {
-    goto Exit;
+    return hr;
   }
 
-  *ppNewMediaType = newMediaType;
+  *ppNewMediaType = newMediaType.Get();
   (*ppNewMediaType)->AddRef();
-
-Exit:
-  SAFE_RELEASE(newMediaType);
 
   return hr;
 }
@@ -103,7 +102,7 @@ inline HRESULT utilGetFrameRate(IMFMediaType* type, UINT32* numerator, UINT32* d
   return MFGetAttributeRatio(type, MF_MT_FRAME_RATE, numerator, denominator);
 }
 
-HRESULT utilGetEncodingBitrate(IMFMediaType* mediaType, UINT32* encodingBitrate)
+inline HRESULT utilGetEncodingBitrate(IMFMediaType* mediaType, UINT32* encodingBitrate)
 {
   UINT32 width = 0;
   UINT32 height = 0;
@@ -129,29 +128,29 @@ HRESULT utilGetEncodingBitrate(IMFMediaType* mediaType, UINT32* encodingBitrate)
   return hr;
 }
 
-HRESULT utilConfigureVideoEncodeing(IMFCaptureSource* capSrc, IMFCaptureRecordSink* capRecord, REFGUID guidEncodingType)
+inline HRESULT utilConfigureVideoEncodeing(IMFCaptureSource* capSrc, IMFCaptureRecordSink* capRecord, REFGUID guidEncodingType)
 {
-  IMFMediaType* mediatype = nullptr;
-  IMFMediaType* mediatype2 = nullptr;
+  ComPtr<IMFMediaType> mediatype = nullptr;
+  ComPtr<IMFMediaType> mediatype2 = nullptr;
   GUID guidSubType = GUID_NULL;
 
   // Configure the video format for the recording sink.
-  HRESULT hr = capSrc->GetCurrentDeviceMediaType((DWORD)MF_CAPTURE_ENGINE_PREFERRED_SOURCE_STREAM_FOR_VIDEO_RECORD, &mediatype);
+  HRESULT hr = capSrc->GetCurrentDeviceMediaType((DWORD)MF_CAPTURE_ENGINE_PREFERRED_SOURCE_STREAM_FOR_VIDEO_RECORD, mediatype.GetAddressOf());
   if (FAILED(hr))
   {
-    goto Exit;
+    return hr;
   }
 
-  hr = utilCloneVideomediaType(mediatype, guidEncodingType, &mediatype2);
+  hr = utilCloneVideomediaType(mediatype.Get(), guidEncodingType, mediatype2.GetAddressOf());
   if (FAILED(hr))
   {
-    goto Exit;
+    return hr;
   }
 
   hr = mediatype->GetGUID(MF_MT_SUBTYPE, &guidSubType);
   if (FAILED(hr))
   {
-    goto Exit;
+    return hr;
   }
 
   if (guidSubType == MFVideoFormat_H264_ES || guidSubType == MFVideoFormat_H264)
@@ -163,10 +162,10 @@ HRESULT utilConfigureVideoEncodeing(IMFCaptureSource* capSrc, IMFCaptureRecordSi
   else
   {
     UINT32 encodingBitrate = 0;
-    hr = utilGetEncodingBitrate(mediatype2, &encodingBitrate);
+    hr = utilGetEncodingBitrate(mediatype2.Get(), &encodingBitrate);
     if (FAILED(hr))
     {
-      goto Exit;
+      return hr;
     }
 
     hr = mediatype2->SetUINT32(MF_MT_AVG_BITRATE, encodingBitrate);
@@ -174,76 +173,66 @@ HRESULT utilConfigureVideoEncodeing(IMFCaptureSource* capSrc, IMFCaptureRecordSi
 
   if (FAILED(hr))
   {
-    goto Exit;
+    return hr;
   }
-
 
   {
     // Connect the video stream to the recording sink.
     DWORD sinkStreamIndex = 0;
-    hr = capRecord->AddStream((DWORD)MF_CAPTURE_ENGINE_PREFERRED_SOURCE_STREAM_FOR_VIDEO_RECORD, mediatype2, nullptr, &sinkStreamIndex);
+    hr = capRecord->AddStream((DWORD)MF_CAPTURE_ENGINE_PREFERRED_SOURCE_STREAM_FOR_VIDEO_RECORD, mediatype2.Get(), nullptr, &sinkStreamIndex);
   }
-
-Exit:
-  SAFE_RELEASE(mediatype);
-  SAFE_RELEASE(mediatype2);
 
   return hr;
 }
 
-HRESULT utilConfigureAudioEncoding(IMFCaptureSource* capSrc, IMFCaptureRecordSink* capRecord, REFGUID guidEncodingType)
+inline HRESULT utilConfigureAudioEncoding(IMFCaptureSource* capSrc, IMFCaptureRecordSink* capRecord, REFGUID guidEncodingType)
 {
-  IMFCollection* availableTypes = nullptr;
-  IMFMediaType* mediatype = nullptr;
-  IMFAttributes* attributes = nullptr;
+  ComPtr<IMFCollection> availableTypes = nullptr;
+  ComPtr<IMFMediaType> mediatype = nullptr;
+  ComPtr<IMFAttributes> attributes = nullptr;
 
   // Configure the audio format for the recording sink.
-  HRESULT hr = MFCreateAttributes(&attributes, 1);
+  HRESULT hr = MFCreateAttributes(attributes.GetAddressOf(), 1);
   if (FAILED(hr))
   {
-    goto Exit;
+    return hr;
   }
 
   // Enumerate low latency media types.
   hr = attributes->SetUINT32(MF_LOW_LATENCY, true);
   if (FAILED(hr))
   {
-    goto Exit;
+    return hr;
   }
 
   // Get a list of encoded output formats that are supported by the encoder.
   hr = MFTranscodeGetAudioOutputAvailableTypes(
       guidEncodingType
-    , MFT_ENUM_FLAG_ALL | MFT_ENUM_FLAG_SORTANDFILTER
-    , attributes
-    , &availableTypes);
+      , MFT_ENUM_FLAG_ALL | MFT_ENUM_FLAG_SORTANDFILTER
+      , attributes.Get()
+      , availableTypes.GetAddressOf());
   if (FAILED(hr))
   {
-    goto Exit;
+    return hr;
   }
 
   // Pick the first format from the list.
-  hr = utilGetCollectionObject(availableTypes, 0, &mediatype);
+  hr = utilGetCollectionObject(availableTypes.Get(), 0, mediatype.GetAddressOf());
   if (FAILED(hr))
   {
-    goto Exit;
+    return hr;
   }
 
   // Connect the audio stream to the recording sink.
   {
     DWORD sinkStreamIndex = 0;
-    hr = capRecord->AddStream((DWORD)MF_CAPTURE_ENGINE_PREFERRED_SOURCE_STREAM_FOR_AUDIO, mediatype, nullptr, &sinkStreamIndex);
+    hr = capRecord->AddStream((DWORD)MF_CAPTURE_ENGINE_PREFERRED_SOURCE_STREAM_FOR_AUDIO, mediatype.Get(), nullptr, &sinkStreamIndex);
     if (hr == MF_E_INVALIDSTREAMNUMBER)
     {
       // If an audio device is not present, allow video only recording.
       hr = S_OK;
     }
   }
-
-Exit:
-  SAFE_RELEASE(availableTypes);
-  SAFE_RELEASE(mediatype);
-  SAFE_RELEASE(attributes);
 
   return hr;
 }
