@@ -2,7 +2,7 @@
 #include "stdafx.h"
 #include "dx11manager.h"
 #include "timer.h"
-#include "captureenginesamplecallback.h"
+#include "captureenginevideocallback.h"
 
 using namespace Microsoft::WRL;
 

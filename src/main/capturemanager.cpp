@@ -1,7 +1,7 @@
 
 #include "stdafx.h"
 #include "utils.h"
-#include "captureenginesamplecallback.h"
+#include "captureenginevideocallback.h"
 #include "capturemanager.h"
 
 using namespace helper;
