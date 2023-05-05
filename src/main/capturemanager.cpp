@@ -342,7 +342,7 @@ HRESULT CaptureManager::startPreview(const uint32_t& width, const uint32_t& heig
     {
       return hr;
     }
-#if 1
+
     // channel count
     hr = outputAudioMediaType->SetUINT32(MF_MT_AUDIO_NUM_CHANNELS, 2);
     if (FAILED(hr))
@@ -377,7 +377,7 @@ HRESULT CaptureManager::startPreview(const uint32_t& width, const uint32_t& heig
     {
       return hr;
     }
-#endif
+
     // 
     hr = outputAudioMediaType->SetUINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, true);
     if (FAILED(hr))
