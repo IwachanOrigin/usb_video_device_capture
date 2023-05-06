@@ -51,5 +51,12 @@
 
 ## How to use
 
-    ...
+    1. Run the usbVideoDeviceCapture.exe
+    2. Select the capture device number.
+    3. Input capture resolution and frame rate supported by the device.
+    4. Input display window resolution.
+    5. A window will appear and capture will begin.
+
+![how_to_use](https://user-images.githubusercontent.com/12496951/236634129-e7b2736d-f33b-4d61-83e7-fa47bbb8bbb7.png)
+
 
