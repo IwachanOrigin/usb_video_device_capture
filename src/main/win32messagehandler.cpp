@@ -70,9 +70,6 @@ bool Win32MessageHandler::init(const HINSTANCE hinst, const int nCmdShow, const 
 
 int Win32MessageHandler::run()
 {
-  // Initialize the window.
-  //window->onInit();
-
   // Main loop.
   MSG msg = {};
   while (msg.message != WM_QUIT)
@@ -84,8 +81,6 @@ int Win32MessageHandler::run()
       DispatchMessage(&msg);
     }
   }
-
-  //window->onDestroy();
 
   return static_cast<char>(msg.wParam);
 }

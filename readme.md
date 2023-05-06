@@ -27,7 +27,7 @@
 
 ### Result
 
-| No. | Device Name                 | Max Resolution | MAX FPS | Audio support |
+| No. | Device Name                 | MAX Resolution | MAX FPS | Audio support |
 |-----|-----------------------------|----------------|---------|---------------|
 | 1   | Logicool HD Pro Webcam C920 | 2K(1920x1080)  | 60p     | Yes           |
 | 2   | I-O DATA GV-HUVC 4K         | 4K(3840x2160)  | 30p     | Yes           |
