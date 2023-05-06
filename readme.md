@@ -32,10 +32,10 @@
 | 1   | Logicool HD Pro Webcam C920 | 2K(1920x1080)  | 60p     | Yes           |
 | 2   | I-O DATA GV-HUVC 4K         | 4K(3840x2160)  | 30p     | Yes           |
 
-    - Logicool HD Pro Webcam C920(Input : 2K60p, Output : 2K30p)
+    - Logicool HD Pro Webcam C920(Input : 2K60p, Output : 2K60p) <CPU, Memory, Disk, NW, GPU>
 ![input_output_2k60p](https://user-images.githubusercontent.com/12496951/236633859-33b9cf78-28fc-4f8f-8243-8d5a32de5773.png)
 
-    - I-O DATA GV-HUVC 4K(Input : 4K30p, Output : 2K30p)
+    - I-O DATA GV-HUVC 4K(Input : 4K30p, Output : 2K30p) <CPU, Memory, Disk, NW, GPU>
 ![input_4k30p_output_2k30p](https://user-images.githubusercontent.com/12496951/236633770-57a07dca-7093-4188-adb6-47f50edcccda.png)
 
 
