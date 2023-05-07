@@ -352,9 +352,8 @@ int main(int argc, char* argv[])
     return -1;
   }
 
-  // Input device no.
+  // Input video device no.
   uint32_t videoSelectionNo = 0;
-
   std::wcout << "Please input video device no : ";
   std::wcin >> videoSelectionNo;
   std::wcout << std::endl;
@@ -379,6 +378,24 @@ int main(int argc, char* argv[])
       uint32_t length = 0;
       ThrowIfFailed(audioDevices[i]->GetAllocatedString(MF_DEVSOURCE_ATTRIBUTE_FRIENDLY_NAME, &buffer, &length));
       std::wcout << "No. " << i << " : " << buffer << std::endl;
+    }
+  }
+
+  // Input video device no.
+  uint32_t audioSelectionNo = 0;
+  if (audioDeviceCount != 0)
+  {
+    std::wcout << "Please input audio device no : ";
+    std::wcin >> audioSelectionNo;
+    std::wcout << std::endl;
+    if (audioSelectionNo > audioDeviceCount)
+    {
+      std::wcout << "Failed audio device select.";
+      if (audioDevices != nullptr)
+      {
+        releaseAllDevices(audioDevices, audioDeviceCount);
+      }
+      return -1;
     }
   }
 
