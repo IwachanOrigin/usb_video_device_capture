@@ -1,6 +1,7 @@
 
 #include "stdafx.h"
 #include "dxhelper.h"
+#include <locale>
 #include "win32messagehandler.h"
 #include "capturemanager.h"
 #include "dx11manager.h"
@@ -270,8 +271,41 @@ bool findMatchFormatTypes(const int& deviceIndex, const uint32_t& capWidth, cons
   return true;
 }
 
+bool getCaptureDevices(uint32_t& deviceCount, IMFActivate**& devices, bool audioMode = false)
+{
+  GUID searchGUID = MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_GUID;
+  if (audioMode)
+  {
+    searchGUID = MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_AUDCAP_GUID;
+  }
+
+  std::shared_ptr<IMFAttributes> pAttributes;
+  IMFAttributes* pRawAttributes = nullptr;
+  ThrowIfFailed(MFCreateAttributes(&pRawAttributes, 1));
+  pAttributes = std::shared_ptr<IMFAttributes>(pRawAttributes, [](auto* p) { p->Release(); });
+
+  HRESULT hr = pAttributes->SetGUID(MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE, searchGUID);
+  if (FAILED(hr))
+  {
+    std::wcout << "Failed to set attribute to MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE." << std::endl;
+    return false;
+  }
+
+  hr = MFEnumDeviceSources(pAttributes.get(), &devices, &deviceCount);
+  if (FAILED(hr))
+  {
+    std::wcout << "Failed to initialize the media foundation." << std::endl;
+    return false;
+  }
+
+  return true;
+}
+
 int main(int argc, char* argv[])
 {
+  // Set locale(use to the system default locale)
+  std::wcout.imbue(std::locale(""));
+
   // INIT
   HRESULT hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
   if (FAILED(hr))
@@ -286,9 +320,10 @@ int main(int argc, char* argv[])
     return -1;
   }
 
-  // Get devices.
-  uint32_t deviceCount = 0;
-  IMFActivate** devices = nullptr;
+  // Get video devices.
+  uint32_t videoDeviceCount = 0;
+  IMFActivate** videoDevices = nullptr;
+#if 0
   {
     std::shared_ptr<IMFAttributes> pAttributes;
     IMFAttributes* pRawAttributes = nullptr;
@@ -302,28 +337,90 @@ int main(int argc, char* argv[])
       return -1;
     }
 
-    hr = MFEnumDeviceSources(pAttributes.get(), &devices, &deviceCount);
+    hr = MFEnumDeviceSources(pAttributes.get(), &videoDevices, &videoDeviceCount);
     if (FAILED(hr))
     {
       std::wcout << "Failed to initialize the media foundation." << std::endl;
       return -1;
     }
 
-    for (uint32_t i = 0; i < deviceCount; i++)
+    for (uint32_t i = 0; i < videoDeviceCount; i++)
     {
       wchar_t* buffer = nullptr;
       uint32_t length = 0;
-      ThrowIfFailed(devices[i]->GetAllocatedString(MF_DEVSOURCE_ATTRIBUTE_FRIENDLY_NAME, &buffer, &length));
+      ThrowIfFailed(videoDevices[i]->GetAllocatedString(MF_DEVSOURCE_ATTRIBUTE_FRIENDLY_NAME, &buffer, &length));
+      std::wcout << "No. " << i << " : " << buffer << std::endl;
+    }
+  }
+#else
+  if (getCaptureDevices(videoDeviceCount, videoDevices))
+  {
+    for (uint32_t i = 0; i < videoDeviceCount; i++)
+    {
+      wchar_t* buffer = nullptr;
+      uint32_t length = 0;
+      ThrowIfFailed(videoDevices[i]->GetAllocatedString(MF_DEVSOURCE_ATTRIBUTE_FRIENDLY_NAME, &buffer, &length));
+      std::wcout << "No. " << i << " : " << buffer << std::endl;
+    }
+  }
+#endif
+
+  if (videoDeviceCount == 0)
+  {
+    CoTaskMemFree(videoDevices);
+    ThrowIfFailed(MFShutdown());
+    CoUninitialize();
+    return -1;
+  }
+
+  // Get audio devices.
+  uint32_t audioDeviceCount = 0;
+  IMFActivate** audioDevices = nullptr;
+  {
+    std::shared_ptr<IMFAttributes> pAttributes;
+    IMFAttributes* pRawAttributes = nullptr;
+    ThrowIfFailed(MFCreateAttributes(&pRawAttributes, 1));
+    pAttributes = std::shared_ptr<IMFAttributes>(pRawAttributes, [](auto* p) { p->Release(); });
+
+    hr = pAttributes->SetGUID(MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE, MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_AUDCAP_GUID);
+    if (FAILED(hr))
+    {
+      std::wcout << "Failed to set attribute to MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE." << std::endl;
+      return -1;
+    }
+
+    hr = MFEnumDeviceSources(pAttributes.get(), &audioDevices, &audioDeviceCount);
+    if (FAILED(hr))
+    {
+      std::wcout << "Failed to initialize the media foundation." << std::endl;
+      return -1;
+    }
+
+    for (uint32_t i = 0; i < audioDeviceCount; i++)
+    {
+      wchar_t* buffer = nullptr;
+      uint32_t length = 0;
+      ThrowIfFailed(audioDevices[i]->GetAllocatedString(MF_DEVSOURCE_ATTRIBUTE_FRIENDLY_NAME, &buffer, &length));
       std::wcout << "No. " << i << " : " << buffer << std::endl;
     }
   }
 
-  if (deviceCount == 0)
+  if (audioDeviceCount == 0)
   {
-    CoTaskMemFree(devices);
+    std::wcout << "Failed to get audio devices." << std::endl;
+    CoTaskMemFree(audioDevices);
     ThrowIfFailed(MFShutdown());
     CoUninitialize();
     return -1;
+  }
+
+  if (audioDevices != nullptr)
+  {
+    for (uint32_t i = 0; i < audioDeviceCount; i++)
+    {
+      audioDevices[i]->Release();
+    }
+    CoTaskMemFree(audioDevices);
   }
 
   // Create capturemanager.
@@ -340,20 +437,20 @@ int main(int argc, char* argv[])
   std::wcout << "Please input device no : ";
   std::wcin >> selectionNo;
   std::wcout << std::endl;
-  if (selectionNo > deviceCount)
+  if (selectionNo > videoDeviceCount)
   {
     std::wcout << "Failed device select.";
     return -1;
   }
 
   // Initialize capture manager.
-  hr = g_pEngine->initCaptureManager(devices[selectionNo]);
+  hr = g_pEngine->initCaptureManager(videoDevices[selectionNo]);
   if (FAILED(hr))
   {
     std::wcout << "Failed to init capture manager." << std::endl;
     return -1;
   }
-  devices[selectionNo]->AddRef();
+  videoDevices[selectionNo]->AddRef();
 
   // Input capture size of width, height, fps
   uint32_t capWidth = 0, capHeight = 0, capFps = 0;
@@ -380,13 +477,13 @@ int main(int argc, char* argv[])
   result = Win32MessageHandler::getInstance().init((HINSTANCE)0, 1, windowWidth, windowHeight);
   if (!result)
   {
-    if (devices != nullptr)
+    if (videoDevices != nullptr)
     {
-      for (uint32_t i = 0; i < deviceCount; i++)
+      for (uint32_t i = 0; i < videoDeviceCount; i++)
       {
-        devices[i]->Release();
+        videoDevices[i]->Release();
       }
-      CoTaskMemFree(devices);
+      CoTaskMemFree(videoDevices);
     }
     ThrowIfFailed(MFShutdown());
     CoUninitialize();
@@ -420,13 +517,13 @@ int main(int argc, char* argv[])
       hPowerNotify = NULL;
     }
 
-    if (devices != nullptr)
+    if (videoDevices != nullptr)
     {
-      for (uint32_t i = 0; i < deviceCount; i++)
+      for (uint32_t i = 0; i < videoDeviceCount; i++)
       {
-        devices[i]->Release();
+        videoDevices[i]->Release();
       }
-      CoTaskMemFree(devices);
+      CoTaskMemFree(videoDevices);
     }
 
     ThrowIfFailed(MFShutdown());
@@ -483,13 +580,13 @@ int main(int argc, char* argv[])
     hPowerNotify = NULL;
   }
 
-  if (devices != nullptr)
+  if (videoDevices != nullptr)
   {
-    for (uint32_t i = 0; i < deviceCount; i++)
+    for (uint32_t i = 0; i < videoDeviceCount; i++)
     {
-      devices[i]->Release();
+      videoDevices[i]->Release();
     }
-    CoTaskMemFree(devices);
+    CoTaskMemFree(videoDevices);
   }
 
   ThrowIfFailed(MFShutdown());
