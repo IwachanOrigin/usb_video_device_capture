@@ -76,7 +76,7 @@ int AudioDeviceManager::start()
 bool AudioDeviceManager::render(const uint8_t* new_data, size_t data_size)
 {
   // Returns 0 on success or a negative error code on failure.
-  int result = SDL_QueueAudio(m_deviceID, new_data, data_size);
+  int result = SDL_QueueAudio(m_deviceID, new_data, (uint32_t)data_size);
   return result == 0 ? true : false;
 }
 

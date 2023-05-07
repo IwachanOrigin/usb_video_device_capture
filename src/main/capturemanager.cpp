@@ -139,12 +139,6 @@ HRESULT CaptureManager::initCaptureManager(IUnknown* pUnk)
 
   m_capCallback->setCaptureManager(this);
 
-  hr = MFCreateAttributes(attributes.GetAddressOf(), 1);
-  if (FAILED(hr))
-  {
-    return hr;
-  }
-
   // Create the factory object for the capture engine.
   hr = CoCreateInstance(CLSID_MFCaptureEngineClassFactory, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(factory.GetAddressOf()));
   if (FAILED(hr))
@@ -159,7 +153,7 @@ HRESULT CaptureManager::initCaptureManager(IUnknown* pUnk)
     return hr;
   }
 
-  hr = m_captureEngine->Initialize(m_capCallback.Get(), attributes.Get(), nullptr, pUnk);
+  hr = m_captureEngine->Initialize(m_capCallback.Get(), nullptr, nullptr, pUnk);
   if (FAILED(hr))
   {
     return hr;

@@ -67,7 +67,7 @@ STDMETHODIMP CaptureEngineAudioCB::OnSample(_In_ IMFSample* sample)
   // Audio rendering
   if (AudioDeviceManager::getInstance().getStatus())
   {
-    bool result = AudioDeviceManager::getInstance().render(byteBuffer, buffCurrLen);
+    bool result = AudioDeviceManager::getInstance().render(byteBuffer, (size_t)buffCurrLen);
     if (!result)
     {
       std::wcout << "Failed to render audio." << std::endl;
