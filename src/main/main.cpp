@@ -404,7 +404,7 @@ int main(int argc, char* argv[])
   ThrowIfFailed(CaptureManager::createInst(&g_pEngine));
 
   // Initialize capture manager.
-  hr = g_pEngine->initCaptureManager(videoDevices[videoSelectionNo]);
+  hr = g_pEngine->initCaptureManager(videoDevices[videoSelectionNo], audioDevices[audioSelectionNo]);
   if (FAILED(hr))
   {
     std::wcout << "Failed to init capture manager." << std::endl;
