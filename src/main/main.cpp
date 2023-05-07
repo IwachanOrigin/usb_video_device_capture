@@ -79,7 +79,6 @@ HRESULT GetVideoSourceFromDevice(UINT nDevice, IMFMediaSource** ppVideoSource, I
   UINT32 videoDeviceCount = 0;
   ComPtr<IMFAttributes> videoConfig = nullptr;
   IMFActivate** videoDevices = nullptr;
-  UINT nameLength = 0;
   ComPtr<IMFAttributes> pAttributes = nullptr;
 
   HRESULT hr = S_OK;
@@ -271,16 +270,6 @@ bool findMatchFormatTypes(const int& deviceIndex, const uint32_t& capWidth, cons
   return true;
 }
 
-LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-  switch (uMsg)
-  {
-  case WM_ERASEBKGND:
-    return 1;
-  }
-  return DefWindowProc(hwnd, uMsg, wParam, lParam);
-}
-
 int main(int argc, char* argv[])
 {
   // INIT
@@ -446,7 +435,7 @@ int main(int argc, char* argv[])
   }
 
   // Setup audio device
-  int errCode = AudioDeviceManager::getInstance().init(0);
+  int errCode = AudioDeviceManager::getInstance().init(2);
   if (errCode == 0)
   {
     errCode = AudioDeviceManager::getInstance().start();
