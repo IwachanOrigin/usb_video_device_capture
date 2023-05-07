@@ -60,3 +60,13 @@
 
 ![how_to_use](https://user-images.githubusercontent.com/12496951/236653443-ee09989f-103f-4756-98a2-275a740579c4.png)
 
+## Attention
+
+    - The video capture device format is alway RGB32 only.  
+      If the video caputure device is not supported the format, capture failed.  
+    - If all settings good, but capture is not started, the active signal resolution is not right.  
+      Please check your windows display settings.  
+      for example...  
+![active_signal_resolution](https://user-images.githubusercontent.com/12496951/236654781-abdad7be-cbec-49e8-a827-0f0143f11703.png)
+
+
