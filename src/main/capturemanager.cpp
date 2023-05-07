@@ -115,7 +115,7 @@ CaptureManager::~CaptureManager()
   this->destroyCapEngine();
 }
 
-HRESULT CaptureManager::initCaptureManager(IUnknown* pUnk)
+HRESULT CaptureManager::initCaptureManager(IUnknown* pVideoDevice, IUnknown* pAudioDevice)
 {
   HRESULT hr = S_OK;
   ComPtr<IMFAttributes> attributes = nullptr;
@@ -153,7 +153,7 @@ HRESULT CaptureManager::initCaptureManager(IUnknown* pUnk)
     return hr;
   }
 
-  hr = m_captureEngine->Initialize(m_capCallback.Get(), nullptr, nullptr, pUnk);
+  hr = m_captureEngine->Initialize(m_capCallback.Get(), nullptr, pAudioDevice, pVideoDevice);
   if (FAILED(hr))
   {
     return hr;

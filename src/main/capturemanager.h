@@ -93,7 +93,7 @@ public:
     m_errorID = 0;
   }
 
-  HRESULT initCaptureManager(IUnknown* pUnk);
+  HRESULT initCaptureManager(IUnknown* pVideoDevice, IUnknown* pAudioDevice = nullptr);
 
   bool isPreviewing() const { return m_isPreviewing; }
   bool isRecording() const { return m_isRecording; }
