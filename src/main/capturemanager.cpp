@@ -139,6 +139,12 @@ HRESULT CaptureManager::initCaptureManager(IUnknown* pVideoDevice, IUnknown* pAu
 
   m_capCallback->setCaptureManager(this);
 
+  hr = MFCreateAttributes(attributes.GetAddressOf(), 1);
+  if (FAILED(hr))
+  {
+    return hr;
+  }
+
   // Create the factory object for the capture engine.
   hr = CoCreateInstance(CLSID_MFCaptureEngineClassFactory, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(factory.GetAddressOf()));
   if (FAILED(hr))
@@ -153,7 +159,7 @@ HRESULT CaptureManager::initCaptureManager(IUnknown* pVideoDevice, IUnknown* pAu
     return hr;
   }
 
-  hr = m_captureEngine->Initialize(m_capCallback.Get(), nullptr, pAudioDevice, pVideoDevice);
+  hr = m_captureEngine->Initialize(m_capCallback.Get(), attributes.Get(), pAudioDevice, pVideoDevice);
   if (FAILED(hr))
   {
     return hr;
