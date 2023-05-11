@@ -25,7 +25,7 @@ using namespace helper;
 using namespace message_handler;
 using namespace manager;
 
-void getVideoDevices(IMFActivate*** pppRawDevice, uint32_t& count)
+static inline void getVideoDevices(IMFActivate*** pppRawDevice, uint32_t& count)
 {
   std::shared_ptr<IMFAttributes> pAttributes;
   IMFAttributes* pRawAttributes = nullptr;
@@ -75,7 +75,7 @@ void getVideoDevices(IMFActivate*** pppRawDevice, uint32_t& count)
  *  to nullptr if no reader is required and only the source is needed.
  * @@Returns S_OK if successful or an error code if not.
  */
-HRESULT GetVideoSourceFromDevice(UINT nDevice, IMFMediaSource** ppVideoSource, IMFSourceReader** ppVideoReader)
+static inline HRESULT GetVideoSourceFromDevice(UINT nDevice, IMFMediaSource** ppVideoSource, IMFSourceReader** ppVideoReader)
 {
   UINT32 videoDeviceCount = 0;
   ComPtr<IMFAttributes> videoConfig = nullptr;
@@ -162,7 +162,7 @@ HRESULT GetVideoSourceFromDevice(UINT nDevice, IMFMediaSource** ppVideoSource, I
   return hr;
 }
 
-bool findMatchFormatTypes(const int& deviceIndex, const uint32_t& capWidth, const uint32_t& capHeight, const uint32_t& capFps)
+static inline bool findMatchFormatTypes(const int& deviceIndex, const uint32_t& capWidth, const uint32_t& capHeight, const uint32_t& capFps)
 {
   HRESULT hr = S_OK;
   ComPtr<IMFMediaSource> pVideoSource = nullptr;
@@ -271,7 +271,7 @@ bool findMatchFormatTypes(const int& deviceIndex, const uint32_t& capWidth, cons
   return true;
 }
 
-bool getCaptureDevices(uint32_t& deviceCount, IMFActivate**& devices, bool audioMode = false)
+static inline bool getCaptureDevices(uint32_t& deviceCount, IMFActivate**& devices, bool audioMode = false)
 {
   GUID searchGUID = MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_GUID;
   if (audioMode)
@@ -301,7 +301,7 @@ bool getCaptureDevices(uint32_t& deviceCount, IMFActivate**& devices, bool audio
   return true;
 }
 
-void releaseAllDevices(IMFActivate**& devices, uint32_t& deviceCount)
+static inline void releaseAllDevices(IMFActivate**& devices, uint32_t& deviceCount)
 {
   for (uint32_t i = 0; i < deviceCount; i++)
   {
