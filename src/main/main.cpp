@@ -217,54 +217,39 @@ static inline bool findMatchFormatTypes(const int& deviceIndex, const uint32_t& 
       return false;
     }
 
-    for (int typeIndex = 0; typeIndex < (int)typeCount; typeIndex++)
+    ComPtr<IMFMediaType> wkMediaType = nullptr;
+    hr = pSourceMediaTypeHandler->GetCurrentMediaType(wkMediaType.GetAddressOf());
+    if (FAILED(hr))
     {
-      ComPtr<IMFMediaType> pMediaType = nullptr;
-      hr = pSourceMediaTypeHandler->GetMediaTypeByIndex(typeIndex, pMediaType.GetAddressOf());
-      if (FAILED(hr))
-      {
-        // "Error retrieving media type."
-        continue;
-      }
+      std::wcout << "Failed to get current media type." << std::endl;
+      return false;
+    }
 
-      uint32_t width = 0, height = 0;
-      hr = MFGetAttributeSize(pMediaType.Get(), MF_MT_FRAME_SIZE, &width, &height);
-      if (FAILED(hr))
-      {
-        // "Failed to get the frame size attribute on media type."
-        continue;
-      }
+    hr = wkMediaType->SetGUID(MF_MT_SUBTYPE, MFVideoFormat_RGB32);
+    if (FAILED(hr))
+    {
+      std::wcout << "Failed to set MF_MT_SUBTYPE MFVideoFormat_RGB32." << std::endl;
+      return false;
+    }
 
-      GUID formatType{};
-      hr = pMediaType->GetGUID(MF_MT_SUBTYPE, &formatType);
-      if (FAILED(hr))
-      {
-        // "Failed to get the subtype guid on media type."
-        continue;
-      }
+    hr = MFSetAttributeSize(wkMediaType.Get(), MF_MT_FRAME_SIZE, capWidth, capHeight);
+    if (FAILED(hr))
+    {
+      std::wcout << "Failed to set the frame size attribute on media type." << std::endl;
+      return false;
+    }
 
-      uint32_t interlaceMode = 0;
-      hr = pMediaType->GetUINT32(MF_MT_INTERLACE_MODE, &interlaceMode);
-      if (FAILED(hr))
-      {
-        // "Failed to get the interlace mode on media type."
-        continue;
-      }
+    hr = MFSetAttributeRatio(wkMediaType.Get(), MF_MT_FRAME_RATE, capFps, 1);
+    if (FAILED(hr))
+    {
+      std::wcout << "Failed to set the frame rate attribute on media type." << std::endl;
+      return false;
+    }
 
-      uint32_t fpsNum = 0, fpsDen = 0;
-      hr = MFGetAttributeRatio(pMediaType.Get(), MF_MT_FRAME_RATE, &fpsNum, &fpsDen);
-      if (FAILED(hr))
-      {
-        // "Failed to get the frame rate on media type."
-        continue;
-      }
-
-      // Check it!
-      if(IsEqualGUID(MFVideoFormat_RGB32, formatType) && width == capWidth && height == capHeight && fpsNum == capFps && fpsDen == 1)
-      {
-        hr = S_OK;
-        break;
-      }
+    hr = pSourceMediaTypeHandler->SetCurrentMediaType(wkMediaType.Get());
+    if (SUCCEEDED(hr))
+    {
+      break;
     }
   }
 
