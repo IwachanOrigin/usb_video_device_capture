@@ -2,7 +2,7 @@
 cmake_minimum_required(VERSION 3.10)
 
 # set the project name
-project(studyMFT CXX)
+project(useReadSample CXX)
 
 # output directory
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
