@@ -36,6 +36,8 @@ private:
   ComPtr<IMFTransform> m_colorConvTransform;
   ComPtr<IMFMediaType> m_DecoderOutputMediaType;
   CRITICAL_SECTION m_criticalSection;
+
+  UINT32 getOptimizedFormatIndex();
 };
 
 #endif // VIDEO_CAPTURE_CALLBACK_H_

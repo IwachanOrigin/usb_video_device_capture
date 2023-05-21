@@ -58,6 +58,7 @@ HRESULT VideoCaptureCB::setSourceReader(IMFSourceReader* sourceReader)
   }
   m_sourceReader = sourceReader;
 
+#if 0
   ComPtr<IUnknown> colorConvTransformUnk = nullptr;
   hr = CoCreateInstance(CLSID_CColorConvertDMO, nullptr, CLSCTX_INPROC_SERVER, IID_IUnknown, (void**)colorConvTransformUnk.GetAddressOf());
   if (FAILED(hr))
@@ -97,8 +98,68 @@ HRESULT VideoCaptureCB::setSourceReader(IMFSourceReader* sourceReader)
     MessageBoxW(nullptr, L"Failed to copy the camera current media type to the decoder output media type.", L"Error", MB_OK);
     return hr;
   }
+#else
+
+  MFT_REGISTER_TYPE_INFO inputFilter = { MFMediaType_Video, MFVideoFormat_MJPG };
+  MFT_REGISTER_TYPE_INFO outputFilter = { MFMediaType_Video, MFVideoFormat_YUY2 };
+  UINT32 unFlags = MFT_ENUM_FLAG_SYNCMFT | MFT_ENUM_FLAG_LOCALMFT | MFT_ENUM_FLAG_SORTANDFILTER;
+
+  IMFActivate** transformActivate = nullptr;
+  UINT32 numDecodersMJPG = 0;
+  hr = MFTEnumEx(MFT_CATEGORY_VIDEO_DECODER, unFlags, &inputFilter, &outputFilter, &transformActivate, &numDecodersMJPG);
+  if (FAILED(hr))
+  {
+    MessageBoxW(nullptr, L"Failed to get the MFTEnumCategory.", L"Error", MB_OK);
+    return hr;
+  }
+  if (numDecodersMJPG < 1)
+  {
+    MessageBoxW(nullptr, L"MJPG to YUY2 decoder is nothing.", L"Error", MB_OK);
+    return hr;
+  }
+
+  // Activate transform
+  hr = transformActivate[0]->ActivateObject(__uuidof(IMFTransform), (void**)m_colorConvTransform.GetAddressOf());
+  if (FAILED(hr))
+  {
+    MessageBoxW(nullptr, L"Failed to activate decoder..", L"Error", MB_OK);
+    for (UINT32 i = 0; i < numDecodersMJPG; i++)
+    {
+      transformActivate[i]->Release();
+    }
+    CoTaskMemFree(transformActivate);
+    return hr;
+  }
+
+  for (UINT32 i = 0; i < numDecodersMJPG; i++)
+  {
+    transformActivate[i]->Release();
+  }
+  CoTaskMemFree(transformActivate);
+
+  ComPtr<IMFMediaType> webCamMediaType = nullptr;
+  UINT32 index = getOptimizedFormatIndex();
+  hr = m_sourceReader->GetNativeMediaType(
+    (DWORD)MF_SOURCE_READER_FIRST_VIDEO_STREAM
+    , index
+    , webCamMediaType.GetAddressOf()
+  );
+  if (FAILED(hr))
+  {
+    MessageBoxW(nullptr, L"Failed to get the camera current media type.", L"Error", MB_OK);
+    return hr;
+  }
+
+  hr = utilCloneVideomediaType(webCamMediaType.Get(), MFVideoFormat_YUY2, m_DecoderOutputMediaType.GetAddressOf());
+  if (FAILED(hr))
+  {
+    MessageBoxW(nullptr, L"Failed to copy the camera current media type to the decoder output media type.", L"Error", MB_OK);
+    return hr;
+  }
+#endif
 
   // default : 640, 480, 30, yuy2
+  // chenged : 640, 480, 30, mjpeg
   hr = m_colorConvTransform->SetInputType(0, webCamMediaType.Get(), 0);
   if (FAILED(hr))
   {
@@ -109,7 +170,7 @@ HRESULT VideoCaptureCB::setSourceReader(IMFSourceReader* sourceReader)
   hr = m_colorConvTransform->SetOutputType(0, m_DecoderOutputMediaType.Get(), 0);
   if (FAILED(hr))
   {
-    MessageBoxW(nullptr, L"Failed to set input media type on color conversion MFT.", L"Error", MB_OK);
+    MessageBoxW(nullptr, L"Failed to set output media type on color conversion MFT.", L"Error", MB_OK);
     return hr;
   }
 
@@ -117,7 +178,7 @@ HRESULT VideoCaptureCB::setSourceReader(IMFSourceReader* sourceReader)
   hr = m_colorConvTransform->GetInputStatus(0, &mftStatus);
   if (FAILED(hr))
   {
-    MessageBoxW(nullptr, L"Failed to get input meida status from color conversion MFT.", L"Error", MB_OK);
+    MessageBoxW(nullptr, L"Failed to get input media status from color conversion MFT.", L"Error", MB_OK);
     return hr;
   }
   if (MFT_INPUT_STATUS_ACCEPT_DATA != mftStatus)
@@ -212,7 +273,7 @@ STDMETHODIMP VideoCaptureCB::OnReadSample(
       outputDataBuffer.pEvents = NULL;
       outputDataBuffer.pSample = mftOutSample.Get();
       auto mftProcessOutput = m_colorConvTransform->ProcessOutput(0, 1, &outputDataBuffer, &processOutputStatus);
-      //std::wcout << "Color conversion result : " << mftProcessOutput << ", MFT status : " << processOutputStatus << std::endl;
+      std::wcout << "Color conversion result : " << mftProcessOutput << ", MFT status : " << processOutputStatus << std::endl;
       sample->Release();
 
       ComPtr<IMFMediaBuffer> buf = nullptr;
@@ -229,7 +290,7 @@ STDMETHODIMP VideoCaptureCB::OnReadSample(
       {
         std::cerr << "Failed the ConvertToContiguousBuffer." << std::endl;
       }
-
+#if 0
       // Update texture
       bool result = manager::DX11Manager::getInstance().updateTexture(byteBuffer, buffCurrLen);
       if (!result)
@@ -245,7 +306,8 @@ STDMETHODIMP VideoCaptureCB::OnReadSample(
         buf->Unlock();
         MessageBoxW(nullptr, L"Failed to rendering.", L"Error", MB_OK);
       }
-
+#endif
+      //std::wcout << "current size : " << buffCurrLen << std::endl;
       buf->Unlock();
     }
   }
@@ -310,4 +372,51 @@ STDMETHODIMP VideoCaptureCB::OnReadSample(
 
 #endif
   return S_OK;
+}
+
+UINT32 VideoCaptureCB::getOptimizedFormatIndex()
+{
+  UINT32 index = 0, wMax = 0, rMax = 0;
+  for (DWORD i = 0; ; i++)
+  {
+    ComPtr<IMFMediaType> pType = nullptr;
+    HRESULT hr = m_sourceReader->GetNativeMediaType(
+      (DWORD)MF_SOURCE_READER_FIRST_VIDEO_STREAM
+      , i
+      , pType.GetAddressOf()
+    );
+
+    if (FAILED(hr))
+    { 
+      break;
+    }
+
+    if (SUCCEEDED(hr))
+    {
+      GUID subtype{};
+      hr = pType->GetGUID(MF_MT_SUBTYPE, &subtype);
+      if (FAILED(hr))
+      {
+        continue;
+      }
+      // Check
+      if (subtype != MFVideoFormat_MJPG)
+      {
+        continue;
+      }
+
+      // Found an output type.
+      UINT32 rate = 0, den = 0, width = 0, height = 0;
+      hr = MFGetAttributeSize(pType.Get(), MF_MT_FRAME_RATE, &rate, &den);
+      rate /= den;
+      hr = MFGetAttributeSize(pType.Get(), MF_MT_FRAME_SIZE, &width, &height);
+      if (width >= wMax && rate >= rMax)
+      {
+        wMax = width;
+        rMax = rate;
+        index = i;
+      }
+    }
+  }
+  return index;
 }
