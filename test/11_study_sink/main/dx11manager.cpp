@@ -52,8 +52,8 @@ bool DX11Manager::init(const HWND hwnd)
   DXGI_SWAP_CHAIN_DESC sd{};
   ZeroMemory(&sd, sizeof(sd));
   sd.BufferCount = 1;
-  sd.BufferDesc.Width = 3840;
-  sd.BufferDesc.Height = 2160;
+  sd.BufferDesc.Width = 1920;
+  sd.BufferDesc.Height = 1080;
   sd.BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
   sd.BufferDesc.RefreshRate.Numerator = 60;
   sd.BufferDesc.RefreshRate.Denominator = 1;
@@ -175,8 +175,8 @@ bool DX11Manager::init(const HWND hwnd)
 bool DX11Manager::createTexture()
 {
   D3D11_TEXTURE2D_DESC desc{};
-  desc.Width = 3840;
-  desc.Height = 2160;
+  desc.Width = 1920;
+  desc.Height = 1080;
   desc.MipLevels = 1;
   desc.ArraySize = 1;
   desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;

@@ -3,6 +3,7 @@
 #define UTILS_H_
 
 #include "stdafx.h"
+#include <strsafe.h>
 #include "dxhelper.h"
 
 namespace helper
@@ -81,6 +82,7 @@ HRESULT utilCloneVideomediaType(IMFMediaType* srcMediaType, REFGUID guidSubType,
   {
     goto Exit;
   }
+
 
   *ppNewMediaType = newMediaType;
   (*ppNewMediaType)->AddRef();
@@ -246,6 +248,23 @@ Exit:
   SAFE_RELEASE(attributes);
 
   return hr;
+}
+
+VOID DbgPrint(PCTSTR format, ...)
+{
+  va_list args;
+  va_start(args, format);
+
+  TCHAR string[MAX_PATH];
+
+  if (SUCCEEDED(StringCbVPrintf(string, sizeof(string), format, args)))
+  {
+    OutputDebugString(string);
+  }
+  else
+  {
+    DebugBreak();
+  }
 }
 
 } // helper

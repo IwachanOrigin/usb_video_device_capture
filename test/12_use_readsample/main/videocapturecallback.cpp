@@ -2,26 +2,26 @@
 #include "stdafx.h"
 #include "dx11manager.h"
 #include "timer.h"
-#include "captureenginesamplecallback.h"
+#include "videocapturecallback.h"
 
 using namespace Microsoft::WRL;
 
-STDMETHODIMP CaptureEngineSampleCB::QueryInterface(REFIID riid, void** ppv)
+STDMETHODIMP VideoCaptureCB::QueryInterface(REFIID riid, void** ppv)
 {
   static const QITAB qit[] =
   {
-    QITABENT(CaptureEngineSampleCB, IMFCaptureEngineOnSampleCallback)
+    QITABENT(VideoCaptureCB, IMFSourceReaderCallback)
     , { 0 }
   };
   return QISearch(this, qit, riid, ppv);
 }
 
-STDMETHODIMP_(ULONG) CaptureEngineSampleCB::AddRef()
+STDMETHODIMP_(ULONG) VideoCaptureCB::AddRef()
 {
   return InterlockedIncrement(&m_ref);
 }
 
-STDMETHODIMP_(ULONG) CaptureEngineSampleCB::Release()
+STDMETHODIMP_(ULONG) VideoCaptureCB::Release()
 {
   LONG ref = InterlockedDecrement(&m_ref);
   if (ref == 0)
@@ -31,23 +31,52 @@ STDMETHODIMP_(ULONG) CaptureEngineSampleCB::Release()
   return ref;
 }
 
-STDMETHODIMP CaptureEngineSampleCB::OnSample(_In_ IMFSample* sample)
+STDMETHODIMP VideoCaptureCB::OnReadSample(
+    HRESULT hrStatus
+    , DWORD dwStreamIndex
+    , DWORD dwStreamFlags
+    , LONGLONG llTimeStamp
+    , IMFSample* sample)
 {
   if (sample == nullptr)
   {
     return S_OK;
   }
 
-  Timer timer;
-#if 1
   DWORD dwTotalLength = 0;
   HRESULT hr = sample->GetTotalLength(&dwTotalLength);
   if (SUCCEEDED(hr))
   {
-    //std::wcout << "Buffer size : " << dwTotalLength << std::endl;
+    std::wcout << "Buffer size : " << dwTotalLength << std::endl;
   }
 
   sample->AddRef();
+
+  ComPtr<IMFMediaBuffer> buf = nullptr;
+  hr = sample->GetBufferByIndex(0, buf.GetAddressOf());
+  if (FAILED(hr))
+  {
+    sample->Release();
+    return E_FAIL;
+  }
+
+  byte* byteBuffer = nullptr;
+  DWORD buffCurrLen = 0;
+  hr = buf->Lock(&byteBuffer, NULL, &buffCurrLen);
+  if (FAILED(hr))
+  {
+    buf->Unlock();
+    sample->Release();
+    return E_FAIL;
+  }
+
+  std::wcout << "Buffer current size : " << buffCurrLen << std::endl;
+
+  sample->Release();
+  buf->Unlock();
+
+#if 0
+  Timer timer;
 
   ComPtr<IMFMediaBuffer> buf = nullptr;
   UINT32 pitch = 4 * 3840;
@@ -90,8 +119,8 @@ STDMETHODIMP CaptureEngineSampleCB::OnSample(_In_ IMFSample* sample)
 
   sample->Release();
   buf->Unlock();
-#endif
   std::wcout << "Timer : " << timer.elapsed() << std::endl;
 
+#endif
   return S_OK;
 }

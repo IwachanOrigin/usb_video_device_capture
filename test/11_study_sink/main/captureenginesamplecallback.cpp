@@ -50,7 +50,7 @@ STDMETHODIMP CaptureEngineSampleCB::OnSample(_In_ IMFSample* sample)
   sample->AddRef();
 
   ComPtr<IMFMediaBuffer> buf = nullptr;
-  UINT32 pitch = 4 * 3840;
+  UINT32 pitch = 4 * 1920;
   hr = sample->ConvertToContiguousBuffer(&buf);
   if (FAILED(hr))
   {
@@ -67,7 +67,7 @@ STDMETHODIMP CaptureEngineSampleCB::OnSample(_In_ IMFSample* sample)
     sample->Release();
     return E_FAIL;
   }
-  assert(buffCurrLen == (pitch * 2160));
+  assert(buffCurrLen == (pitch * 1080));
 
   bool result = manager::DX11Manager::getInstance().updateTexture(byteBuffer, buffCurrLen);
   if (!result)

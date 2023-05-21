@@ -264,7 +264,7 @@ HRESULT CaptureManager::startPreview()
   // Get a pointer to the preview sink.
   if (m_capPrevSink == nullptr)
   {
-    hr = m_captureEngine->GetSink(MF_CAPTURE_ENGINE_SINK_TYPE_PREVIEW, &sink);
+    hr = m_captureEngine->GetSink(MF_CAPTURE_ENGINE_SINK_TYPE_PREVIEW, sink.GetAddressOf());
     if (FAILED(hr))
     {
       return hr;
@@ -278,35 +278,54 @@ HRESULT CaptureManager::startPreview()
 
     // RendarHandle
 
-    hr = m_captureEngine->GetSource(&captureSource);
+    hr = m_captureEngine->GetSource(captureSource.GetAddressOf());
     if (FAILED(hr))
     {
       return hr;
     }
 
     // Configure the video format for the preview sink.
-    hr = captureSource->GetCurrentDeviceMediaType((DWORD)MF_CAPTURE_ENGINE_PREFERRED_SOURCE_STREAM_FOR_VIDEO_PREVIEW, &mediatype);
+#if 0
+    hr = captureSource->GetCurrentDeviceMediaType((DWORD)MF_CAPTURE_ENGINE_PREFERRED_SOURCE_STREAM_FOR_VIDEO_PREVIEW, mediatype.GetAddressOf());
     if (FAILED(hr))
     {
       return hr;
     }
+#else
+    UINT32 index = getOptimizedFormatIndex(captureSource.Get());
+    hr = captureSource->GetAvailableDeviceMediaType((DWORD)MF_CAPTURE_ENGINE_PREFERRED_SOURCE_STREAM_FOR_VIDEO_PREVIEW, (DWORD)index, mediatype.GetAddressOf());
+    if (FAILED(hr))
+    {
+      return hr;
+    }
+
+    GUID subtype{ 0 };
+    hr = mediatype->GetGUID(MF_MT_SUBTYPE, &subtype);
+    if (subtype != MFVideoFormat_MJPG)
+    {
+      hr = mediatype->SetGUID(MF_MT_SUBTYPE, MFVideoFormat_MJPG);
+      if (FAILED(hr))
+      {
+        return hr;
+      }
+    }
+
+    // Found an output type.
+    UINT32 rate = 0, den = 0, width = 0, height = 0;
+    hr = MFGetAttributeSize(mediatype.Get(), MF_MT_FRAME_RATE, &rate, &den);
+    rate /= den;
+    hr = MFGetAttributeSize(mediatype.Get(), MF_MT_FRAME_SIZE, &width, &height);
+    DbgPrint(L"width = %u, height=%u, rate=%u.\n", width, height, rate);
+
+    hr = captureSource->SetCurrentDeviceMediaType((DWORD)MF_CAPTURE_ENGINE_PREFERRED_SOURCE_STREAM_FOR_VIDEO_PREVIEW, mediatype.Get());
+    if (FAILED(hr))
+    {
+      return hr;
+    }
+#endif
 
     // format
-    hr = utilCloneVideomediaType(mediatype.Get(), MFVideoFormat_RGB32, &outputMediaType);
-    if (FAILED(hr))
-    {
-      return hr;
-    }
-
-    // frame size
-    hr = MFSetAttributeSize(outputMediaType.Get(), MF_MT_FRAME_SIZE, 3840, 2160);
-    if (FAILED(hr))
-    {
-      return hr;
-    }
-
-    // fps
-    hr = MFSetAttributeRatio(outputMediaType.Get(), MF_MT_FRAME_RATE, 30, 1);
+    hr = utilCloneVideomediaType(mediatype.Get(), MFVideoFormat_MJPG, outputMediaType.GetAddressOf());
     if (FAILED(hr))
     {
       return hr;
@@ -320,7 +339,7 @@ HRESULT CaptureManager::startPreview()
 
     // Connect the video stream to the preview sink.
     DWORD dwSinkStreamIndex = 0;
-    hr = m_capPrevSink->AddStream((DWORD)MF_CAPTURE_ENGINE_PREFERRED_SOURCE_STREAM_FOR_VIDEO_PREVIEW, outputMediaType.Get(), nullptr, &dwSinkStreamIndex);
+    hr = m_capPrevSink->AddStream((DWORD)MF_CAPTURE_ENGINE_PREFERRED_SOURCE_STREAM_FOR_VIDEO_PREVIEW, mediatype.Get(), nullptr, &dwSinkStreamIndex);
     if (FAILED(hr))
     {
       return hr;
@@ -384,6 +403,49 @@ HRESULT CaptureManager::stopRecord()
 HRESULT CaptureManager::takePhoto(PCWSTR filename)
 {
   return S_OK;
+}
+
+UINT32 CaptureManager::getOptimizedFormatIndex(IMFCaptureSource *pSource)
+{
+  if (!pSource)
+  {
+    return 0;
+  }
+
+  UINT32 index = 0, wMax = 0, rMax = 0;
+  for (DWORD i = 0; ; i++)
+  {
+    ComPtr<IMFMediaType> pType = nullptr;
+    HRESULT hr = pSource->GetAvailableDeviceMediaType(
+      (DWORD)MF_CAPTURE_ENGINE_PREFERRED_SOURCE_STREAM_FOR_VIDEO_PREVIEW,
+      i,
+      pType.GetAddressOf()
+    );
+
+    if (FAILED(hr)) { break; }
+
+    if (SUCCEEDED(hr))
+    {
+      // Found an output type.
+      GUID subtype{ 0 };
+      hr = pType->GetGUID(MF_MT_SUBTYPE, &subtype);
+      //if (subtype == MFVideoFormat_YUY2)
+      {
+        UINT32 rate = 0, den = 0, width = 0, height = 0;
+        hr = MFGetAttributeSize(pType.Get(), MF_MT_FRAME_RATE, &rate, &den);
+        rate /= den;
+        hr = MFGetAttributeSize(pType.Get(), MF_MT_FRAME_SIZE, &width, &height);
+        DbgPrint(L"width=%u, height=%u, rate=%u\n", width, height, rate);
+        if (width >= wMax && rate >= rMax)
+        {
+          wMax = width;
+          rMax = rate;
+          index = i;
+        }
+      }
+    }
+  }
+  return index;
 }
 
 // CaptureManager

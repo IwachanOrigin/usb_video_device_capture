@@ -115,16 +115,8 @@ int main(int argc, char* argv[])
     return -1;
   }
 
-  // Create capturemanager.
-  CaptureManager* g_pEngine = nullptr;
-  ThrowIfFailed(CaptureManager::createInst(&g_pEngine));
-
   // Input device no.
   uint32_t selectionNo = 0;
-
-  HPOWERNOTIFY hPowerNotify = nullptr;
-  HPOWERNOTIFY hPowerNotifyMonitor = nullptr;
-  SYSTEM_POWER_CAPABILITIES pwrCaps{};
 
   std::wcout << "Please input device no : ";
   std::wcin >> selectionNo;
@@ -134,7 +126,24 @@ int main(int argc, char* argv[])
     return -1;
   }
 
-  ThrowIfFailed(g_pEngine->initCaptureManager(devices[selectionNo]));
+  // Create capturemanager.
+  int retInt = CaptureManager::getInstance().init(devices[selectionNo]);
+  if (retInt < 0)
+  {
+    if (devices != nullptr)
+    {
+      for (uint32_t i = 0; i < deviceCount; i++)
+      {
+        devices[i]->Release();
+      }
+      CoTaskMemFree(devices);
+    }
+    ThrowIfFailed(MFShutdown());
+    CoUninitialize();
+
+    MessageBoxW(nullptr, L"Failed to create main window.", L"Error", MB_OK);
+    return -1;
+  }
   devices[selectionNo]->AddRef();
 
   // Create main window.
@@ -157,33 +166,10 @@ int main(int argc, char* argv[])
   }
 
   HWND previewWnd = Win32MessageHandler::getInstance().hwnd();
-  // Information cannot be obtained from the device without the following process.
-  hPowerNotify = RegisterSuspendResumeNotification((HANDLE)previewWnd, DEVICE_NOTIFY_WINDOW_HANDLE);
-  hPowerNotifyMonitor = RegisterPowerSettingNotification((HANDLE)previewWnd, &GUID_MONITOR_POWER_ON, DEVICE_NOTIFY_WINDOW_HANDLE);
-  ZeroMemory(&pwrCaps, sizeof(pwrCaps));
-  GetPwrCapabilities(&pwrCaps);
-
-  // Start preview
-  ThrowIfFailed(g_pEngine->startPreview());
-
-  // Create dx11 device, context, swapchain  
+  // Create dx11 device, context, swapchain
   result = DX11Manager::getInstance().init(previewWnd);
   if (!result)
   {
-    ThrowIfFailed(g_pEngine->stopPreview());
-
-    if (g_pEngine)
-    {
-      delete g_pEngine;
-      g_pEngine = nullptr;
-    }
-
-    if (hPowerNotify)
-    {
-      UnregisterSuspendResumeNotification(hPowerNotify);
-      hPowerNotify = NULL;
-    }
-
     if (devices != nullptr)
     {
       for (uint32_t i = 0; i < deviceCount; i++)
@@ -200,22 +186,7 @@ int main(int argc, char* argv[])
   // Start message loop
   Win32MessageHandler::getInstance().run();
 
-  // Stop preview
-  ThrowIfFailed(g_pEngine->stopPreview());
-
   // Release
-  if (g_pEngine)
-  {
-    delete g_pEngine;
-    g_pEngine = nullptr;
-  }
-
-  if (hPowerNotify)
-  {
-    UnregisterSuspendResumeNotification(hPowerNotify);
-    hPowerNotify = NULL;
-  }
-
   if (devices != nullptr)
   {
     for (uint32_t i = 0; i < deviceCount; i++)

@@ -160,6 +160,9 @@ public:
       return S_OK;
     }
   }
+
+private:
+  UINT32 getOptimizedFormatIndex(IMFCaptureSource* pSource);
 };
 
 #endif // CAPTURE_MANAGER_H_

@@ -156,6 +156,7 @@ int main(int argc, char* argv[])
     return -1;
   }
 
+
   HWND previewWnd = Win32MessageHandler::getInstance().hwnd();
   // Information cannot be obtained from the device without the following process.
   hPowerNotify = RegisterSuspendResumeNotification((HANDLE)previewWnd, DEVICE_NOTIFY_WINDOW_HANDLE);
