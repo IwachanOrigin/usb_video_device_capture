@@ -254,13 +254,18 @@ public:
     {
         if (m_pPreview)
         {
-            return m_pPreview->UpdateVideo(NULL, NULL, NULL);
+          return m_pPreview->UpdateVideo(NULL, NULL, NULL);
         }
         else
         {
             return S_OK;
         }
     }
+
+    private:
+      UINT32 getOptimizedFormatIndex(IMFCaptureSource* pSource);
+      HRESULT configureSourceReader(const UINT32 mediaIndex, IMFCaptureSource* pSource);
+      HRESULT tryMediaType(IMFMediaType* pType);
 };
 
 #endif CAPTURE_H

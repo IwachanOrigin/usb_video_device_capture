@@ -18,7 +18,7 @@ namespace PreviewWnd
 
     BOOL OnCreate(HWND /*hwnd*/, LPCREATESTRUCT /*lpCreateStruct*/)
     {
-        hBackgroundBrush = CreateSolidBrush(RGB(0,0,0));
+        hBackgroundBrush = CreateSolidBrush(RGB(255,0,0));
         return (hBackgroundBrush != NULL);
     }
 

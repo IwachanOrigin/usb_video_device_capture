@@ -191,7 +191,7 @@ CaptureManager::InitializeCaptureManager(HWND hwndPreview, IUnknown* pUnk)
     {
         goto Exit;
     }
-    //hr = pAttributes->SetUnknown(MF_CAPTURE_ENGINE_D3D_MANAGER, g_pDXGIMan);
+    hr = pAttributes->SetUnknown(MF_CAPTURE_ENGINE_D3D_MANAGER, g_pDXGIMan);
     if (FAILED(hr))
     {
         goto Exit;
@@ -382,11 +382,34 @@ HRESULT CaptureManager::StartPreview()
         }
 
         // Configure the video format for the preview sink.
+#if 0
         hr = pSource->GetCurrentDeviceMediaType((DWORD)MF_CAPTURE_ENGINE_PREFERRED_SOURCE_STREAM_FOR_VIDEO_PREVIEW , &pMediaType);
         if (FAILED(hr))
         {
             goto done;
         }
+#else
+        UINT32 index = getOptimizedFormatIndex(pSource);
+        hr = pSource->GetAvailableDeviceMediaType((DWORD)MF_CAPTURE_ENGINE_PREFERRED_SOURCE_STREAM_FOR_VIDEO_PREVIEW, (DWORD)index, &pMediaType);
+        if (FAILED(hr))
+        {
+          goto done;
+        }
+#endif
+        
+#if 1
+        // Found an output type.
+        UINT32 rate = 0, den = 0, width = 0, height = 0;
+        hr = MFGetAttributeSize(pMediaType, MF_MT_FRAME_RATE, &rate, &den);
+        rate /= den;
+        hr = MFGetAttributeSize(pMediaType, MF_MT_FRAME_SIZE, &width, &height);
+        GUID subtype{0};
+        hr = pMediaType->GetGUID(MF_MT_SUBTYPE, &subtype);
+        if (subtype == MFVideoFormat_YUY2)
+        {
+          DbgPrint(L"width = %u, height=%u, rate=%u.\n", width, height, rate);
+        }
+#endif
 
         hr = CloneVideoMediaType(pMediaType, MFVideoFormat_RGB32, &pMediaType2);
         if (FAILED(hr))
@@ -398,6 +421,12 @@ HRESULT CaptureManager::StartPreview()
         if (FAILED(hr))
         {
             goto done;
+        }
+
+        hr = pSource->SetCurrentDeviceMediaType((DWORD)MF_CAPTURE_ENGINE_PREFERRED_SOURCE_STREAM_FOR_VIDEO_PREVIEW, pMediaType);
+        if (FAILED(hr))
+        {
+          goto done;
         }
 
         // Connect the video stream to the preview sink.
@@ -823,5 +852,79 @@ done:
 }
 
 
+UINT32 CaptureManager::getOptimizedFormatIndex(IMFCaptureSource* pSource)
+{
+  if (!pSource)
+  {
+    return 0;
+  }
+
+  UINT32 index = 0, wMax = 0, rMax = 0;
+  for (DWORD i = 0; ; i++)
+  {
+    IMFMediaType* pType = NULL;
+    HRESULT hr = pSource->GetAvailableDeviceMediaType(
+      (DWORD)MF_CAPTURE_ENGINE_PREFERRED_SOURCE_STREAM_FOR_VIDEO_PREVIEW,
+      i,
+      &pType
+    );
+
+    if (FAILED(hr)) { break; }
+
+    if (SUCCEEDED(hr))
+    {
+      // Found an output type.
+      UINT32 rate = 0, den = 0, width = 0, height = 0;
+      hr = MFGetAttributeSize(pType, MF_MT_FRAME_RATE, &rate, &den);
+      rate /= den;
+      hr = MFGetAttributeSize(pType, MF_MT_FRAME_SIZE, &width, &height);
+      if (width >= wMax && rate >= rMax)
+      {
+        wMax = width;
+        rMax = rate;
+        index = i;
+      }
+    }
+
+    SafeRelease(&pType);
+  }
+  return index;
+}
+
+HRESULT CaptureManager::configureSourceReader(const UINT32 mediaIndex, IMFCaptureSource* pSource)
+{
+  if (!pSource)
+  {
+    return E_FAIL;
+  }
+
+  IMFMediaType* pType = NULL;
+  HRESULT hr = pSource->GetAvailableDeviceMediaType(
+    (DWORD)MF_CAPTURE_ENGINE_PREFERRED_SOURCE_STREAM_FOR_VIDEO_PREVIEW,
+    mediaIndex,
+    &pType
+  );
+  if (SUCCEEDED(hr))
+  {
+    //hr = TryMediaType(pType);
+  }
+
+  SafeRelease(&pType);
+
+  return hr;
+}
+
+HRESULT CaptureManager::tryMediaType(IMFMediaType* pType)
+{
+  HRESULT hr = S_OK;
+  BOOL bFound = FALSE;
+  GUID subtype = {0};
+
+  hr = pType->GetGUID(MF_MT_SUBTYPE, &subtype);
+  if (FAILED(hr))
+  {
+    return hr;
+  }
 
 
+}
