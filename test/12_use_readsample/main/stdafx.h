@@ -25,6 +25,7 @@
 #include <shlobj.h>
 #include <shlwapi.h>
 #include <tchar.h>
+#include <wmcodecdsp.h>
 
 #include <mfapi.h>
 #include <mfidl.h>

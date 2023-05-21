@@ -4,6 +4,8 @@
 
 #include "stdafx.h"
 
+using namespace Microsoft::WRL;
+
 class VideoCaptureCB : public IMFSourceReaderCallback
 {
   long m_ref;
@@ -24,14 +26,15 @@ public:
     , DWORD dwStreamFlags
     , LONGLONG llTimeStamp
     , IMFSample* sample);
-
   STDMETHODIMP OnEvent(DWORD, IMFMediaEvent*) { return S_OK; };
   STDMETHODIMP OnFlush(DWORD) { return S_OK; }
 
-  void setSourceReader(IMFSourceReader* sourceReader) { m_sourceReader = sourceReader; }
+  HRESULT setSourceReader(IMFSourceReader* sourceReader);
 
 private:
   IMFSourceReader* m_sourceReader;
+  ComPtr<IMFTransform> m_colorConvTransform;
+  ComPtr<IMFMediaType> m_DecoderOutputMediaType;
   CRITICAL_SECTION m_criticalSection;
 };
 

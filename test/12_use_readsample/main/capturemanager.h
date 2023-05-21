@@ -13,7 +13,6 @@ public:
   static CaptureManager& getInstance();
 
   int init(IMFActivate *pActivate);
-  int nextFrame();
 
 private:
   explicit CaptureManager();

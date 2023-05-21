@@ -3,13 +3,17 @@
 #include "dx11manager.h"
 #include "timer.h"
 #include "capturemanager.h"
+#include "utils.h"
 #include "videocapturecallback.h"
 
 using namespace Microsoft::WRL;
+using namespace helper;
 
 VideoCaptureCB::VideoCaptureCB()
   : m_ref(1)
   , m_sourceReader(nullptr)
+  , m_colorConvTransform(nullptr)
+  , m_DecoderOutputMediaType(nullptr)
 {
   InitializeCriticalSection(&m_criticalSection);
 }
@@ -44,6 +48,59 @@ STDMETHODIMP_(ULONG) VideoCaptureCB::Release()
   return ref;
 }
 
+HRESULT VideoCaptureCB::setSourceReader(IMFSourceReader* sourceReader)
+{
+  HRESULT hr = E_FAIL;
+
+  if (!sourceReader)
+  {
+    return hr;
+  }
+  m_sourceReader = sourceReader;
+
+  ComPtr<IUnknown> colorConvTransformUnk = nullptr;
+  hr = CoCreateInstance(CLSID_CColorConvertDMO, nullptr, CLSCTX_INPROC_SERVER, IID_IUnknown, (void**)colorConvTransformUnk.GetAddressOf());
+  if (FAILED(hr))
+  {
+    MessageBoxW(nullptr, L"Failed to create color conversion transform unknown.", L"Error", MB_OK);
+    return hr;
+  }
+
+  hr = colorConvTransformUnk->QueryInterface(IID_PPV_ARGS(m_colorConvTransform.GetAddressOf()));
+  if (FAILED(hr))
+  {
+    MessageBoxW(nullptr, L"Failed to get IMFTransform interface from color converter MFT object..", L"Error", MB_OK);
+    return hr;
+  }
+
+  hr = MFCreateMediaType(m_DecoderOutputMediaType.GetAddressOf());
+  if (FAILED(hr))
+  {
+    MessageBoxW(nullptr, L"Failed to create media type.", L"Error", MB_OK);
+    return hr;
+  }
+
+  ComPtr<IMFMediaType> webCamMediaType = nullptr;
+  hr = m_sourceReader->GetCurrentMediaType(
+    (DWORD)MF_SOURCE_READER_FIRST_VIDEO_STREAM
+    , webCamMediaType.GetAddressOf()
+    );
+  if (FAILED(hr))
+  {
+    MessageBoxW(nullptr, L"Failed to get the camera current media type.", L"Error", MB_OK);
+    return hr;
+  }
+
+  hr = utilCloneAllItems(webCamMediaType.Get(), m_DecoderOutputMediaType.GetAddressOf());
+  if (FAILED(hr))
+  {
+    MessageBoxW(nullptr, L"Failed to copy the camera current media type to the decoder output media type.", L"Error", MB_OK);
+    return hr;
+  }
+
+  return hr;
+}
+
 STDMETHODIMP VideoCaptureCB::OnReadSample(
     HRESULT hrStatus
     , DWORD dwStreamIndex
@@ -64,13 +121,6 @@ STDMETHODIMP VideoCaptureCB::OnReadSample(
   {
     if (sample)
     {
-      DWORD dwTotalLength = 0;
-      hr = sample->GetTotalLength(&dwTotalLength);
-      if (SUCCEEDED(hr))
-      {
-        std::wcout << "Buffer size : " << dwTotalLength << std::endl;
-      }
-
       sample->AddRef();
 
       ComPtr<IMFMediaBuffer> buf = nullptr;

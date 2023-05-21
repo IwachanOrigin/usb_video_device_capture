@@ -72,7 +72,12 @@ int CaptureManager::init(IMFActivate *pActivate)
     return -1;
   }
 
-  m_videoCaptureCB->setSourceReader(m_sourceReader.Get());
+  hr = m_videoCaptureCB->setSourceReader(m_sourceReader.Get());
+  if (FAILED(hr))
+  {
+    MessageBoxW(nullptr, L"Failed to setSourceReader in videocapture callback.", L"Error", MB_OK);
+    return -1;
+  }
 
   // TODO: MediaType setting...MJPG, YUY2
 
@@ -90,26 +95,5 @@ int CaptureManager::init(IMFActivate *pActivate)
     return -1;
   }
 
-  return 0;
-}
-
-int CaptureManager::nextFrame()
-{
-
-  HRESULT hr = S_OK;
-  hr = m_sourceReader->ReadSample(
-    (DWORD)MF_SOURCE_READER_FIRST_VIDEO_STREAM
-    , 0
-    , nullptr
-    , nullptr
-    , nullptr
-    , nullptr
-    );
-
-
-  if (FAILED(hr))
-  {
-    return -1;
-  }
   return 0;
 }

@@ -9,7 +9,9 @@
 #pragma comment(lib, "mfplat")
 #pragma comment(lib, "mfuuid")
 #pragma comment(lib, "mfreadwrite")
+
 #pragma comment(lib, "shlwapi")
+#pragma comment(lib, "wmcodecdspuuid.lib")
 
 #pragma comment(lib, "d3d11")
 #pragma comment(lib, "d3dcompiler")
