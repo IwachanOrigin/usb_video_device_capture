@@ -14,3 +14,7 @@ x64/
 videoPS.h
 
 videoVS.h
+
+*.aps
+
+Debug/
