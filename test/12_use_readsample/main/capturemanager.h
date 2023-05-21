@@ -3,6 +3,7 @@
 #define CAPTURE_MANAGER_H_
 
 #include "stdafx.h"
+#include "videocapturecallback.h"
 
 using namespace Microsoft::WRL;
 
@@ -12,6 +13,7 @@ public:
   static CaptureManager& getInstance();
 
   int init(IMFActivate *pActivate);
+  int nextFrame();
 
 private:
   explicit CaptureManager();
@@ -21,6 +23,7 @@ private:
 
   ComPtr<IMFSourceReader> m_sourceReader;
   wchar_t *m_wcSymbolicLink;
+  ComPtr<VideoCaptureCB> m_videoCaptureCB;
 };
 
 #endif // CAPTURE_MANAGER_H_

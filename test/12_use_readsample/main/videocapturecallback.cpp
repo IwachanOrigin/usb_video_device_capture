@@ -2,9 +2,22 @@
 #include "stdafx.h"
 #include "dx11manager.h"
 #include "timer.h"
+#include "capturemanager.h"
 #include "videocapturecallback.h"
 
 using namespace Microsoft::WRL;
+
+VideoCaptureCB::VideoCaptureCB()
+  : m_ref(1)
+  , m_sourceReader(nullptr)
+{
+  InitializeCriticalSection(&m_criticalSection);
+}
+
+VideoCaptureCB::~VideoCaptureCB()
+{
+  DeleteCriticalSection(&m_criticalSection);
+}
 
 STDMETHODIMP VideoCaptureCB::QueryInterface(REFIID riid, void** ppv)
 {
@@ -38,42 +51,64 @@ STDMETHODIMP VideoCaptureCB::OnReadSample(
     , LONGLONG llTimeStamp
     , IMFSample* sample)
 {
-  if (sample == nullptr)
+  HRESULT hr = S_OK;
+
+  EnterCriticalSection(&m_criticalSection);
+
+  if (FAILED(hrStatus))
   {
-    return S_OK;
+    hr = hrStatus;
   }
 
-  DWORD dwTotalLength = 0;
-  HRESULT hr = sample->GetTotalLength(&dwTotalLength);
   if (SUCCEEDED(hr))
   {
-    std::wcout << "Buffer size : " << dwTotalLength << std::endl;
+    if (sample)
+    {
+      DWORD dwTotalLength = 0;
+      hr = sample->GetTotalLength(&dwTotalLength);
+      if (SUCCEEDED(hr))
+      {
+        std::wcout << "Buffer size : " << dwTotalLength << std::endl;
+      }
+
+      sample->AddRef();
+
+      ComPtr<IMFMediaBuffer> buf = nullptr;
+      hr = sample->GetBufferByIndex(0, buf.GetAddressOf());
+      if (FAILED(hr))
+      {
+        sample->Release();
+        hr = E_FAIL;
+      }
+
+      byte* byteBuffer = nullptr;
+      DWORD buffCurrLen = 0;
+      hr = buf->Lock(&byteBuffer, NULL, &buffCurrLen);
+      if (FAILED(hr))
+      {
+        buf->Unlock();
+        sample->Release();
+        hr = E_FAIL;
+      }
+
+      std::wcout << "Buffer current size : " << buffCurrLen << std::endl;
+
+      sample->Release();
+      buf->Unlock();
+    }
   }
 
-  sample->AddRef();
+  // Request next frame
+  hr = m_sourceReader->ReadSample(
+    (DWORD)MF_SOURCE_READER_FIRST_VIDEO_STREAM
+    , 0
+    , nullptr
+    , nullptr
+    , nullptr
+    , nullptr
+  );
 
-  ComPtr<IMFMediaBuffer> buf = nullptr;
-  hr = sample->GetBufferByIndex(0, buf.GetAddressOf());
-  if (FAILED(hr))
-  {
-    sample->Release();
-    return E_FAIL;
-  }
-
-  byte* byteBuffer = nullptr;
-  DWORD buffCurrLen = 0;
-  hr = buf->Lock(&byteBuffer, NULL, &buffCurrLen);
-  if (FAILED(hr))
-  {
-    buf->Unlock();
-    sample->Release();
-    return E_FAIL;
-  }
-
-  std::wcout << "Buffer current size : " << buffCurrLen << std::endl;
-
-  sample->Release();
-  buf->Unlock();
+  LeaveCriticalSection(&m_criticalSection);
 
 #if 0
   Timer timer;

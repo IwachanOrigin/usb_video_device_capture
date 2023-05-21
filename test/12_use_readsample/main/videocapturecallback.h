@@ -9,7 +9,8 @@ class VideoCaptureCB : public IMFSourceReaderCallback
   long m_ref;
 
 public:
-  VideoCaptureCB() : m_ref(1) {}
+  explicit VideoCaptureCB();
+  virtual ~VideoCaptureCB();
 
   // IUnknown
   STDMETHODIMP QueryInterface(REFIID riid, void** ppv);
@@ -26,6 +27,12 @@ public:
 
   STDMETHODIMP OnEvent(DWORD, IMFMediaEvent*) { return S_OK; };
   STDMETHODIMP OnFlush(DWORD) { return S_OK; }
+
+  void setSourceReader(IMFSourceReader* sourceReader) { m_sourceReader = sourceReader; }
+
+private:
+  IMFSourceReader* m_sourceReader;
+  CRITICAL_SECTION m_criticalSection;
 };
 
 #endif // VIDEO_CAPTURE_CALLBACK_H_

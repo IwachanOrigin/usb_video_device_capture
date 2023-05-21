@@ -5,16 +5,12 @@
 CaptureManager::CaptureManager()
   : m_sourceReader(nullptr)
   , m_wcSymbolicLink(nullptr)
+  , m_videoCaptureCB(new VideoCaptureCB())
 {
 }
 
 CaptureManager::~CaptureManager()
 {
-  if (m_wcSymbolicLink)
-  {
-    delete m_wcSymbolicLink;
-    m_wcSymbolicLink = nullptr;
-  }
 }
 
 CaptureManager& CaptureManager::getInstance()
@@ -57,7 +53,7 @@ int CaptureManager::init(IMFActivate *pActivate)
 
   hr = attributes->SetUnknown(
     MF_SOURCE_READER_ASYNC_CALLBACK
-    , new VideoCaptureCB()
+    , m_videoCaptureCB.Get()
     );
   if (FAILED(hr))
   {
@@ -76,6 +72,8 @@ int CaptureManager::init(IMFActivate *pActivate)
     return -1;
   }
 
+  m_videoCaptureCB->setSourceReader(m_sourceReader.Get());
+
   // TODO: MediaType setting...MJPG, YUY2
 
   // Ask for the first sample.
@@ -92,5 +90,26 @@ int CaptureManager::init(IMFActivate *pActivate)
     return -1;
   }
 
+  return 0;
+}
+
+int CaptureManager::nextFrame()
+{
+
+  HRESULT hr = S_OK;
+  hr = m_sourceReader->ReadSample(
+    (DWORD)MF_SOURCE_READER_FIRST_VIDEO_STREAM
+    , 0
+    , nullptr
+    , nullptr
+    , nullptr
+    , nullptr
+    );
+
+
+  if (FAILED(hr))
+  {
+    return -1;
+  }
   return 0;
 }
