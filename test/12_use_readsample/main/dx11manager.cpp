@@ -5,6 +5,9 @@
 using namespace DirectX;
 using namespace manager;
 
+const int CAPTURE_WIDTH = 640;
+const int CAPTURE_HEIGHT = 480;
+
 DX11Manager::DX11Manager()
   : m_d3dDevice(nullptr)
   , m_immediateContext(nullptr)
@@ -52,8 +55,8 @@ bool DX11Manager::init(const HWND hwnd)
   DXGI_SWAP_CHAIN_DESC sd{};
   ZeroMemory(&sd, sizeof(sd));
   sd.BufferCount = 1;
-  sd.BufferDesc.Width = 3840;
-  sd.BufferDesc.Height = 2160;
+  sd.BufferDesc.Width = CAPTURE_WIDTH;
+  sd.BufferDesc.Height = CAPTURE_HEIGHT;
   sd.BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
   sd.BufferDesc.RefreshRate.Numerator = 60;
   sd.BufferDesc.RefreshRate.Denominator = 1;
@@ -175,8 +178,8 @@ bool DX11Manager::init(const HWND hwnd)
 bool DX11Manager::createTexture()
 {
   D3D11_TEXTURE2D_DESC desc{};
-  desc.Width = 3840;
-  desc.Height = 2160;
+  desc.Width = CAPTURE_WIDTH;
+  desc.Height = CAPTURE_HEIGHT;
   desc.MipLevels = 1;
   desc.ArraySize = 1;
   desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
