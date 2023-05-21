@@ -91,10 +91,59 @@ HRESULT VideoCaptureCB::setSourceReader(IMFSourceReader* sourceReader)
     return hr;
   }
 
-  hr = utilCloneAllItems(webCamMediaType.Get(), m_DecoderOutputMediaType.GetAddressOf());
+  hr = utilCloneVideomediaType(webCamMediaType.Get(), MFVideoFormat_RGB32, m_DecoderOutputMediaType.GetAddressOf());
   if (FAILED(hr))
   {
     MessageBoxW(nullptr, L"Failed to copy the camera current media type to the decoder output media type.", L"Error", MB_OK);
+    return hr;
+  }
+
+  // default : 640, 480, 30, yuy2
+  hr = m_colorConvTransform->SetInputType(0, webCamMediaType.Get(), 0);
+  if (FAILED(hr))
+  {
+    MessageBoxW(nullptr, L"Failed to set input media type on color conversion MFT.", L"Error", MB_OK);
+    return hr;
+  }
+
+  hr = m_colorConvTransform->SetOutputType(0, m_DecoderOutputMediaType.Get(), 0);
+  if (FAILED(hr))
+  {
+    MessageBoxW(nullptr, L"Failed to set input media type on color conversion MFT.", L"Error", MB_OK);
+    return hr;
+  }
+
+  DWORD mftStatus = 0;
+  hr = m_colorConvTransform->GetInputStatus(0, &mftStatus);
+  if (FAILED(hr))
+  {
+    MessageBoxW(nullptr, L"Failed to get input meida status from color conversion MFT.", L"Error", MB_OK);
+    return hr;
+  }
+  if (MFT_INPUT_STATUS_ACCEPT_DATA != mftStatus)
+  {
+    MessageBoxW(nullptr, L"Color conversion MFT is not accepting data.", L"Error", MB_OK);
+    return hr;
+  }
+
+  hr = m_colorConvTransform->ProcessMessage(MFT_MESSAGE_COMMAND_FLUSH, NULL);
+  if (FAILED(hr))
+  {
+    MessageBoxW(nullptr, L"Failed to process FLUSH command on color conversion MFT.", L"Error", MB_OK);
+    return hr;
+  }
+
+  hr = m_colorConvTransform->ProcessMessage(MFT_MESSAGE_NOTIFY_BEGIN_STREAMING, NULL);
+  if (FAILED(hr))
+  {
+    MessageBoxW(nullptr, L"Failed to process BEGIN_STREAMING command on color conversion MFT.", L"Error", MB_OK);
+    return hr;
+  }
+
+  hr = m_colorConvTransform->ProcessMessage(MFT_MESSAGE_NOTIFY_START_OF_STREAM, NULL);
+  if (FAILED(hr))
+  {
+    MessageBoxW(nullptr, L"Failed to process START_OF_STREAM command on color conversion MFT.", L"Error", MB_OK);
     return hr;
   }
 
@@ -123,6 +172,60 @@ STDMETHODIMP VideoCaptureCB::OnReadSample(
     {
       sample->AddRef();
 
+      hr = m_colorConvTransform->ProcessInput(0, sample, NULL);
+      if (FAILED(hr))
+      {
+        std::cerr << "The color conversion decoder ProcessInput call failed." << std::endl;
+        sample->Release();
+        hr = E_FAIL;
+      }
+
+      ComPtr<IMFSample> mftOutSample = nullptr;
+      ComPtr<IMFMediaBuffer> mftOutBuffer = nullptr;
+      MFT_OUTPUT_STREAM_INFO streamInfo{};
+      MFT_OUTPUT_DATA_BUFFER outputDataBuffer{};
+      DWORD processOutputStatus = 0;
+
+      hr = m_colorConvTransform->GetOutputStreamInfo(0, &streamInfo);
+      if (FAILED(hr))
+      {
+        std::cerr << "Failed to get output stream info from color conversion MFT." << std::endl;
+        sample->Release();
+        hr = E_FAIL;
+      }
+
+      hr = MFCreateSample(&mftOutSample);
+      if (FAILED(hr))
+      {
+        std::cerr << "Failed to create MF sample." << std::endl;
+        sample->Release();
+        hr = E_FAIL;
+      }
+
+      hr = MFCreateMemoryBuffer(streamInfo.cbSize, mftOutBuffer.GetAddressOf());
+      if (FAILED(hr))
+      {
+        std::cerr << "Failed to create memory buffer." << std::endl;
+        sample->Release();
+        hr = E_FAIL;
+      }
+
+      hr = mftOutSample->AddBuffer(mftOutBuffer.Get());
+      if (FAILED(hr))
+      {
+        std::cerr << "Failed to add sample to buffer." << std::endl;
+        sample->Release();
+        hr = E_FAIL;
+      }
+      outputDataBuffer.dwStreamID = 0;
+      outputDataBuffer.dwStatus = 0;
+      outputDataBuffer.pEvents = NULL;
+      outputDataBuffer.pSample = mftOutSample.Get();
+      auto mftProcessOutput = m_colorConvTransform->ProcessOutput(0, 1, &outputDataBuffer, &processOutputStatus);
+      std::wcout << "Color conversion result : " << mftProcessOutput << ", MFT status : " << processOutputStatus << std::endl;
+
+      sample->Release();
+#if 0
       ComPtr<IMFMediaBuffer> buf = nullptr;
       hr = sample->GetBufferByIndex(0, buf.GetAddressOf());
       if (FAILED(hr))
@@ -140,11 +243,11 @@ STDMETHODIMP VideoCaptureCB::OnReadSample(
         sample->Release();
         hr = E_FAIL;
       }
-
       std::wcout << "Buffer current size : " << buffCurrLen << std::endl;
 
       sample->Release();
       buf->Unlock();
+#endif
     }
   }
 
