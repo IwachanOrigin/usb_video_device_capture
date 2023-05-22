@@ -99,6 +99,56 @@ HRESULT VideoCaptureCB::setSourceReader(IMFSourceReader* sourceReader)
     MessageBoxW(nullptr, L"Failed to copy the camera current media type to the decoder output media type.", L"Error", MB_OK);
     return hr;
   }
+
+  // default : 640, 480, 30, yuy2
+  // chenged : 640, 480, 30, mjpeg
+  hr = m_colorConvTransform->SetInputType(0, webCamMediaType.Get(), 0);
+  if (FAILED(hr))
+  {
+    MessageBoxW(nullptr, L"Failed to set input media type on color conversion MFT.", L"Error", MB_OK);
+    return hr;
+  }
+
+  hr = m_colorConvTransform->SetOutputType(0, m_DecoderOutputMediaType.Get(), 0);
+  if (FAILED(hr))
+  {
+    MessageBoxW(nullptr, L"Failed to set output media type on color conversion MFT.", L"Error", MB_OK);
+    return hr;
+  }
+
+  DWORD mftStatus = 0;
+  hr = m_colorConvTransform->GetInputStatus(0, &mftStatus);
+  if (FAILED(hr))
+  {
+    MessageBoxW(nullptr, L"Failed to get input media status from color conversion MFT.", L"Error", MB_OK);
+    return hr;
+  }
+  if (MFT_INPUT_STATUS_ACCEPT_DATA != mftStatus)
+  {
+    MessageBoxW(nullptr, L"Color conversion MFT is not accepting data.", L"Error", MB_OK);
+    return hr;
+  }
+
+  hr = m_colorConvTransform->ProcessMessage(MFT_MESSAGE_COMMAND_FLUSH, NULL);
+  if (FAILED(hr))
+  {
+    MessageBoxW(nullptr, L"Failed to process FLUSH command on color conversion MFT.", L"Error", MB_OK);
+    return hr;
+  }
+
+  hr = m_colorConvTransform->ProcessMessage(MFT_MESSAGE_NOTIFY_BEGIN_STREAMING, NULL);
+  if (FAILED(hr))
+  {
+    MessageBoxW(nullptr, L"Failed to process BEGIN_STREAMING command on color conversion MFT.", L"Error", MB_OK);
+    return hr;
+  }
+
+  hr = m_colorConvTransform->ProcessMessage(MFT_MESSAGE_NOTIFY_START_OF_STREAM, NULL);
+  if (FAILED(hr))
+  {
+    MessageBoxW(nullptr, L"Failed to process START_OF_STREAM command on color conversion MFT.", L"Error", MB_OK);
+    return hr;
+  }
 #else
 
   MFT_REGISTER_TYPE_INFO inputFilter = { MFMediaType_Video, MFVideoFormat_MJPG };
@@ -107,7 +157,7 @@ HRESULT VideoCaptureCB::setSourceReader(IMFSourceReader* sourceReader)
 
   IMFActivate** transformActivate = nullptr;
   UINT32 numDecodersMJPG = 0;
-  hr = MFTEnumEx(MFT_CATEGORY_VIDEO_DECODER, unFlags, &inputFilter, &outputFilter, &transformActivate, &numDecodersMJPG);
+  hr = MFTEnumEx(MFT_CATEGORY_VIDEO_DECODER, unFlags, &inputFilter, nullptr, &transformActivate, &numDecodersMJPG);
   if (FAILED(hr))
   {
     MessageBoxW(nullptr, L"Failed to get the MFTEnumCategory.", L"Error", MB_OK);
@@ -172,25 +222,6 @@ HRESULT VideoCaptureCB::setSourceReader(IMFSourceReader* sourceReader)
     }
   }
 
-  for (UINT32 i = 0; i < (UINT32)pdwOutputMax; i++)
-  {
-    ComPtr<IMFMediaType> _mediaType = nullptr;
-    hr = m_colorConvTransform->GetOutputAvailableType(pdwOutputIDs[0], (DWORD)i, _mediaType.GetAddressOf());
-    if (FAILED(hr) && hr != E_NOTIMPL)
-    {
-      MessageBoxW(nullptr, L"Failed to GetOutputAvailableType.", L"Error", MB_OK);
-      return hr;
-    }
-    GUID subtype{};
-    if (SUCCEEDED(_mediaType->GetGUID(MF_MT_SUBTYPE, &subtype)))
-    {
-      if (MFVideoFormat_YUY2 == subtype)
-      {
-        MessageBoxW(nullptr, L"Output type is MFVideoFormat_YUY2", L"Info", MB_OK);
-      }
-    }
-  }
-
   ComPtr<IMFMediaType> webCamMediaType = nullptr;
   UINT32 index = getOptimizedFormatIndex();
   hr = m_sourceReader->GetNativeMediaType(
@@ -210,15 +241,36 @@ HRESULT VideoCaptureCB::setSourceReader(IMFSourceReader* sourceReader)
     MessageBoxW(nullptr, L"Failed to copy the camera current media type to the decoder output media type.", L"Error", MB_OK);
     return hr;
   }
-#endif
 
-  // default : 640, 480, 30, yuy2
-  // chenged : 640, 480, 30, mjpeg
   hr = m_colorConvTransform->SetInputType(0, webCamMediaType.Get(), 0);
   if (FAILED(hr))
   {
     MessageBoxW(nullptr, L"Failed to set input media type on color conversion MFT.", L"Error", MB_OK);
     return hr;
+  }
+
+  for (UINT32 i = 0; i < (UINT32)pdwOutputMax; i++)
+  {
+    ComPtr<IMFMediaType> _mediaType = nullptr;
+    hr = m_colorConvTransform->GetOutputAvailableType(pdwOutputIDs[0], (DWORD)i, _mediaType.GetAddressOf());
+    if (FAILED(hr) && hr != E_NOTIMPL)
+    {
+      if (MF_E_TRANSFORM_TYPE_NOT_SET == hr)
+      {
+        std::cerr << "MF_E_TRANSFORM_TYPE_NOT_SET" << std::endl;
+        return hr;
+      }
+      MessageBoxW(nullptr, L"Failed to GetOutputAvailableType.", L"Error", MB_OK);
+      return hr;
+    }
+    GUID subtype{};
+    if (SUCCEEDED(_mediaType->GetGUID(MF_MT_SUBTYPE, &subtype)))
+    {
+      if (MFVideoFormat_YUY2 == subtype)
+      {
+        MessageBoxW(nullptr, L"Output type is MFVideoFormat_YUY2", L"Info", MB_OK);
+      }
+    }
   }
 
   hr = m_colorConvTransform->SetOutputType(0, m_DecoderOutputMediaType.Get(), 0);
@@ -261,6 +313,7 @@ HRESULT VideoCaptureCB::setSourceReader(IMFSourceReader* sourceReader)
     MessageBoxW(nullptr, L"Failed to process START_OF_STREAM command on color conversion MFT.", L"Error", MB_OK);
     return hr;
   }
+#endif
 
   return hr;
 }
