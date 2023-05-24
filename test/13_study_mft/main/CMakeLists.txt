@@ -4,6 +4,8 @@ set(main_src
   dxhelper.h
   stdafx.h
   stdafx.cpp
+  finddecoder.h
+  finddecoder.cpp
 )
 
 add_executable(${PROJECT_NAME} ${main_src})
