@@ -395,6 +395,401 @@ static inline LPCSTR getGUIDNameConst(const GUID& guid)
   return NULL;
 }
 
+static inline HRESULT CreateSingleBufferIMFSample(DWORD bufferSize, IMFSample** pSample)
+{
+  IMFMediaBuffer* pBuffer = NULL;
+
+  HRESULT hr = S_OK;
+
+  hr = MFCreateSample(pSample);
+  if (FAILED(hr))
+  {
+    std::wcerr << "Failed to create MF sample." << std::endl;
+    goto done;
+  }
+
+  // Adds a ref count to the pBuffer object.
+  hr = MFCreateMemoryBuffer(bufferSize, &pBuffer);
+  if (FAILED(hr))
+  {
+    std::wcerr << "Failed to create memory buffer." << std::endl;
+    goto done;
+  }
+
+  // Adds another ref count to the pBuffer object.
+  hr = (*pSample)->AddBuffer(pBuffer);
+  if (FAILED(hr))
+  {
+    std::wcerr << "Failed to add sample to buffer." << std::endl;
+    goto done;
+  }
+
+done:
+  // Leave the single ref count that will be removed when the pSample is released.
+  SAFE_RELEASE(pBuffer);
+  return hr;
+}
+
+static inline HRESULT CreateAndCopySingleBufferIMFSample(IMFSample* pSrcSample, IMFSample** pDstSample)
+{
+  IMFMediaBuffer* pDstBuffer = NULL;
+  DWORD srcBufLength;
+
+  HRESULT hr = S_OK;
+
+  // Gets total length of ALL media buffer samples. We can use here because it's only a
+  // single buffer sample copy.
+  hr = pSrcSample->GetTotalLength(&srcBufLength);
+  if (FAILED(hr))
+  {
+    std::wcerr << "Failed to get total length from source buffer." << std::endl;
+    goto done;
+  }
+
+  hr = CreateSingleBufferIMFSample(srcBufLength, pDstSample);
+  if (FAILED(hr))
+  {
+    std::wcerr << "Failed to create new single buffer IMF sample." << std::endl;
+    goto done;
+  }
+
+  hr = pSrcSample->CopyAllItems(*pDstSample);
+  if (FAILED(hr))
+  {
+    std::wcerr << "Failed to copy IMFSample items from src to dst." << std::endl;
+    goto done;
+  }
+
+  hr = (*pDstSample)->GetBufferByIndex(0, &pDstBuffer);
+  if (FAILED(hr))
+  {
+    std::wcerr << "Failed to get buffer from sample." << std::endl;
+    goto done;
+  }
+
+  hr = pSrcSample->CopyToBuffer(pDstBuffer);
+  if (FAILED(hr))
+  {
+    std::wcerr << "Failed to copy IMF media buffer." << std::endl;
+    goto done;
+  }
+
+done:
+  SAFE_RELEASE(pDstBuffer);
+  return hr;
+}
+
+static inline std::string GetMediaTypeDescription(IMFMediaType* pMediaType)
+{
+  HRESULT hr = S_OK;
+  GUID MajorType{ 0 };
+  UINT32 cAttrCount = 0;
+  LPCSTR pszGuidStr{ 0 };
+  std::string description = "";
+  WCHAR TempBuf[200]{ 0 };
+
+  if (pMediaType == NULL)
+  {
+    description = "<NULL>";
+    goto done;
+  }
+
+  hr = pMediaType->GetMajorType(&MajorType);
+  if (FAILED(hr))
+  {
+    goto done;
+  }
+
+  //pszGuidStr = STRING_FROM_GUID(MajorType);
+  pszGuidStr = getGUIDNameConst(MajorType);
+  if (pszGuidStr != NULL)
+  {
+    description += pszGuidStr;
+    description += ": ";
+  }
+  else
+  {
+    description += "Other: ";
+  }
+
+  hr = pMediaType->GetCount(&cAttrCount);
+  if (FAILED(hr))
+  {
+    goto done;
+  }
+
+  for (UINT32 i = 0; i < cAttrCount; i++)
+  {
+    GUID guidId;
+    MF_ATTRIBUTE_TYPE attrType;
+
+    hr = pMediaType->GetItemByIndex(i, &guidId, NULL);
+    if (FAILED(hr))
+    {
+      goto done;
+    }
+
+    hr = pMediaType->GetItemType(guidId, &attrType);
+    if (FAILED(hr))
+    {
+      goto done;
+    }
+
+    //pszGuidStr = STRING_FROM_GUID(guidId);
+    pszGuidStr = getGUIDNameConst(guidId);
+    if (pszGuidStr != NULL)
+    {
+      description += pszGuidStr;
+    }
+    else
+    {
+      LPOLESTR guidStr = NULL;
+
+      hr = StringFromCLSID(guidId, &guidStr);
+      if (FAILED(hr))
+      {
+        goto done;
+      }
+      auto wGuidStr = std::wstring(guidStr);
+      description += std::string(wGuidStr.begin(), wGuidStr.end()); // GUID's won't have wide chars.
+
+      CoTaskMemFree(guidStr);
+    }
+
+    description += "=";
+
+    switch (attrType)
+    {
+    case MF_ATTRIBUTE_UINT32:
+    {
+      UINT32 Val;
+      hr = pMediaType->GetUINT32(guidId, &Val);
+      if (FAILED(hr))
+      {
+        goto done;
+      }
+
+      description += std::to_string(Val);
+      break;
+    }
+    case MF_ATTRIBUTE_UINT64:
+    {
+      UINT64 Val;
+      hr = pMediaType->GetUINT64(guidId, &Val);
+      if (FAILED(hr))
+      {
+        goto done;
+      }
+
+      if (guidId == MF_MT_FRAME_SIZE)
+      {
+        description += "W:" + std::to_string(HI32(Val)) + " H: " + std::to_string(LO32(Val));
+      }
+      else if (guidId == MF_MT_FRAME_RATE)
+      {
+        // Frame rate is numerator/denominator.
+        description += std::to_string(HI32(Val)) + "/" + std::to_string(LO32(Val));
+      }
+      else if (guidId == MF_MT_PIXEL_ASPECT_RATIO)
+      {
+        description += std::to_string(HI32(Val)) + ":" + std::to_string(LO32(Val));
+      }
+      else
+      {
+        //tempStr.Format("%ld", Val);
+        description += std::to_string(Val);
+      }
+
+      //description += tempStr;
+
+      break;
+    }
+    case MF_ATTRIBUTE_DOUBLE:
+    {
+      DOUBLE Val;
+      hr = pMediaType->GetDouble(guidId, &Val);
+      if (FAILED(hr))
+      {
+        goto done;
+      }
+
+      //tempStr.Format("%f", Val);
+      description += std::to_string(Val);
+      break;
+    }
+    case MF_ATTRIBUTE_GUID:
+    {
+      GUID Val;
+      const char* pValStr;
+
+      hr = pMediaType->GetGUID(guidId, &Val);
+      if (FAILED(hr))
+      {
+        goto done;
+      }
+
+      //pValStr = STRING_FROM_GUID(Val);
+      pValStr = getGUIDNameConst(Val);
+      if (pValStr != NULL)
+      {
+        description += pValStr;
+      }
+      else
+      {
+        LPOLESTR guidStr = NULL;
+        hr = StringFromCLSID(Val, &guidStr);
+        if (FAILED(hr))
+        {
+          goto done;
+        }
+        auto wGuidStr = std::wstring(guidStr);
+        description += std::string(wGuidStr.begin(), wGuidStr.end()); // GUID's won't have wide chars.
+
+        CoTaskMemFree(guidStr);
+      }
+
+      break;
+    }
+    case MF_ATTRIBUTE_STRING:
+    {
+      hr = pMediaType->GetString(guidId, TempBuf, sizeof(TempBuf) / sizeof(TempBuf[0]), NULL);
+      if (hr == HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER))
+      {
+        description += "<Too Long>";
+        break;
+      }
+      if (FAILED(hr))
+      {
+        goto done;
+      }
+      auto wstr = std::wstring(TempBuf);
+      description += std::string(wstr.begin(), wstr.end()); // It's unlikely the attribute descriptions will contain multi byte chars.
+
+      break;
+    }
+    case MF_ATTRIBUTE_BLOB:
+    {
+      description += "<BLOB>";
+      break;
+    }
+    case MF_ATTRIBUTE_IUNKNOWN:
+    {
+      description += "<UNK>";
+      break;
+    }
+    }
+
+    description += ", ";
+  }
+
+done:
+
+  return description;
+}
+
+
+static inline HRESULT GetTransformOutput(IMFTransform* pTransform, IMFSample** pOutSample, BOOL* transformFlushed)
+{
+  MFT_OUTPUT_STREAM_INFO StreamInfo = { 0 };
+  MFT_OUTPUT_DATA_BUFFER outputDataBuffer = { 0 };
+  DWORD processOutputStatus = 0;
+  ComPtr<IMFMediaType> pChangedOutMediaType = nullptr;
+
+  HRESULT hr = S_OK;
+  *transformFlushed = FALSE;
+
+  hr = pTransform->GetOutputStreamInfo(0, &StreamInfo);
+  if (FAILED(hr))
+  {
+    std::cerr << "Failed to get output stream info from MFT." << std::endl;
+    return hr;
+  }
+
+  outputDataBuffer.dwStreamID = 0;
+  outputDataBuffer.dwStatus = 0;
+  outputDataBuffer.pEvents = NULL;
+
+  if ((StreamInfo.dwFlags & MFT_OUTPUT_STREAM_PROVIDES_SAMPLES) == 0)
+  {
+    hr = CreateSingleBufferIMFSample(StreamInfo.cbSize, pOutSample);
+    if (FAILED(hr))
+    {
+      std::cerr << "Failed to create new single buffer IMF sample." << std::endl;
+      return hr;
+    }
+    outputDataBuffer.pSample = *pOutSample;
+  }
+
+  auto mftProcessOutput = pTransform->ProcessOutput(0, 1, &outputDataBuffer, &processOutputStatus);
+
+  printf("Process output result %.2X, MFT status %.2X.\n", mftProcessOutput, processOutputStatus);
+
+  if (mftProcessOutput == S_OK)
+  {
+    // Sample is ready and allocated on the transform output buffer.
+    *pOutSample = outputDataBuffer.pSample;
+  }
+  else if (mftProcessOutput == MF_E_TRANSFORM_STREAM_CHANGE)
+  {
+    // Format of the input stream has changed. https://docs.microsoft.com/en-us/windows/win32/medfound/handling-stream-changes
+    if (outputDataBuffer.dwStatus == MFT_OUTPUT_DATA_BUFFER_FORMAT_CHANGE)
+    {
+      printf("MFT stream changed.\n");
+
+      hr = pTransform->GetOutputAvailableType(0, 0, pChangedOutMediaType.GetAddressOf());
+      if (FAILED(hr))
+      {
+        std::cerr << "Failed to get the MFT output media type after a stream change." << std::endl;
+        return hr;
+      }
+
+      std::cout << "MFT output media type: " << GetMediaTypeDescription(pChangedOutMediaType.Get()) << std::endl << std::endl;
+
+      hr = pChangedOutMediaType->SetGUID(MF_MT_SUBTYPE, MFVideoFormat_IYUV);
+      if (FAILED(hr))
+      {
+        std::cerr << "Failed to set media sub type." << std::endl;
+        return hr;
+      }
+
+      hr = pTransform->SetOutputType(0, pChangedOutMediaType.Get(), 0);
+      if (FAILED(hr))
+      {
+        std::cerr << "Failed to set new output media type on MFT." << std::endl;
+        return hr;
+      }
+
+      hr = pTransform->ProcessMessage(MFT_MESSAGE_COMMAND_FLUSH, NULL);
+      if (FAILED(hr))
+      {
+        std::cerr << "Failed to process FLUSH command on MFT." << std::endl;
+        return hr;
+      }
+
+      *transformFlushed = TRUE;
+    }
+    else
+    {
+      printf("MFT stream changed but didn't have the data format change flag set. Don't know what to do.\n");
+      hr = E_NOTIMPL;
+    }
+  }
+  else if (mftProcessOutput == MF_E_TRANSFORM_NEED_MORE_INPUT)
+  {
+    // More input is not an error condition but it means the allocated output sample is empty.
+    hr = MF_E_TRANSFORM_NEED_MORE_INPUT;
+  }
+  else
+  {
+    printf("MFT ProcessOutput error result %.2X, MFT status %.2X.\n", mftProcessOutput, processOutputStatus);
+    hr = mftProcessOutput;
+  }
+
+  return hr;
+}
+
+
+
 } // helper
 
 #endif // UTILS_H_
