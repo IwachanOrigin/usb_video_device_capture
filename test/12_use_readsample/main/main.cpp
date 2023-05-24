@@ -128,26 +128,6 @@ int main(int argc, char* argv[])
     return -1;
   }
 
-  // Create capturemanager.
-  int retInt = CaptureManager::getInstance().init(devices[selectionNo]);
-  if (retInt < 0)
-  {
-    if (devices != nullptr)
-    {
-      for (uint32_t i = 0; i < deviceCount; i++)
-      {
-        devices[i]->Release();
-      }
-      CoTaskMemFree(devices);
-    }
-    ThrowIfFailed(MFShutdown());
-    CoUninitialize();
-
-    MessageBoxW(nullptr, L"Failed to create main window.", L"Error", MB_OK);
-    return -1;
-  }
-  devices[selectionNo]->AddRef();
-
   // Create main window.
   bool result = Win32MessageHandler::getInstance().init((HINSTANCE)0, 1);
   if (!result)
@@ -184,6 +164,26 @@ int main(int argc, char* argv[])
     ThrowIfFailed(MFShutdown());
     CoUninitialize();
   }
+
+  // Create capturemanager.
+  int retInt = CaptureManager::getInstance().init(devices[selectionNo]);
+  if (retInt < 0)
+  {
+    if (devices != nullptr)
+    {
+      for (uint32_t i = 0; i < deviceCount; i++)
+      {
+        devices[i]->Release();
+      }
+      CoTaskMemFree(devices);
+    }
+    ThrowIfFailed(MFShutdown());
+    CoUninitialize();
+
+    MessageBoxW(nullptr, L"Failed to create main window.", L"Error", MB_OK);
+    return -1;
+  }
+  devices[selectionNo]->AddRef();
 
   // Start message loop
   Win32MessageHandler::getInstance().run();

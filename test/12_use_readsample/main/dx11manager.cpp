@@ -5,8 +5,8 @@
 using namespace DirectX;
 using namespace manager;
 
-const int CAPTURE_WIDTH = 640;
-const int CAPTURE_HEIGHT = 480;
+const int CAPTURE_WIDTH = 1920;
+const int CAPTURE_HEIGHT = 1080;
 
 DX11Manager::DX11Manager()
   : m_d3dDevice(nullptr)

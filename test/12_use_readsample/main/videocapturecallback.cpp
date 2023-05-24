@@ -151,113 +151,75 @@ HRESULT VideoCaptureCB::setSourceReader(IMFSourceReader* sourceReader)
   }
 #else
 
-  MFT_REGISTER_TYPE_INFO inputFilter = { MFMediaType_Video, MFVideoFormat_MJPG };
-  MFT_REGISTER_TYPE_INFO outputFilter = { MFMediaType_Video, MFVideoFormat_NV12 };
-  UINT32 unFlags = MFT_ENUM_FLAG_SYNCMFT | MFT_ENUM_FLAG_LOCALMFT | MFT_ENUM_FLAG_SORTANDFILTER;
-
-  IMFActivate** transformActivate = nullptr;
-  UINT32 numDecodersMJPG = 0;
-  hr = MFTEnumEx(MFT_CATEGORY_VIDEO_DECODER, unFlags, &inputFilter, &outputFilter, &transformActivate, &numDecodersMJPG);
+  ComPtr<IUnknown> colorConvTransformUnk = nullptr;
+  // https://learn.microsoft.com/ja-jp/windows/win32/medfound/colorconverter
+  // https://learn.microsoft.com/ja-jp/windows/win32/medfound/video-processor-mft
+  hr = CoCreateInstance(CLSID_CColorConvertDMO, nullptr, CLSCTX_INPROC_SERVER, IID_IUnknown, (void**)colorConvTransformUnk.GetAddressOf());
   if (FAILED(hr))
   {
-    MessageBoxW(nullptr, L"Failed to get the MFTEnumCategory.", L"Error", MB_OK);
-    return hr;
-  }
-  if (numDecodersMJPG < 1)
-  {
-    MessageBoxW(nullptr, L"MJPG to YUY2 decoder is nothing.", L"Error", MB_OK);
+    MessageBoxW(nullptr, L"Failed to create color conversion transform unknown.", L"Error", MB_OK);
     return hr;
   }
 
-  // Activate transform
-  hr = transformActivate[0]->ActivateObject(__uuidof(IMFTransform), (void**)m_colorConvTransform.GetAddressOf());
+  hr = colorConvTransformUnk->QueryInterface(IID_PPV_ARGS(m_colorConvTransform.GetAddressOf()));
   if (FAILED(hr))
   {
-    MessageBoxW(nullptr, L"Failed to activate decoder..", L"Error", MB_OK);
-    for (UINT32 i = 0; i < numDecodersMJPG; i++)
-    {
-      transformActivate[i]->Release();
-    }
-    CoTaskMemFree(transformActivate);
+    MessageBoxW(nullptr, L"Failed to get IMFTransform interface from color converter MFT object..", L"Error", MB_OK);
     return hr;
   }
 
-  for (UINT32 i = 0; i < numDecodersMJPG; i++)
+  hr = MFCreateMediaType(m_DecoderOutputMediaType.GetAddressOf());
+  if (FAILED(hr))
   {
-    transformActivate[i]->Release();
-  }
-  CoTaskMemFree(transformActivate);
-
-  // get stream limits
-  DWORD pdwInputMin = 0, pdwInputMax = 0, pdwOutputMin = 0, pdwOutputMax = 0;
-  hr = m_colorConvTransform->GetStreamLimits(&pdwInputMin, &pdwInputMax, &pdwOutputMin, &pdwOutputMax);
-  std::wcout << "InputMin : " << pdwInputMin << ", InputMax : " << pdwInputMax << ", OutputMin : " << pdwOutputMin << ", OutputMax : " << pdwOutputMax << std::endl;
-
-  // get stream count
-  DWORD pcInputStreams = 0, pcOutputStreams = 0;
-  hr = m_colorConvTransform->GetStreamCount(&pcInputStreams, &pcOutputStreams);
-  std::wcout << "InputStreams : " << pcInputStreams << ", OutputStreams : " << pcOutputStreams << std::endl;
-
-  // get stream ids
-  DWORD pdwInputIDs[1]{ 0 }, pdwOutputIDs[1]{ 0 };
-  hr = m_colorConvTransform->GetStreamIDs(pcInputStreams, pdwInputIDs, pcOutputStreams, pdwOutputIDs);
-  std::wcout << "InputId : " << pdwInputIDs[0] << ", OutputId : " << pdwOutputIDs[0] << std::endl;
-
-  for (UINT32 i = 0; i < (UINT32)pdwInputMax; i++)
-  {
-    ComPtr<IMFMediaType> _mediaType = nullptr;
-    hr = m_colorConvTransform->GetInputAvailableType(pdwInputIDs[0], (DWORD)i, _mediaType.GetAddressOf());
-    if (FAILED(hr))
-    {
-      MessageBoxW(nullptr, L"Failed to GetInputAvailableType.", L"Error", MB_OK);
-      return hr;
-    }
-    GUID subtype{};
-    if (SUCCEEDED(_mediaType->GetGUID(MF_MT_SUBTYPE, &subtype)))
-    {
-      LPCSTR lpcsSubtype = getGUIDNameConst(subtype);
-      std::cout << "MF_MT_SUBTYPE : " << lpcsSubtype << std::endl;
-      UINT32 width = 0, height = 0;
-      hr = MFGetAttributeSize(_mediaType.Get(), MF_MT_FRAME_SIZE, &width, &height);
-      UINT32 num = 0, den = 0;
-      hr = MFGetAttributeRatio(_mediaType.Get(), MF_MT_FRAME_RATE, &num, &den);
-      std::cout << "width = " << width << ", height = " << height << ", fps = " << num << std::endl;
-    }
+    MessageBoxW(nullptr, L"Failed to create media type.", L"Error", MB_OK);
+    return hr;
   }
 
   ComPtr<IMFMediaType> webCamMediaType = nullptr;
-  UINT32 index = getOptimizedFormatIndex();
-  hr = m_sourceReader->GetNativeMediaType(
+  hr = m_sourceReader->GetCurrentMediaType(
     (DWORD)MF_SOURCE_READER_FIRST_VIDEO_STREAM
-    , index
     , webCamMediaType.GetAddressOf()
-  );
-  {
-    GUID subtype{};
-    if (SUCCEEDED(webCamMediaType->GetGUID(MF_MT_SUBTYPE, &subtype)))
-    {
-      LPCSTR lpcsSubtype = getGUIDNameConst(subtype);
-      std::cout << "MF_MT_SUBTYPE : " << lpcsSubtype << std::endl;
-      UINT32 width = 0, height = 0;
-      hr = MFGetAttributeSize(webCamMediaType.Get(), MF_MT_FRAME_SIZE, &width, &height);
-      UINT32 num = 0, den = 0;
-      hr = MFGetAttributeRatio(webCamMediaType.Get(), MF_MT_FRAME_RATE, &num, &den);
-      std::cout << "width = " << width << ", height = " << height << ", fps = " << num << std::endl;
-    }
-  }
+    );
   if (FAILED(hr))
   {
     MessageBoxW(nullptr, L"Failed to get the camera current media type.", L"Error", MB_OK);
     return hr;
   }
 
-  hr = utilCloneVideomediaType(webCamMediaType.Get(), MFVideoFormat_NV12, m_DecoderOutputMediaType.GetAddressOf());
+  hr = webCamMediaType->SetGUID(MF_MT_SUBTYPE, MFVideoFormat_NV12);
   if (FAILED(hr))
   {
-    MessageBoxW(nullptr, L"Failed to copy the camera current media type to the decoder output media type.", L"Error", MB_OK);
+    MessageBoxW(nullptr, L"Failed to set the camera media type to subtype.", L"Error", MB_OK);
     return hr;
   }
 
+  hr = MFSetAttributeSize(webCamMediaType.Get(), MF_MT_FRAME_SIZE, 1920, 1080);
+  if (FAILED(hr))
+  {
+    MessageBoxW(nullptr, L"Failed to set the camera media type to frame size.", L"Error", MB_OK);
+    return hr;
+  }
+
+  hr = MFSetAttributeRatio(webCamMediaType.Get(), MF_MT_FRAME_RATE, 30, 1);
+  if (FAILED(hr))
+  {
+    MessageBoxW(nullptr, L"Failed to set the camera media type to frame rate.", L"Error", MB_OK);
+    return hr;
+  }
+
+  hr = m_sourceReader->SetCurrentMediaType(
+    (DWORD)MF_SOURCE_READER_FIRST_VIDEO_STREAM
+    , NULL
+    , webCamMediaType.Get()
+  );
+  if (FAILED(hr))
+  {
+    MessageBoxW(nullptr, L"Failed to set the camera media type.", L"Error", MB_OK);
+    return hr;
+  }
+
+  // default : 640, 480, 30, yuy2
+  // chenged : 1920, 1080, 30, nv12
   hr = m_colorConvTransform->SetInputType(0, webCamMediaType.Get(), 0);
   if (FAILED(hr))
   {
@@ -265,34 +227,14 @@ HRESULT VideoCaptureCB::setSourceReader(IMFSourceReader* sourceReader)
     return hr;
   }
 
-  ComPtr<IMFMediaType> outputAvailableType = nullptr;
-  for (UINT32 i = 0; i < (UINT32)pdwOutputMax; i++)
+  hr = utilCloneVideomediaType(webCamMediaType.Get(), MFVideoFormat_RGB32, m_DecoderOutputMediaType.GetAddressOf());
+  if (FAILED(hr))
   {
-    hr = m_colorConvTransform->GetOutputAvailableType(pdwOutputIDs[0], (DWORD)i, outputAvailableType.GetAddressOf());
-    if (FAILED(hr) && hr != E_NOTIMPL)
-    {
-      if (MF_E_TRANSFORM_TYPE_NOT_SET == hr)
-      {
-        std::cerr << "MF_E_TRANSFORM_TYPE_NOT_SET" << std::endl;
-        return hr;
-      }
-      MessageBoxW(nullptr, L"Failed to GetOutputAvailableType.", L"Error", MB_OK);
-      return hr;
-    }
-    GUID subtype{};
-    if (SUCCEEDED(outputAvailableType->GetGUID(MF_MT_SUBTYPE, &subtype)))
-    {
-      LPCSTR lpcsSubtype = getGUIDNameConst(subtype);
-      std::cout << "MF_MT_SUBTYPE : " << lpcsSubtype << std::endl;
-      UINT32 width = 0, height = 0;
-      hr = MFGetAttributeSize(outputAvailableType.Get(), MF_MT_FRAME_SIZE, &width, &height);
-      UINT32 num = 0, den = 0;
-      hr = MFGetAttributeRatio(outputAvailableType.Get(), MF_MT_FRAME_RATE, &num, &den);
-      std::cout << "width = " << width << ", height = " << height << ", fps = " << num << std::endl;
-    }
+    MessageBoxW(nullptr, L"Failed to copy the camera current media type to the decoder output media type.", L"Error", MB_OK);
+    return hr;
   }
 
-  hr = m_colorConvTransform->SetOutputType(0, outputAvailableType.Get(), 0);
+  hr = m_colorConvTransform->SetOutputType(0, m_DecoderOutputMediaType.Get(), 0);
   if (FAILED(hr))
   {
     MessageBoxW(nullptr, L"Failed to set output media type on color conversion MFT.", L"Error", MB_OK);
@@ -425,7 +367,7 @@ STDMETHODIMP VideoCaptureCB::OnReadSample(
         {
           std::cerr << "Failed the ConvertToContiguousBuffer." << std::endl;
         }
-#if 0
+#if 1
         // Update texture
         bool result = manager::DX11Manager::getInstance().updateTexture(byteBuffer, buffCurrLen);
         if (!result)
