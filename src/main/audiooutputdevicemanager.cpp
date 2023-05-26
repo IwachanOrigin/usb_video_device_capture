@@ -1,15 +1,15 @@
 
 #include <string>
 #include <windows.h>
-#include "audiodevicemanager.h"
+#include "audiooutputdevicemanager.h"
 
-AudioDeviceManager::AudioDeviceManager()
+AudioOutputDeviceManager::AudioOutputDeviceManager()
   : m_deviceID(0)
   , m_status(false)
 {
 }
 
-AudioDeviceManager::~AudioDeviceManager()
+AudioOutputDeviceManager::~AudioOutputDeviceManager()
 {
 	if (m_deviceID > 0)
 	{
@@ -18,13 +18,13 @@ AudioDeviceManager::~AudioDeviceManager()
 	SDL_Quit();
 }
 
-AudioDeviceManager& AudioDeviceManager::getInstance()
+AudioOutputDeviceManager& AudioOutputDeviceManager::getInstance()
 {
-  static AudioDeviceManager inst;
+  static AudioOutputDeviceManager inst;
   return inst;
 }
 
-int AudioDeviceManager::init(const int audio_device_index)
+int AudioOutputDeviceManager::init(const int audio_device_index)
 {
   if (audio_device_index < 0)
   {
@@ -56,7 +56,7 @@ int AudioDeviceManager::init(const int audio_device_index)
   return 0;
 }
 
-int AudioDeviceManager::start()
+int AudioOutputDeviceManager::start()
 {
   if (m_deviceID <= 0)
   {
@@ -73,14 +73,14 @@ int AudioDeviceManager::start()
   return 0;
 }
 
-bool AudioDeviceManager::render(const uint8_t* new_data, size_t data_size)
+bool AudioOutputDeviceManager::render(const uint8_t* new_data, size_t data_size)
 {
   // Returns 0 on success or a negative error code on failure.
   int result = SDL_QueueAudio(m_deviceID, new_data, (uint32_t)data_size);
   return result == 0 ? true : false;
 }
 
-int AudioDeviceManager::stop()
+int AudioOutputDeviceManager::stop()
 {
   if (m_deviceID <= 0)
   {
