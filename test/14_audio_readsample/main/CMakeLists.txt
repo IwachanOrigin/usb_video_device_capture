@@ -1,5 +1,7 @@
 
 set(main_src
+  audiooutputdevicemanager.h
+  audiooutputdevicemanager.cpp
   capturemanager.cpp
   capturemanager.h
   main.cpp

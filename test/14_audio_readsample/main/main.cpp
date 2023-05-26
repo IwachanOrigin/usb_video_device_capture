@@ -13,8 +13,9 @@
 #pragma comment(lib, "shlwapi")
 #pragma comment(lib, "wmcodecdspuuid.lib")
 
-#pragma comment(lib, "d3d11")
-#pragma comment(lib, "d3dcompiler")
+#pragma comment(lib, "SDL2")
+
+#undef main // for SDL2
 
 using namespace message_handler;
 
