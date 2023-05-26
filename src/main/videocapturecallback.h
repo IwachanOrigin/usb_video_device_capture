@@ -39,6 +39,7 @@ private:
   UINT32 m_sampleCount;
 
   UINT32 getOptimizedFormatIndex();
+  bool isAcceptedFormat(const GUID& subtype);
 };
 
 #endif // VIDEO_CAPTURE_CALLBACK_H_
