@@ -83,10 +83,10 @@ HRESULT VideoCaptureCB::setSourceReader(IMFSourceReader* sourceReader)
     return hr;
   }
 
-  ComPtr<IMFMediaType> deviceMediaType = nullptr;
+  ComPtr<IMFMediaType> deviceDefaultMediaType = nullptr;
   hr = m_sourceReader->GetCurrentMediaType(
     (DWORD)MF_SOURCE_READER_FIRST_VIDEO_STREAM
-    , deviceMediaType.GetAddressOf()
+    , deviceDefaultMediaType.GetAddressOf()
     );
   if (FAILED(hr))
   {
@@ -94,12 +94,9 @@ HRESULT VideoCaptureCB::setSourceReader(IMFSourceReader* sourceReader)
     return hr;
   }
   std::wcout << "----- Default device media info -----" << std::endl;
-  std::cout << GetMediaTypeDescription(deviceMediaType.Get()) << std::endl << std::endl;
+  std::cout << GetMediaTypeDescription(deviceDefaultMediaType.Get()) << std::endl << std::endl;
 
-  // Release the default device info.
-  deviceMediaType->Release();
-  deviceMediaType = nullptr;
-
+  ComPtr<IMFMediaType> deviceMediaType = nullptr;
   UINT32 index = this->getOptimizedFormatIndex();
   hr = m_sourceReader->GetNativeMediaType(
     (DWORD)MF_SOURCE_READER_FIRST_VIDEO_STREAM
