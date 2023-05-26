@@ -20,20 +20,14 @@ set_source_files_properties(videoPS.hlsl
 add_custom_target(hlsl SOURCES ${hlsl_srcs})
 
 set(main_src
-  audiodevicemanager.h
-  audiodevicemanager.cpp
-  captureengineaudiocallback.cpp
-  captureengineaudiocallback.h
-  captureenginevideocallback.cpp
-  captureenginevideocallback.h
   capturemanager.cpp
   capturemanager.h
   dx11manager.cpp
   dx11manager.h
   dxhelper.h
   main.cpp
-  mesh.h
   mesh.cpp
+  mesh.h
   pipeline.cpp
   pipeline.h
   SimpleMath.cpp
@@ -43,24 +37,11 @@ set(main_src
   stdafx.h
   timer.h
   utils.h
+  videocapturecallback.cpp
+  videocapturecallback.h
   win32messagehandler.cpp
   win32messagehandler.h
 )
 
 add_executable(${PROJECT_NAME} ${main_src})
 add_dependencies(${PROJECT_NAME} hlsl)
-
-# Copy dlls
-foreach(DLL IN LISTS EXTERNAL_DLLS)
-  # Get the file name of the DLL
-  get_filename_component(DLL_FILENAME "${DLL}" NAME)
-
-  # Command to copy the DLL file
-  add_custom_command(
-    TARGET ${PROJECT_NAME}
-    POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy "${DLL}" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/$<CONFIG>/${DLL_FILENAME}"
-    COMMENT "Copying external DLL to output directory"
-  )
-endforeach()
-

@@ -5,6 +5,9 @@
 using namespace DirectX;
 using namespace manager;
 
+const int CAPTURE_WIDTH = 1920;
+const int CAPTURE_HEIGHT = 1080;
+
 DX11Manager::DX11Manager()
   : m_d3dDevice(nullptr)
   , m_immediateContext(nullptr)
@@ -15,8 +18,6 @@ DX11Manager::DX11Manager()
   , m_texture(nullptr)
   , m_renderWidth(0)
   , m_renderHeight(0)
-  , m_textuerWidth(0)
-  , m_textureHeight(0)
 {
 }
 
@@ -30,16 +31,13 @@ DX11Manager& DX11Manager::getInstance()
   return inst;
 }
 
-bool DX11Manager::init(const HWND hwnd, const uint32_t& width, const uint32_t& height, const uint32_t& fpsNum)
+bool DX11Manager::init(const HWND hwnd)
 {
   if (hwnd == nullptr)
   {
     MessageBoxW(nullptr, L"hwnd is NULL.", L"Error", MB_OK);
     return false;
   }
-
-  m_textuerWidth = width;
-  m_textureHeight = height;
 
   RECT rc{};
   GetClientRect(hwnd, &rc);
@@ -57,10 +55,10 @@ bool DX11Manager::init(const HWND hwnd, const uint32_t& width, const uint32_t& h
   DXGI_SWAP_CHAIN_DESC sd{};
   ZeroMemory(&sd, sizeof(sd));
   sd.BufferCount = 1;
-  sd.BufferDesc.Width = m_textuerWidth;
-  sd.BufferDesc.Height = m_textureHeight;
+  sd.BufferDesc.Width = CAPTURE_WIDTH;
+  sd.BufferDesc.Height = CAPTURE_HEIGHT;
   sd.BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
-  sd.BufferDesc.RefreshRate.Numerator = fpsNum;
+  sd.BufferDesc.RefreshRate.Numerator = 60;
   sd.BufferDesc.RefreshRate.Denominator = 1;
   sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
   sd.SampleDesc.Count = 1;
@@ -180,8 +178,8 @@ bool DX11Manager::init(const HWND hwnd, const uint32_t& width, const uint32_t& h
 bool DX11Manager::createTexture()
 {
   D3D11_TEXTURE2D_DESC desc{};
-  desc.Width = m_textuerWidth;
-  desc.Height = m_textureHeight;
+  desc.Width = CAPTURE_WIDTH;
+  desc.Height = CAPTURE_HEIGHT;
   desc.MipLevels = 1;
   desc.ArraySize = 1;
   desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
@@ -217,11 +215,6 @@ bool DX11Manager::createTexture()
 
 bool DX11Manager::updateTexture(const uint8_t* new_data, size_t data_size)
 {
-  if (!m_immediateContext)
-  {
-    return false;
-  }
-
   if (!new_data)
   {
     return false;

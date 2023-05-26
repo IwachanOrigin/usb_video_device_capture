@@ -6,8 +6,6 @@ using namespace message_handler;
 
 Win32MessageHandler::Win32MessageHandler()
   : m_hwnd(nullptr)
-  , m_width(0)
-  , m_height(0)
 {
 }
 
@@ -21,11 +19,10 @@ Win32MessageHandler& Win32MessageHandler::getInstance()
   return inst;
 }
 
-bool Win32MessageHandler::init(const HINSTANCE hinst, const int nCmdShow, const uint32_t width, const uint32_t height)
+bool Win32MessageHandler::init(HINSTANCE hinst, int nCmdShow)
 {
   // Parse the command line parameters
-  m_width = width;
-  m_height = height;
+  // TODO
 
   const WCHAR className[100] = L"MainWindow";
 
@@ -39,14 +36,14 @@ bool Win32MessageHandler::init(const HINSTANCE hinst, const int nCmdShow, const 
   windowClass.lpszClassName = className;
   RegisterClassExW(&windowClass);
 
-  RECT windowRect = {0, 0, static_cast<LONG>(m_width), static_cast<LONG>(m_height)};
+  RECT windowRect = {0, 0, static_cast<LONG>(1920), static_cast<LONG>(1080)};
   AdjustWindowRect(&windowRect, WS_OVERLAPPEDWINDOW, FALSE);
 
   // Create the window and store a handle to it.
   m_hwnd = CreateWindowExW(
     0
     , windowClass.lpszClassName
-    , L"USBVideoDeviceCapture"
+    , L"Test"
     , WS_OVERLAPPEDWINDOW
     , CW_USEDEFAULT
     , CW_USEDEFAULT
@@ -70,6 +67,9 @@ bool Win32MessageHandler::init(const HINSTANCE hinst, const int nCmdShow, const 
 
 int Win32MessageHandler::run()
 {
+  // Initialize the window.
+  //window->onInit();
+
   // Main loop.
   MSG msg = {};
   while (msg.message != WM_QUIT)
@@ -81,6 +81,8 @@ int Win32MessageHandler::run()
       DispatchMessage(&msg);
     }
   }
+
+  //window->onDestroy();
 
   return static_cast<char>(msg.wParam);
 }

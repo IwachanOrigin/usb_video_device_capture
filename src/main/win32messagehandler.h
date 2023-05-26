@@ -12,7 +12,7 @@ class Win32MessageHandler
 public:
   static Win32MessageHandler &getInstance();
 
-  bool init(const HINSTANCE hinst, const int nCmdShow, const uint32_t width, const uint32_t height);
+  bool init(HINSTANCE hinst, int nCmdShow);
   int run();
   HWND hwnd() { return m_hwnd; }
 
@@ -26,8 +26,6 @@ private:
   Win32MessageHandler &operator=(const Win32MessageHandler &);
 
   HWND m_hwnd;
-  uint32_t m_width;
-  uint32_t m_height;
 };
 
 } // message_handler
