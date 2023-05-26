@@ -83,7 +83,7 @@ int CaptureManager::init(IMFActivate *pActivate)
 
   // Ask for the first sample.
   hr = m_sourceReader->ReadSample(
-    (DWORD)MF_SOURCE_READER_FIRST_VIDEO_STREAM
+    (DWORD)MF_SOURCE_READER_FIRST_AUDIO_STREAM
     , 0, nullptr, nullptr, nullptr, nullptr);
   if (FAILED(hr))
   {

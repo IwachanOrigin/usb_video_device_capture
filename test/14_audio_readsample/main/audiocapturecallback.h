@@ -33,12 +33,9 @@ public:
 
 private:
   IMFSourceReader* m_sourceReader;
-  ComPtr<IMFTransform> m_colorConvTransform;
   ComPtr<IMFMediaType> m_DecoderOutputMediaType;
   CRITICAL_SECTION m_criticalSection;
   UINT32 m_sampleCount;
-
-  UINT32 getOptimizedFormatIndex();
 };
 
 #endif // AUDIO_CAPTURE_CALLBACK_H_

@@ -3,6 +3,8 @@
 #include "win32messagehandler.h"
 #include "capturemanager.h"
 
+#include <locale>
+
 #pragma comment(lib, "mf")
 #pragma comment(lib, "mfplat")
 #pragma comment(lib, "mfuuid")
@@ -16,50 +18,48 @@
 
 using namespace message_handler;
 
-void getVideoDevices(IMFActivate*** pppRawDevice, uint32_t& count)
+static inline bool getCaptureDevices(uint32_t& deviceCount, IMFActivate**& devices, bool audioMode = false)
 {
+  GUID searchGUID = MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_GUID;
+  if (audioMode)
+  {
+    searchGUID = MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_AUDCAP_GUID;
+  }
+
   std::shared_ptr<IMFAttributes> pAttributes;
   IMFAttributes* pRawAttributes = nullptr;
-  HRESULT hr = S_OK;
-  hr = MFCreateAttributes(&pRawAttributes, 1);
+  HRESULT hr = MFCreateAttributes(&pRawAttributes, 1);
   if (FAILED(hr))
   {
-    std::wcerr << "Failed to create attributes." << std::endl;
-    count = 0;
-    return;
+    std::wcout << "Failed to set create attributes." << std::endl;
+    return false;
   }
   pAttributes = std::shared_ptr<IMFAttributes>(pRawAttributes, [](auto* p) { p->Release(); });
 
-  hr = pAttributes->SetGUID(MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE, MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_AUDCAP_GUID);
+  hr = pAttributes->SetGUID(MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE, searchGUID);
   if (FAILED(hr))
   {
-    std::wcerr << "Failed to set guid." << std::endl;
-    count = 0;
-    return;
+    std::wcout << "Failed to set attribute to MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE." << std::endl;
+    return false;
   }
 
-  count = 0;
-  IMFActivate** ppRawDevice = nullptr;
-  hr = MFEnumDeviceSources(pAttributes.get(), &ppRawDevice, &count);
+  hr = MFEnumDeviceSources(pAttributes.get(), &devices, &deviceCount);
   if (FAILED(hr))
   {
-    std::wcerr << "Failed to enum rate device sorces." << std::endl;
-    return;
+    std::wcout << "Failed to initialize the media foundation." << std::endl;
+    return false;
   }
 
-  for (uint32_t i = 0; i < count; i++)
+  return true;
+}
+
+static inline void releaseAllDevices(IMFActivate**& devices, uint32_t& deviceCount)
+{
+  for (uint32_t i = 0; i < deviceCount; i++)
   {
-    wchar_t* buffer = nullptr;
-    uint32_t length = 0;
-    hr = ppRawDevice[i]->GetAllocatedString(MF_DEVSOURCE_ATTRIBUTE_FRIENDLY_NAME, &buffer, &length);
-    if (FAILED(hr))
-    {
-      std::wcerr << "Failed to get device name." << std::endl;
-      continue;
-    }
-    std::wcout << "No. " << i << " : " << buffer << std::endl;
+    devices[i]->Release();
   }
-  pppRawDevice = &ppRawDevice;
+  CoTaskMemFree(devices);
 }
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -103,6 +103,10 @@ HWND CreatePreviewWindow(HINSTANCE hInstance, HWND hParent)
 int main(int argc, char* argv[])
 {
   HRESULT hr = S_OK;
+
+  // Set locale(use to the system default locale)
+  std::wcout.imbue(std::locale(""));
+
   // INIT
   hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
   if (FAILED(hr))
@@ -117,13 +121,29 @@ int main(int argc, char* argv[])
     return -1;
   }
 
-  // Get devices.
-  uint32_t deviceCount = 0;
-  IMFActivate** devices = nullptr;
-  getVideoDevices(&devices, deviceCount);
-  if (deviceCount == 0)
+  // Get video devices.
+  uint32_t audioDeviceCount = 0;
+  IMFActivate** audioDevices = nullptr;
+  if (getCaptureDevices(audioDeviceCount, audioDevices, true))
   {
-    CoTaskMemFree(devices);
+    for (uint32_t i = 0; i < audioDeviceCount; i++)
+    {
+      wchar_t* buffer = nullptr;
+      uint32_t length = 0;
+      hr = audioDevices[i]->GetAllocatedString(MF_DEVSOURCE_ATTRIBUTE_FRIENDLY_NAME, &buffer, &length);
+      if (FAILED(hr))
+      {
+        std::wcerr << "Failed to get audio device name." << std::endl;
+        continue;
+      }
+      std::wcout << "No. " << i << " : " << buffer << std::endl;
+    }
+  }
+
+  if (audioDeviceCount == 0)
+  {
+    std::wcerr << "Audio Device Not Found." << std::endl;
+    CoTaskMemFree(audioDevices);
     hr = MFShutdown();
     CoUninitialize();
     return -1;
@@ -134,16 +154,12 @@ int main(int argc, char* argv[])
 
   std::wcout << "Please input device no : ";
   std::wcin >> selectionNo;
-  if (selectionNo > deviceCount)
+  if (selectionNo > audioDeviceCount)
   {
-    std::wcout << "Failed device select.";
-    if (devices != nullptr)
+    std::wcerr << "Failed device select." << std::endl;
+    if (audioDevices != nullptr)
     {
-      for (uint32_t i = 0; i < deviceCount; i++)
-      {
-        devices[i]->Release();
-      }
-      CoTaskMemFree(devices);
+      releaseAllDevices(audioDevices, audioDeviceCount);
     }
     hr = MFShutdown();
     CoUninitialize();
@@ -154,52 +170,40 @@ int main(int argc, char* argv[])
   bool result = Win32MessageHandler::getInstance().init((HINSTANCE)0, 1);
   if (!result)
   {
-    if (devices != nullptr)
+    std::wcerr << "Failed to create main window." << std::endl;
+    if (audioDevices != nullptr)
     {
-      for (uint32_t i = 0; i < deviceCount; i++)
-      {
-        devices[i]->Release();
-      }
-      CoTaskMemFree(devices);
+      releaseAllDevices(audioDevices, audioDeviceCount);
     }
     hr = MFShutdown();
     CoUninitialize();
 
-    MessageBoxW(nullptr, L"Failed to create main window.", L"Error", MB_OK);
     return -1;
   }
 
   // Create capturemanager.
-  int retInt = CaptureManager::getInstance().init(devices[selectionNo]);
+  int retInt = CaptureManager::getInstance().init(audioDevices[selectionNo]);
   if (retInt < 0)
   {
-    if (devices != nullptr)
+    std::wcerr << "Failed to init capture manager." << std::endl;
+    if (audioDevices != nullptr)
     {
-      for (uint32_t i = 0; i < deviceCount; i++)
-      {
-        devices[i]->Release();
-      }
-      CoTaskMemFree(devices);
+      releaseAllDevices(audioDevices, audioDeviceCount);
     }
     hr = MFShutdown();
     CoUninitialize();
 
-    MessageBoxW(nullptr, L"Failed to create main window.", L"Error", MB_OK);
     return -1;
   }
-  devices[selectionNo]->AddRef();
+  audioDevices[selectionNo]->AddRef();
 
   // Start message loop
   Win32MessageHandler::getInstance().run();
 
   // Release
-  if (devices != nullptr)
+  if (audioDevices != nullptr)
   {
-    for (uint32_t i = 0; i < deviceCount; i++)
-    {
-      devices[i]->Release();
-    }
-    CoTaskMemFree(devices);
+    releaseAllDevices(audioDevices, audioDeviceCount);
   }
   hr = MFShutdown();
   CoUninitialize();

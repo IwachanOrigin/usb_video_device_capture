@@ -3,7 +3,6 @@
 #define UTILS_H_
 
 #include "stdafx.h"
-#include "dxhelper.h"
 
 using Microsoft::WRL::ComPtr;
 
@@ -397,7 +396,7 @@ static inline LPCSTR getGUIDNameConst(const GUID& guid)
 
 static inline HRESULT CreateSingleBufferIMFSample(DWORD bufferSize, IMFSample** pSample)
 {
-  IMFMediaBuffer* pBuffer = NULL;
+  ComPtr<IMFMediaBuffer> pBuffer = nullptr;
 
   HRESULT hr = S_OK;
 
@@ -405,35 +404,31 @@ static inline HRESULT CreateSingleBufferIMFSample(DWORD bufferSize, IMFSample** 
   if (FAILED(hr))
   {
     std::wcerr << "Failed to create MF sample." << std::endl;
-    goto done;
+    return hr;
   }
 
   // Adds a ref count to the pBuffer object.
-  hr = MFCreateMemoryBuffer(bufferSize, &pBuffer);
+  hr = MFCreateMemoryBuffer(bufferSize, pBuffer.GetAddressOf());
   if (FAILED(hr))
   {
     std::wcerr << "Failed to create memory buffer." << std::endl;
-    goto done;
+    return hr;
   }
 
   // Adds another ref count to the pBuffer object.
-  hr = (*pSample)->AddBuffer(pBuffer);
+  hr = (*pSample)->AddBuffer(pBuffer.Get());
   if (FAILED(hr))
   {
     std::wcerr << "Failed to add sample to buffer." << std::endl;
-    goto done;
+    return hr;
   }
-
-done:
-  // Leave the single ref count that will be removed when the pSample is released.
-  SAFE_RELEASE(pBuffer);
   return hr;
 }
 
 static inline HRESULT CreateAndCopySingleBufferIMFSample(IMFSample* pSrcSample, IMFSample** pDstSample)
 {
-  IMFMediaBuffer* pDstBuffer = NULL;
-  DWORD srcBufLength;
+  ComPtr<IMFMediaBuffer> pDstBuffer = nullptr;
+  DWORD srcBufLength = 0;
 
   HRESULT hr = S_OK;
 
@@ -443,39 +438,36 @@ static inline HRESULT CreateAndCopySingleBufferIMFSample(IMFSample* pSrcSample, 
   if (FAILED(hr))
   {
     std::wcerr << "Failed to get total length from source buffer." << std::endl;
-    goto done;
+    return hr;
   }
 
   hr = CreateSingleBufferIMFSample(srcBufLength, pDstSample);
   if (FAILED(hr))
   {
     std::wcerr << "Failed to create new single buffer IMF sample." << std::endl;
-    goto done;
+    return hr;
   }
 
   hr = pSrcSample->CopyAllItems(*pDstSample);
   if (FAILED(hr))
   {
     std::wcerr << "Failed to copy IMFSample items from src to dst." << std::endl;
-    goto done;
+    return hr;
   }
 
   hr = (*pDstSample)->GetBufferByIndex(0, &pDstBuffer);
   if (FAILED(hr))
   {
     std::wcerr << "Failed to get buffer from sample." << std::endl;
-    goto done;
+    return hr;
   }
 
-  hr = pSrcSample->CopyToBuffer(pDstBuffer);
+  hr = pSrcSample->CopyToBuffer(pDstBuffer.Get());
   if (FAILED(hr))
   {
     std::wcerr << "Failed to copy IMF media buffer." << std::endl;
-    goto done;
+    return hr;
   }
-
-done:
-  SAFE_RELEASE(pDstBuffer);
   return hr;
 }
 
