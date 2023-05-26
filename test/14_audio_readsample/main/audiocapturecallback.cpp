@@ -2,7 +2,7 @@
 #include "stdafx.h"
 #include "timer.h"
 #include "utils.h"
-#include "capturemanager.h"
+#include "audiocapturemanager.h"
 #include "audiooutputdevicemanager.h"
 #include "audiocapturecallback.h"
 
@@ -162,7 +162,7 @@ STDMETHODIMP AudioCaptureCB::OnReadSample(
       hr = sample->SetSampleTime(llTimeStamp);
       hr = sample->GetSampleDuration(&llSampleDuration);
       hr = sample->GetSampleFlags(&sampleFlags);
-      printf("Sample flags %d, sample duration %I64d, sample time %I64d\n", sampleFlags, llSampleDuration, llTimeStamp);
+      printf("Sample flags %d, sample duration %I64d, sample time %I64d\n", (int)sampleFlags, llSampleDuration, llTimeStamp);
 
       ComPtr<IMFMediaBuffer> buf = nullptr;
       hr = sample->ConvertToContiguousBuffer(buf.GetAddressOf());
