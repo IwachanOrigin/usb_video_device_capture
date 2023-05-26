@@ -3,6 +3,7 @@
 #include "timer.h"
 #include "utils.h"
 #include "capturemanager.h"
+#include "audiooutputdevicemanager.h"
 #include "audiocapturecallback.h"
 
 using namespace Microsoft::WRL;
@@ -177,7 +178,16 @@ STDMETHODIMP AudioCaptureCB::OnReadSample(
       {
         std::cerr << "Failed the ConvertToContiguousBuffer." << std::endl;
       }
-      std::wcout << "current size : " << buffCurrLen << std::endl;
+      // Audio rendering
+      if (AudioOutputDeviceManager::getInstance().getStatus())
+      {
+        bool result = AudioOutputDeviceManager::getInstance().render(byteBuffer, (size_t)buffCurrLen);
+        if (!result)
+        {
+          std::wcout << "Failed to render audio." << std::endl;
+        }
+      }
+      //std::wcout << "current size : " << buffCurrLen << std::endl;
       buf->Unlock();
 
       sample->Release();

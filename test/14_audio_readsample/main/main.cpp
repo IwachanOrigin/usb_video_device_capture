@@ -2,6 +2,7 @@
 #include "stdafx.h"
 #include "win32messagehandler.h"
 #include "capturemanager.h"
+#include "audiooutputdevicemanager.h"
 
 #include <locale>
 
@@ -180,6 +181,21 @@ int main(int argc, char* argv[])
     CoUninitialize();
 
     return -1;
+  }
+
+  // Setup audio device
+  int errCode = AudioOutputDeviceManager::getInstance().init(4);
+  if (errCode == 0)
+  {
+    errCode = AudioOutputDeviceManager::getInstance().start();
+    if (errCode != 0)
+    {
+      std::wcout << "Failed to start audio device." << std::endl;
+    }
+  }
+  else
+  {
+    std::wcout << "Failed to initialize the audio device." << std::endl;
   }
 
   // Create capturemanager.
