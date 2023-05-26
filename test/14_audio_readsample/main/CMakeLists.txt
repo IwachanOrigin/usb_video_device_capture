@@ -2,8 +2,8 @@
 set(main_src
   audiooutputdevicemanager.h
   audiooutputdevicemanager.cpp
-  capturemanager.cpp
-  capturemanager.h
+  audiocapturemanager.cpp
+  audiocapturemanager.h
   main.cpp
   stdafx.cpp
   stdafx.h

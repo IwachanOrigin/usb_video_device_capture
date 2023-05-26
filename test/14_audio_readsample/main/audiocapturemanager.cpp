@@ -1,25 +1,25 @@
 
-#include "capturemanager.h"
+#include "audiocapturemanager.h"
 #include "audiocapturecallback.h"
 
-CaptureManager::CaptureManager()
+AudioCaptureManager::AudioCaptureManager()
   : m_sourceReader(nullptr)
   , m_wcSymbolicLink(nullptr)
   , m_audioCaptureCB(new AudioCaptureCB())
 {
 }
 
-CaptureManager::~CaptureManager()
+AudioCaptureManager::~AudioCaptureManager()
 {
 }
 
-CaptureManager& CaptureManager::getInstance()
+AudioCaptureManager& AudioCaptureManager::getInstance()
 {
-  static CaptureManager inst;
+  static AudioCaptureManager inst;
   return inst;
 }
 
-int CaptureManager::init(IMFActivate *pActivate)
+int AudioCaptureManager::init(IMFActivate *pActivate)
 {
   ComPtr<IMFMediaSource> mediaSource = nullptr;
   ComPtr<IMFAttributes> attributes = nullptr;

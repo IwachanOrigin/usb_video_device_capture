@@ -1,7 +1,7 @@
 
 #include "stdafx.h"
 #include "win32messagehandler.h"
-#include "capturemanager.h"
+#include "audiocapturemanager.h"
 #include "audiooutputdevicemanager.h"
 
 #include <locale>
@@ -199,7 +199,7 @@ int main(int argc, char* argv[])
   }
 
   // Create capturemanager.
-  int retInt = CaptureManager::getInstance().init(audioDevices[selectionNo]);
+  int retInt = AudioCaptureManager::getInstance().init(audioDevices[selectionNo]);
   if (retInt < 0)
   {
     std::wcerr << "Failed to init capture manager." << std::endl;
