@@ -3,7 +3,7 @@
 #define CAPTURE_MANAGER_H_
 
 #include "stdafx.h"
-#include "videocapturecallback.h"
+#include "audiocapturecallback.h"
 
 using namespace Microsoft::WRL;
 
@@ -22,7 +22,7 @@ private:
 
   ComPtr<IMFSourceReader> m_sourceReader;
   wchar_t *m_wcSymbolicLink;
-  ComPtr<VideoCaptureCB> m_videoCaptureCB;
+  ComPtr<AudioCaptureCB> m_audioCaptureCB;
 };
 
 #endif // CAPTURE_MANAGER_H_

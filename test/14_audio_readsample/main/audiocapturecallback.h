@@ -1,18 +1,18 @@
 
-#ifndef VIDEO_CAPTURE_CALLBACK_H_
-#define VIDEO_CAPTURE_CALLBACK_H_
+#ifndef AUDIO_CAPTURE_CALLBACK_H_
+#define AUDIO_CAPTURE_CALLBACK_H_
 
 #include "stdafx.h"
 
 using namespace Microsoft::WRL;
 
-class VideoCaptureCB : public IMFSourceReaderCallback
+class AudioCaptureCB : public IMFSourceReaderCallback
 {
   long m_ref;
 
 public:
-  explicit VideoCaptureCB();
-  virtual ~VideoCaptureCB();
+  explicit AudioCaptureCB();
+  virtual ~AudioCaptureCB();
 
   // IUnknown
   STDMETHODIMP QueryInterface(REFIID riid, void** ppv);
@@ -41,4 +41,4 @@ private:
   UINT32 getOptimizedFormatIndex();
 };
 
-#endif // VIDEO_CAPTURE_CALLBACK_H_
+#endif // AUDIO_CAPTURE_CALLBACK_H_

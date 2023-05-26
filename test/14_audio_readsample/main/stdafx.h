@@ -32,8 +32,4 @@
 #include <mferror.h>
 #include <mfreadwrite.h>
 
-#include <d3d11.h>
-
-#include "SimpleMath.h"
-
 #endif // STDAFX_H_

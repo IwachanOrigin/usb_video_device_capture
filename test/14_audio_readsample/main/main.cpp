@@ -1,9 +1,7 @@
 
 #include "stdafx.h"
-#include "dxhelper.h"
 #include "win32messagehandler.h"
 #include "capturemanager.h"
-#include "dx11manager.h"
 
 #pragma comment(lib, "mf")
 #pragma comment(lib, "mfplat")
@@ -16,28 +14,49 @@
 #pragma comment(lib, "d3d11")
 #pragma comment(lib, "d3dcompiler")
 
-using namespace helper;
 using namespace message_handler;
-using namespace manager;
 
 void getVideoDevices(IMFActivate*** pppRawDevice, uint32_t& count)
 {
   std::shared_ptr<IMFAttributes> pAttributes;
   IMFAttributes* pRawAttributes = nullptr;
-  ThrowIfFailed(MFCreateAttributes(&pRawAttributes, 1));
+  HRESULT hr = S_OK;
+  hr = MFCreateAttributes(&pRawAttributes, 1);
+  if (FAILED(hr))
+  {
+    std::wcerr << "Failed to create attributes." << std::endl;
+    count = 0;
+    return;
+  }
   pAttributes = std::shared_ptr<IMFAttributes>(pRawAttributes, [](auto* p) { p->Release(); });
 
-  ThrowIfFailed(pAttributes->SetGUID(MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE, MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_GUID));
+  hr = pAttributes->SetGUID(MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE, MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_AUDCAP_GUID);
+  if (FAILED(hr))
+  {
+    std::wcerr << "Failed to set guid." << std::endl;
+    count = 0;
+    return;
+  }
 
   count = 0;
   IMFActivate** ppRawDevice = nullptr;
-  ThrowIfFailed(MFEnumDeviceSources(pAttributes.get(), &ppRawDevice, &count));
+  hr = MFEnumDeviceSources(pAttributes.get(), &ppRawDevice, &count);
+  if (FAILED(hr))
+  {
+    std::wcerr << "Failed to enum rate device sorces." << std::endl;
+    return;
+  }
 
   for (uint32_t i = 0; i < count; i++)
   {
     wchar_t* buffer = nullptr;
     uint32_t length = 0;
-    ThrowIfFailed(ppRawDevice[i]->GetAllocatedString(MF_DEVSOURCE_ATTRIBUTE_FRIENDLY_NAME, &buffer, &length));
+    hr = ppRawDevice[i]->GetAllocatedString(MF_DEVSOURCE_ATTRIBUTE_FRIENDLY_NAME, &buffer, &length);
+    if (FAILED(hr))
+    {
+      std::wcerr << "Failed to get device name." << std::endl;
+      continue;
+    }
     std::wcout << "No. " << i << " : " << buffer << std::endl;
   }
   pppRawDevice = &ppRawDevice;
@@ -83,36 +102,29 @@ HWND CreatePreviewWindow(HINSTANCE hInstance, HWND hParent)
 
 int main(int argc, char* argv[])
 {
+  HRESULT hr = S_OK;
   // INIT
-  ThrowIfFailed(CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE));
-  ThrowIfFailed(MFStartup(MF_VERSION));
+  hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+  if (FAILED(hr))
+  {
+    std::wcerr << "Failed to CoInitializeEx." << std::endl;
+    return -1;
+  }
+  hr = MFStartup(MF_VERSION);
+  if (FAILED(hr))
+  {
+    std::wcerr << "Failed to MFStartup." << std::endl;
+    return -1;
+  }
 
   // Get devices.
   uint32_t deviceCount = 0;
   IMFActivate** devices = nullptr;
-  {
-    std::shared_ptr<IMFAttributes> pAttributes;
-    IMFAttributes* pRawAttributes = nullptr;
-    ThrowIfFailed(MFCreateAttributes(&pRawAttributes, 1));
-    pAttributes = std::shared_ptr<IMFAttributes>(pRawAttributes, [](auto* p) { p->Release(); });
-
-    ThrowIfFailed(pAttributes->SetGUID(MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE, MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_GUID));
-
-    ThrowIfFailed(MFEnumDeviceSources(pAttributes.get(), &devices, &deviceCount));
-
-    for (uint32_t i = 0; i < deviceCount; i++)
-    {
-      wchar_t* buffer = nullptr;
-      uint32_t length = 0;
-      ThrowIfFailed(devices[i]->GetAllocatedString(MF_DEVSOURCE_ATTRIBUTE_FRIENDLY_NAME, &buffer, &length));
-      std::wcout << "No. " << i << " : " << buffer << std::endl;
-    }
-  }
-
+  getVideoDevices(&devices, deviceCount);
   if (deviceCount == 0)
   {
     CoTaskMemFree(devices);
-    ThrowIfFailed(MFShutdown());
+    hr = MFShutdown();
     CoUninitialize();
     return -1;
   }
@@ -125,6 +137,16 @@ int main(int argc, char* argv[])
   if (selectionNo > deviceCount)
   {
     std::wcout << "Failed device select.";
+    if (devices != nullptr)
+    {
+      for (uint32_t i = 0; i < deviceCount; i++)
+      {
+        devices[i]->Release();
+      }
+      CoTaskMemFree(devices);
+    }
+    hr = MFShutdown();
+    CoUninitialize();
     return -1;
   }
 
@@ -140,29 +162,11 @@ int main(int argc, char* argv[])
       }
       CoTaskMemFree(devices);
     }
-    ThrowIfFailed(MFShutdown());
+    hr = MFShutdown();
     CoUninitialize();
 
     MessageBoxW(nullptr, L"Failed to create main window.", L"Error", MB_OK);
     return -1;
-  }
-
-  HWND previewWnd = Win32MessageHandler::getInstance().hwnd();
-  // Create dx11 device, context, swapchain
-  result = DX11Manager::getInstance().init(previewWnd);
-  if (!result)
-  {
-    if (devices != nullptr)
-    {
-      for (uint32_t i = 0; i < deviceCount; i++)
-      {
-        devices[i]->Release();
-      }
-      CoTaskMemFree(devices);
-    }
-
-    ThrowIfFailed(MFShutdown());
-    CoUninitialize();
   }
 
   // Create capturemanager.
@@ -177,7 +181,7 @@ int main(int argc, char* argv[])
       }
       CoTaskMemFree(devices);
     }
-    ThrowIfFailed(MFShutdown());
+    hr = MFShutdown();
     CoUninitialize();
 
     MessageBoxW(nullptr, L"Failed to create main window.", L"Error", MB_OK);
@@ -197,8 +201,7 @@ int main(int argc, char* argv[])
     }
     CoTaskMemFree(devices);
   }
-
-  ThrowIfFailed(MFShutdown());
+  hr = MFShutdown();
   CoUninitialize();
 
   return 0;

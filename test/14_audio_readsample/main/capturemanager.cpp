@@ -1,11 +1,11 @@
 
 #include "capturemanager.h"
-#include "videocapturecallback.h"
+#include "audiocapturecallback.h"
 
 CaptureManager::CaptureManager()
   : m_sourceReader(nullptr)
   , m_wcSymbolicLink(nullptr)
-  , m_videoCaptureCB(new VideoCaptureCB())
+  , m_audioCaptureCB(new AudioCaptureCB())
 {
 }
 
@@ -35,7 +35,7 @@ int CaptureManager::init(IMFActivate *pActivate)
 
   UINT32 sizeSymbolicLink = 0;
   hr = pActivate->GetAllocatedString(
-    MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_SYMBOLIC_LINK
+    MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_AUDCAP_SYMBOLIC_LINK
     , &m_wcSymbolicLink
     , &sizeSymbolicLink);
   if (FAILED(hr))
@@ -53,7 +53,7 @@ int CaptureManager::init(IMFActivate *pActivate)
 
   hr = attributes->SetUnknown(
     MF_SOURCE_READER_ASYNC_CALLBACK
-    , m_videoCaptureCB.Get()
+    , m_audioCaptureCB.Get()
     );
   if (FAILED(hr))
   {
@@ -72,7 +72,7 @@ int CaptureManager::init(IMFActivate *pActivate)
     return -1;
   }
 
-  hr = m_videoCaptureCB->setSourceReader(m_sourceReader.Get());
+  hr = m_audioCaptureCB->setSourceReader(m_sourceReader.Get());
   if (FAILED(hr))
   {
     MessageBoxW(nullptr, L"Failed to setSourceReader in videocapture callback.", L"Error", MB_OK);

@@ -1,15 +1,12 @@
 
 #include "stdafx.h"
-#include "dx11manager.h"
 #include "timer.h"
 #include "capturemanager.h"
-#include "utils.h"
-#include "videocapturecallback.h"
+#include "audiocapturecallback.h"
 
 using namespace Microsoft::WRL;
-using namespace helper;
 
-VideoCaptureCB::VideoCaptureCB()
+AudioCaptureCB::AudioCaptureCB()
   : m_ref(1)
   , m_sourceReader(nullptr)
   , m_colorConvTransform(nullptr)
@@ -19,27 +16,27 @@ VideoCaptureCB::VideoCaptureCB()
   InitializeCriticalSection(&m_criticalSection);
 }
 
-VideoCaptureCB::~VideoCaptureCB()
+AudioCaptureCB::~AudioCaptureCB()
 {
   DeleteCriticalSection(&m_criticalSection);
 }
 
-STDMETHODIMP VideoCaptureCB::QueryInterface(REFIID riid, void** ppv)
+STDMETHODIMP AudioCaptureCB::QueryInterface(REFIID riid, void** ppv)
 {
   static const QITAB qit[] =
   {
-    QITABENT(VideoCaptureCB, IMFSourceReaderCallback)
+    QITABENT(AudioCaptureCB, IMFSourceReaderCallback)
     , { 0 }
   };
   return QISearch(this, qit, riid, ppv);
 }
 
-STDMETHODIMP_(ULONG) VideoCaptureCB::AddRef()
+STDMETHODIMP_(ULONG) AudioCaptureCB::AddRef()
 {
   return InterlockedIncrement(&m_ref);
 }
 
-STDMETHODIMP_(ULONG) VideoCaptureCB::Release()
+STDMETHODIMP_(ULONG) AudioCaptureCB::Release()
 {
   LONG ref = InterlockedDecrement(&m_ref);
   if (ref == 0)
@@ -49,7 +46,7 @@ STDMETHODIMP_(ULONG) VideoCaptureCB::Release()
   return ref;
 }
 
-HRESULT VideoCaptureCB::setSourceReader(IMFSourceReader* sourceReader)
+HRESULT AudioCaptureCB::setSourceReader(IMFSourceReader* sourceReader)
 {
   HRESULT hr = E_FAIL;
 
@@ -58,98 +55,6 @@ HRESULT VideoCaptureCB::setSourceReader(IMFSourceReader* sourceReader)
     return hr;
   }
   m_sourceReader = sourceReader;
-
-#if 0
-  ComPtr<IUnknown> colorConvTransformUnk = nullptr;
-  hr = CoCreateInstance(CLSID_CColorConvertDMO, nullptr, CLSCTX_INPROC_SERVER, IID_IUnknown, (void**)colorConvTransformUnk.GetAddressOf());
-  if (FAILED(hr))
-  {
-    MessageBoxW(nullptr, L"Failed to create color conversion transform unknown.", L"Error", MB_OK);
-    return hr;
-  }
-
-  hr = colorConvTransformUnk->QueryInterface(IID_PPV_ARGS(m_colorConvTransform.GetAddressOf()));
-  if (FAILED(hr))
-  {
-    MessageBoxW(nullptr, L"Failed to get IMFTransform interface from color converter MFT object..", L"Error", MB_OK);
-    return hr;
-  }
-
-  hr = MFCreateMediaType(m_DecoderOutputMediaType.GetAddressOf());
-  if (FAILED(hr))
-  {
-    MessageBoxW(nullptr, L"Failed to create media type.", L"Error", MB_OK);
-    return hr;
-  }
-
-  ComPtr<IMFMediaType> webCamMediaType = nullptr;
-  hr = m_sourceReader->GetCurrentMediaType(
-    (DWORD)MF_SOURCE_READER_FIRST_VIDEO_STREAM
-    , webCamMediaType.GetAddressOf()
-    );
-  if (FAILED(hr))
-  {
-    MessageBoxW(nullptr, L"Failed to get the camera current media type.", L"Error", MB_OK);
-    return hr;
-  }
-
-  hr = utilCloneVideomediaType(webCamMediaType.Get(), MFVideoFormat_RGB32, m_DecoderOutputMediaType.GetAddressOf());
-  if (FAILED(hr))
-  {
-    MessageBoxW(nullptr, L"Failed to copy the camera current media type to the decoder output media type.", L"Error", MB_OK);
-    return hr;
-  }
-
-  // default : 640, 480, 30, yuy2
-  // chenged : 640, 480, 30, mjpeg
-  hr = m_colorConvTransform->SetInputType(0, webCamMediaType.Get(), 0);
-  if (FAILED(hr))
-  {
-    MessageBoxW(nullptr, L"Failed to set input media type on color conversion MFT.", L"Error", MB_OK);
-    return hr;
-  }
-
-  hr = m_colorConvTransform->SetOutputType(0, m_DecoderOutputMediaType.Get(), 0);
-  if (FAILED(hr))
-  {
-    MessageBoxW(nullptr, L"Failed to set output media type on color conversion MFT.", L"Error", MB_OK);
-    return hr;
-  }
-
-  DWORD mftStatus = 0;
-  hr = m_colorConvTransform->GetInputStatus(0, &mftStatus);
-  if (FAILED(hr))
-  {
-    MessageBoxW(nullptr, L"Failed to get input media status from color conversion MFT.", L"Error", MB_OK);
-    return hr;
-  }
-  if (MFT_INPUT_STATUS_ACCEPT_DATA != mftStatus)
-  {
-    MessageBoxW(nullptr, L"Color conversion MFT is not accepting data.", L"Error", MB_OK);
-    return hr;
-  }
-
-  hr = m_colorConvTransform->ProcessMessage(MFT_MESSAGE_COMMAND_FLUSH, NULL);
-  if (FAILED(hr))
-  {
-    MessageBoxW(nullptr, L"Failed to process FLUSH command on color conversion MFT.", L"Error", MB_OK);
-    return hr;
-  }
-
-  hr = m_colorConvTransform->ProcessMessage(MFT_MESSAGE_NOTIFY_BEGIN_STREAMING, NULL);
-  if (FAILED(hr))
-  {
-    MessageBoxW(nullptr, L"Failed to process BEGIN_STREAMING command on color conversion MFT.", L"Error", MB_OK);
-    return hr;
-  }
-
-  hr = m_colorConvTransform->ProcessMessage(MFT_MESSAGE_NOTIFY_START_OF_STREAM, NULL);
-  if (FAILED(hr))
-  {
-    MessageBoxW(nullptr, L"Failed to process START_OF_STREAM command on color conversion MFT.", L"Error", MB_OK);
-    return hr;
-  }
-#else
 
   ComPtr<IUnknown> colorConvTransformUnk = nullptr;
   // https://learn.microsoft.com/ja-jp/windows/win32/medfound/colorconverter
@@ -274,12 +179,11 @@ HRESULT VideoCaptureCB::setSourceReader(IMFSourceReader* sourceReader)
     MessageBoxW(nullptr, L"Failed to process START_OF_STREAM command on color conversion MFT.", L"Error", MB_OK);
     return hr;
   }
-#endif
 
   return hr;
 }
 
-STDMETHODIMP VideoCaptureCB::OnReadSample(
+STDMETHODIMP AudioCaptureCB::OnReadSample(
     HRESULT hrStatus
     , DWORD dwStreamIndex
     , DWORD dwStreamFlags
@@ -367,24 +271,7 @@ STDMETHODIMP VideoCaptureCB::OnReadSample(
         {
           std::cerr << "Failed the ConvertToContiguousBuffer." << std::endl;
         }
-#if 1
-        // Update texture
-        bool result = manager::DX11Manager::getInstance().updateTexture(byteBuffer, buffCurrLen);
-        if (!result)
-        {
-          buf->Unlock();
-          MessageBoxW(nullptr, L"Failed to update texture.", L"Error", MB_OK);
-        }
-
-        // Rendering
-        result = manager::DX11Manager::getInstance().render();
-        if (!result)
-        {
-          buf->Unlock();
-          MessageBoxW(nullptr, L"Failed to rendering.", L"Error", MB_OK);
-        }
-#endif
-        //std::wcout << "current size : " << buffCurrLen << std::endl;
+        std::wcout << "current size : " << buffCurrLen << std::endl;
         buf->Unlock();
       }
       else if (mftProcessOutput == MF_E_TRANSFORM_NEED_MORE_INPUT)
@@ -408,57 +295,10 @@ STDMETHODIMP VideoCaptureCB::OnReadSample(
 
   LeaveCriticalSection(&m_criticalSection);
 
-#if 0
-  Timer timer;
-
-  ComPtr<IMFMediaBuffer> buf = nullptr;
-  UINT32 pitch = 4 * 3840;
-  hr = sample->ConvertToContiguousBuffer(&buf);
-  if (FAILED(hr))
-  {
-    sample->Release();
-    return E_FAIL;
-  }
-
-  byte* byteBuffer = nullptr;
-  DWORD buffCurrLen = 0;
-  hr = buf->Lock(&byteBuffer, NULL, &buffCurrLen);
-  if (FAILED(hr))
-  {
-    buf->Unlock();
-    sample->Release();
-    return E_FAIL;
-  }
-  assert(buffCurrLen == (pitch * 2160));
-
-  bool result = manager::DX11Manager::getInstance().updateTexture(byteBuffer, buffCurrLen);
-  if (!result)
-  {
-    sample->Release();
-    buf->Unlock();
-    MessageBoxW(nullptr, L"Failed to update texture.", L"Error", MB_OK);
-    return E_FAIL;
-  }
-
-  // Rendering
-  result = manager::DX11Manager::getInstance().render();
-  if (!result)
-  {
-    sample->Release();
-    buf->Unlock();
-    MessageBoxW(nullptr, L"Failed to rendering.", L"Error", MB_OK);
-    return E_FAIL;
-  }
-
-  sample->Release();
-  buf->Unlock();
-  std::wcout << "Timer : " << timer.elapsed() << std::endl;
-
-#endif
   return S_OK;
 }
 
-UINT32 VideoCaptureCB::getOptimizedFormatIndex()
+UINT32 AudioCaptureCB::getOptimizedFormatIndex()
 {
   UINT32 index = 0, wMax = 0, rMax = 0;
   for (DWORD i = 0; ; i++)
