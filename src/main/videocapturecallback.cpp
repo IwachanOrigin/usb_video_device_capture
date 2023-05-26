@@ -179,6 +179,13 @@ HRESULT VideoCaptureCB::setSourceReader(IMFSourceReader* sourceReader)
     return hr;
   }
 
+  hr = this->setCaptureResolutionAndFps();
+  if (FAILED(hr))
+  {
+    MessageBoxW(nullptr, L"Failed to init capture resolution and fps to internal variables.", L"Error", MB_OK);
+    return hr;
+  }
+
   return hr;
 }
 
@@ -205,7 +212,7 @@ STDMETHODIMP VideoCaptureCB::OnReadSample(
       hr = sample->SetSampleTime(llTimeStamp);
       hr = sample->GetSampleDuration(&llSampleDuration);
       hr = sample->GetSampleFlags(&sampleFlags);
-      printf("Sample flags %d, sample duration %I64d, sample time %I64d\n", sampleFlags, llSampleDuration, llTimeStamp);
+      printf("Sample flags %d, sample duration %I64d, sample time %I64d\n", (int)sampleFlags, llSampleDuration, llTimeStamp);
 
       hr = m_colorConvTransform->ProcessInput(0, sample, NULL);
       if (FAILED(hr))
@@ -276,7 +283,8 @@ STDMETHODIMP VideoCaptureCB::OnReadSample(
         if (!result)
         {
           buf->Unlock();
-          MessageBoxW(nullptr, L"Failed to update texture.", L"Error", MB_OK);
+          //MessageBoxW(nullptr, L"Failed to update texture.", L"Error", MB_OK);
+          std::wcerr << "Failed to update texture." << std::endl;
         }
 
         // Rendering
@@ -284,7 +292,8 @@ STDMETHODIMP VideoCaptureCB::OnReadSample(
         if (!result)
         {
           buf->Unlock();
-          MessageBoxW(nullptr, L"Failed to rendering.", L"Error", MB_OK);
+          //MessageBoxW(nullptr, L"Failed to rendering.", L"Error", MB_OK);
+          std::wcerr << "Failed to rendering." << std::endl;
         }
         buf->Unlock();
       }
@@ -423,4 +432,46 @@ bool VideoCaptureCB::isAcceptedFormat(const GUID& subtype)
   }
 
   return false;
+}
+
+HRESULT VideoCaptureCB::setCaptureResolutionAndFps()
+{
+  if (!m_sourceReader)
+  {
+    std::wcerr << "Source Reader is NULL." << std::endl;
+    return E_FAIL;
+  }
+  ComPtr<IMFMediaType> pType = nullptr;
+  HRESULT hr = m_sourceReader->GetCurrentMediaType(
+    (DWORD)MF_SOURCE_READER_FIRST_VIDEO_STREAM
+    , pType.GetAddressOf()
+    );
+
+  if (FAILED(hr))
+  {
+    std::wcerr << "Failed to get current media type." << std::endl;
+    return E_FAIL;
+  }
+
+  // Found an output type.
+  uint32_t rate = 0, den = 0, width = 0, height = 0;
+  hr = MFGetAttributeSize(pType.Get(), MF_MT_FRAME_RATE, &rate, &den);
+  if (FAILED(hr))
+  {
+    std::wcerr << "Failed to get frame rate from current media type." << std::endl;
+    return E_FAIL;
+  }
+  rate /= den;
+  m_capFps = rate;
+
+  hr = MFGetAttributeSize(pType.Get(), MF_MT_FRAME_SIZE, &width, &height);
+  if (FAILED(hr))
+  {
+    std::wcerr << "Failed to get frame size from current media type." << std::endl;
+    return E_FAIL;
+  }
+  m_capWidth = width;
+  m_capHeight = height;
+
+  return S_OK;
 }

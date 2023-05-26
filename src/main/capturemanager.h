@@ -14,6 +14,10 @@ public:
 
   int init(IMFActivate *pActivate);
 
+  uint32_t getCaptureWidth() { return m_capWidth; }
+  uint32_t getCaptureHeight() { return m_capHeight; }
+  uint32_t getCaptureFps() { return m_capFps; }
+
 private:
   explicit CaptureManager();
   virtual ~CaptureManager();
@@ -23,6 +27,9 @@ private:
   ComPtr<IMFSourceReader> m_sourceReader;
   wchar_t *m_wcSymbolicLink;
   ComPtr<VideoCaptureCB> m_videoCaptureCB;
+  uint32_t m_capWidth;
+  uint32_t m_capHeight;
+  uint32_t m_capFps;
 };
 
 #endif // CAPTURE_MANAGER_H_

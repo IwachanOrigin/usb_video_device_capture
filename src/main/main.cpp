@@ -147,24 +147,6 @@ int main(int argc, char* argv[])
     return -1;
   }
 
-  HWND previewWnd = Win32MessageHandler::getInstance().hwnd();
-  // Create dx11 device, context, swapchain
-  result = DX11Manager::getInstance().init(previewWnd);
-  if (!result)
-  {
-    if (devices != nullptr)
-    {
-      for (uint32_t i = 0; i < deviceCount; i++)
-      {
-        devices[i]->Release();
-      }
-      CoTaskMemFree(devices);
-    }
-
-    ThrowIfFailed(MFShutdown());
-    CoUninitialize();
-  }
-
   // Create capturemanager.
   int retInt = CaptureManager::getInstance().init(devices[selectionNo]);
   if (retInt < 0)
@@ -184,6 +166,28 @@ int main(int argc, char* argv[])
     return -1;
   }
   devices[selectionNo]->AddRef();
+
+  HWND previewWnd = Win32MessageHandler::getInstance().hwnd();
+  uint32_t width = 0, height = 0, fps = 0;
+  width = CaptureManager::getInstance().getCaptureWidth();
+  height = CaptureManager::getInstance().getCaptureHeight();
+  fps = CaptureManager::getInstance().getCaptureFps();
+  // Create dx11 device, context, swapchain
+  result = DX11Manager::getInstance().init(previewWnd, width, height, fps);
+  if (!result)
+  {
+    if (devices != nullptr)
+    {
+      for (uint32_t i = 0; i < deviceCount; i++)
+      {
+        devices[i]->Release();
+      }
+      CoTaskMemFree(devices);
+    }
+
+    ThrowIfFailed(MFShutdown());
+    CoUninitialize();
+  }
 
   // Start message loop
   Win32MessageHandler::getInstance().run();

@@ -30,16 +30,23 @@ public:
   STDMETHODIMP OnFlush(DWORD) { return S_OK; }
 
   HRESULT setSourceReader(IMFSourceReader* sourceReader);
+  uint32_t getCaptureWidth() { return m_capWidth; }
+  uint32_t getCaptureHeight() { return m_capHeight; }
+  uint32_t getCaptureFps() { return m_capFps; }
 
 private:
   IMFSourceReader* m_sourceReader;
   ComPtr<IMFTransform> m_colorConvTransform;
   ComPtr<IMFMediaType> m_DecoderOutputMediaType;
   CRITICAL_SECTION m_criticalSection;
-  UINT32 m_sampleCount;
+  uint32_t m_sampleCount;
+  uint32_t m_capWidth;
+  uint32_t m_capHeight;
+  uint32_t m_capFps;
 
-  UINT32 getOptimizedFormatIndex();
+  uint32_t getOptimizedFormatIndex();
   bool isAcceptedFormat(const GUID& subtype);
+  HRESULT setCaptureResolutionAndFps();
 };
 
 #endif // VIDEO_CAPTURE_CALLBACK_H_

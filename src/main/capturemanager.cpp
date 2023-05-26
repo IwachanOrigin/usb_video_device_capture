@@ -6,6 +6,9 @@ CaptureManager::CaptureManager()
   : m_sourceReader(nullptr)
   , m_wcSymbolicLink(nullptr)
   , m_videoCaptureCB(new VideoCaptureCB())
+  , m_capWidth(0)
+  , m_capHeight(0)
+  , m_capFps(0)
 {
 }
 
@@ -72,14 +75,17 @@ int CaptureManager::init(IMFActivate *pActivate)
     return -1;
   }
 
+  // Set the source reader.
+  // And capture width, capture height, capture fps are setted to internal variables in this function.
   hr = m_videoCaptureCB->setSourceReader(m_sourceReader.Get());
   if (FAILED(hr))
   {
     MessageBoxW(nullptr, L"Failed to setSourceReader in videocapture callback.", L"Error", MB_OK);
     return -1;
   }
-
-  // TODO: MediaType setting...MJPG, YUY2
+  m_capWidth = m_videoCaptureCB->getCaptureWidth();
+  m_capHeight = m_videoCaptureCB->getCaptureHeight();
+  m_capFps = m_videoCaptureCB->getCaptureFps();
 
   // Ask for the first sample.
   hr = m_sourceReader->ReadSample(
