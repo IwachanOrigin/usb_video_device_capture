@@ -10,7 +10,7 @@
 
 ### Verification Machine Spec
 
-    OS  : Windows 10 Pro 21H2
+    OS  : Windows 10 Pro 22H2
     CPU : Intel Core i7-9700K
     RAM : 32.0GB
     GPU : NVIDIA GeForce RTX 2060(Driver ver.522.30)
@@ -29,14 +29,14 @@
 
 | No. | Device Name                 | MAX Resolution | MAX FPS | Audio support |
 |-----|-----------------------------|----------------|---------|---------------|
-| 1   | Logicool HD Pro Webcam C920 | 2K(1920x1080)  | 60p     | Yes           |
+| 1   | Logicool HD Pro Webcam C920 | 2K(1920x1080)  | 30p     | Yes           |
 | 2   | I-O DATA GV-HUVC 4K         | 4K(3840x2160)  | 30p     | Yes           |
 
-    - Logicool HD Pro Webcam C920(Input : 2K60p, Output : 2K60p) <CPU, Memory, Disk, NW, GPU>
-![input_output_2k60p](https://user-images.githubusercontent.com/12496951/236633859-33b9cf78-28fc-4f8f-8243-8d5a32de5773.png)
+    - Logicool HD Pro Webcam C920(Input : 2K30p, Output : 2K30p) <CPU, Memory, Disk, NW, GPU>
+![input_output_2k30p](https://user-images.githubusercontent.com/12496951/236633859-33b9cf78-28fc-4f8f-8243-8d5a32de5773.png)
 
-    - I-O DATA GV-HUVC 4K(Input : 4K30p, Output : 2K30p) <CPU, Memory, Disk, NW, GPU>
-![input_4k30p_output_2k30p](https://user-images.githubusercontent.com/12496951/236633770-57a07dca-7093-4188-adb6-47f50edcccda.png)
+    - I-O DATA GV-HUVC 4K(Input : 4K30p, Output : 4K30p) <CPU, Memory, Disk, NW, GPU>
+![input_4k30p_output_4k30p](https://user-images.githubusercontent.com/12496951/236633770-57a07dca-7093-4188-adb6-47f50edcccda.png)
 
 
 ## Build
@@ -51,19 +51,17 @@
 
 ## How to use
 
-    1. Run the usbVideoDeviceCapture.exe
-    2. Select the video capture device number.
-    3. Select the audio capture device number.
-    4. Input capture resolution and frame rate supported by the device.
-    5. Input display window resolution.
-    6. A window will appear and capture will begin.
+    1. Run the usbVideoDeviceCapture.exe  
+    2. Select the video capture device number.  
+    3. Select the audio capture device number.  
+    4. Select the audio output device number.  
+    5. Input display window resolution.  
+    6. A window will appear and capture will begin.  
 
 ![how_to_use](https://user-images.githubusercontent.com/12496951/236653443-ee09989f-103f-4756-98a2-275a740579c4.png)
 
 ## Attention
 
-    - The video capture device format is alway RGB32 only.  
-      If the video caputure device is not supported the format, capture failed.  
     - If all settings good, but capture is not started, the active signal resolution is not right.  
       Please check your windows display settings.  
       for example...  
