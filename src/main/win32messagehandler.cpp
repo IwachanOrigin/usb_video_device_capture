@@ -24,7 +24,7 @@ bool Win32MessageHandler::init(HINSTANCE hinst, int nCmdShow)
   // Parse the command line parameters
   // TODO
 
-  const WCHAR className[100] = L"MainWindow";
+  const WCHAR className[100] = L"Capture Engine MainWindow Class";
 
   // Initialize the window class.
   WNDCLASSEXW windowClass = {0};
@@ -43,7 +43,7 @@ bool Win32MessageHandler::init(HINSTANCE hinst, int nCmdShow)
   m_hwnd = CreateWindowExW(
     0
     , windowClass.lpszClassName
-    , L"Test"
+    , L"USB Video Capture"
     , WS_OVERLAPPEDWINDOW
     , CW_USEDEFAULT
     , CW_USEDEFAULT
