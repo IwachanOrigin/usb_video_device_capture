@@ -66,3 +66,6 @@
 ![active_signal_resolution](https://github.com/IwachanOrigin/usb_video_device_capture/blob/1fa0ac7ecec934c6080774b6735a5660707b00aa/doc/images/active_signal_resolution.png)
 
 
+## Design
+
+![design](https://github.com/IwachanOrigin/usb_video_device_capture/blob/9dcf10dcd3e06da4cf24942abb2c5eb694b5099f/doc/images/design.png)
