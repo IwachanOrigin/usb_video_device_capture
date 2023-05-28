@@ -20,20 +20,20 @@ set_source_files_properties(videoPS.hlsl
 add_custom_target(hlsl SOURCES ${hlsl_srcs})
 
 set(main_src
-  audiodevicemanager.h
-  audiodevicemanager.cpp
-  captureengineaudiocallback.cpp
-  captureengineaudiocallback.h
-  captureenginevideocallback.cpp
-  captureenginevideocallback.h
+  audiocapturecallback.cpp
+  audiocapturecallback.h
+  audiocapturemanager.cpp
+  audiocapturemanager.h
+  audiooutputdevicemanager.cpp
+  audiooutputdevicemanager.h
   capturemanager.cpp
   capturemanager.h
   dx11manager.cpp
   dx11manager.h
   dxhelper.h
   main.cpp
-  mesh.h
   mesh.cpp
+  mesh.h
   pipeline.cpp
   pipeline.h
   SimpleMath.cpp
@@ -43,6 +43,8 @@ set(main_src
   stdafx.h
   timer.h
   utils.h
+  videocapturecallback.cpp
+  videocapturecallback.h
   win32messagehandler.cpp
   win32messagehandler.h
 )

@@ -3,7 +3,6 @@
 #define DX_HELPER_H_
 
 #include <stdexcept>
-#include <wrl/client.h>
 
 using Microsoft::WRL::ComPtr;
 

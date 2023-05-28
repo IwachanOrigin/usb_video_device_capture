@@ -1,15 +1,16 @@
 
 #include <string>
 #include <windows.h>
-#include "audiodevicemanager.h"
+#include "audiooutputdevicemanager.h"
 
-AudioDeviceManager::AudioDeviceManager()
+AudioOutputDeviceManager::AudioOutputDeviceManager()
   : m_deviceID(0)
   , m_status(false)
 {
+  SDL_Init(SDL_INIT_AUDIO);
 }
 
-AudioDeviceManager::~AudioDeviceManager()
+AudioOutputDeviceManager::~AudioOutputDeviceManager()
 {
 	if (m_deviceID > 0)
 	{
@@ -18,19 +19,18 @@ AudioDeviceManager::~AudioDeviceManager()
 	SDL_Quit();
 }
 
-AudioDeviceManager& AudioDeviceManager::getInstance()
+AudioOutputDeviceManager& AudioOutputDeviceManager::getInstance()
 {
-  static AudioDeviceManager inst;
+  static AudioOutputDeviceManager inst;
   return inst;
 }
 
-int AudioDeviceManager::init(const int audio_device_index)
+int AudioOutputDeviceManager::init(const int audio_device_index)
 {
   if (audio_device_index < 0)
   {
     return -1;
   }
-	SDL_Init(SDL_INIT_AUDIO);
 
   SDL_AudioSpec wants{};
   SDL_AudioSpec spec{};
@@ -56,7 +56,7 @@ int AudioDeviceManager::init(const int audio_device_index)
   return 0;
 }
 
-int AudioDeviceManager::start()
+int AudioOutputDeviceManager::start()
 {
   if (m_deviceID <= 0)
   {
@@ -73,14 +73,14 @@ int AudioDeviceManager::start()
   return 0;
 }
 
-bool AudioDeviceManager::render(const uint8_t* new_data, size_t data_size)
+bool AudioOutputDeviceManager::render(const uint8_t* new_data, size_t data_size)
 {
   // Returns 0 on success or a negative error code on failure.
   int result = SDL_QueueAudio(m_deviceID, new_data, (uint32_t)data_size);
   return result == 0 ? true : false;
 }
 
-int AudioDeviceManager::stop()
+int AudioOutputDeviceManager::stop()
 {
   if (m_deviceID <= 0)
   {
@@ -95,4 +95,19 @@ int AudioDeviceManager::stop()
   SDL_PauseAudioDevice(m_deviceID, 1);
 
   return 0;
+}
+
+int AudioOutputDeviceManager::getAudioDeviceList(std::vector<std::wstring> &vec)
+{
+  int deviceNum = SDL_GetNumAudioDevices(0);
+  for (int i = 0; i < deviceNum; i++)
+  {
+    const char* audioDeviceName = SDL_GetAudioDeviceName(i, 0);
+    int convBufSize = ::MultiByteToWideChar(CP_UTF8, 0, audioDeviceName, -1, (wchar_t*)NULL, 0);
+    wchar_t* wcAudioDeviceName = (wchar_t*)new wchar_t[convBufSize];
+    ::MultiByteToWideChar(CP_UTF8, 0, audioDeviceName, -1, wcAudioDeviceName, convBufSize);
+    vec.push_back(std::wstring(wcAudioDeviceName, wcAudioDeviceName + convBufSize - 1));
+    delete[] wcAudioDeviceName;
+  }
+  return deviceNum;
 }
