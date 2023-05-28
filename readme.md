@@ -36,7 +36,7 @@
 ![input_output_2k30p](https://github.com/IwachanOrigin/usb_video_device_capture/blob/eb5f8f47a906f8a32875bbc672d39c4b7e0965cb/doc/images/input_output_2k30p.png)
 
     - I-O DATA GV-HUVC 4K(Input : 4K30p, Output : 4K30p) <CPU, Memory, Disk, NW, GPU>
-![input_4k30p_output_4k30p](https://github.com/IwachanOrigin/usb_video_device_capture/blob/eb5f8f47a906f8a32875bbc672d39c4b7e0965cb/doc/images/input_output_4k30p.png)
+![input_4k30p_output_4k30p](https://github.com/IwachanOrigin/usb_video_device_capture/blob/1c87211e987152a1df2e078f34ca713460537169/doc/images/input_output_4k30p.png)
 
 ## Build
 
@@ -56,13 +56,13 @@
     4. Select the audio output device number.  
     5. A window will appear and capture will begin.  
 
-![how_to_use](https://user-images.githubusercontent.com/12496951/236653443-ee09989f-103f-4756-98a2-275a740579c4.png)
+![how_to_use](https://github.com/IwachanOrigin/usb_video_device_capture/blob/1fa0ac7ecec934c6080774b6735a5660707b00aa/doc/images/how_to_use.png)
 
 ## Attention
 
     - If all settings good, but capture is not started, the active signal resolution is not right.  
       Please check your windows display settings.  
       for example...  
-![active_signal_resolution](https://user-images.githubusercontent.com/12496951/236654781-abdad7be-cbec-49e8-a827-0f0143f11703.png)
+![active_signal_resolution](https://github.com/IwachanOrigin/usb_video_device_capture/blob/1fa0ac7ecec934c6080774b6735a5660707b00aa/doc/images/active_signal_resolution.png)
 
 
