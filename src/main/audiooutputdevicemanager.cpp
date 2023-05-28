@@ -7,6 +7,7 @@ AudioOutputDeviceManager::AudioOutputDeviceManager()
   : m_deviceID(0)
   , m_status(false)
 {
+  SDL_Init(SDL_INIT_AUDIO);
 }
 
 AudioOutputDeviceManager::~AudioOutputDeviceManager()
@@ -30,7 +31,6 @@ int AudioOutputDeviceManager::init(const int audio_device_index)
   {
     return -1;
   }
-	SDL_Init(SDL_INIT_AUDIO);
 
   SDL_AudioSpec wants{};
   SDL_AudioSpec spec{};
@@ -95,4 +95,19 @@ int AudioOutputDeviceManager::stop()
   SDL_PauseAudioDevice(m_deviceID, 1);
 
   return 0;
+}
+
+int AudioOutputDeviceManager::getAudioDeviceList(std::vector<std::wstring> &vec)
+{
+  int deviceNum = SDL_GetNumAudioDevices(0);
+  for (int i = 0; i < deviceNum; i++)
+  {
+    const char* audioDeviceName = SDL_GetAudioDeviceName(i, 0);
+    int convBufSize = ::MultiByteToWideChar(CP_UTF8, 0, audioDeviceName, -1, (wchar_t*)NULL, 0);
+    wchar_t* wcAudioDeviceName = (wchar_t*)new wchar_t[convBufSize];
+    ::MultiByteToWideChar(CP_UTF8, 0, audioDeviceName, -1, wcAudioDeviceName, convBufSize);
+    vec.push_back(std::wstring(wcAudioDeviceName, wcAudioDeviceName + convBufSize - 1));
+    delete[] wcAudioDeviceName;
+  }
+  return deviceNum;
 }

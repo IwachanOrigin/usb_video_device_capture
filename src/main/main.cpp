@@ -119,10 +119,10 @@ int main(int argc, char* argv[])
   ThrowIfFailed(CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE));
   ThrowIfFailed(MFStartup(MF_VERSION));
 
-  // Get video devices.
+  // Get video capture devices.
   uint32_t videoDeviceCount = 0;
   IMFActivate** videoDevices = nullptr;
-  std::wcout << "----- Video Devices -----" << std::endl;
+  std::wcout << "----- Video Capture Devices -----" << std::endl;
   if (getCaptureDevices(videoDeviceCount, videoDevices))
   {
     for (uint32_t i = 0; i < videoDeviceCount; i++)
@@ -132,7 +132,7 @@ int main(int argc, char* argv[])
       hr = videoDevices[i]->GetAllocatedString(MF_DEVSOURCE_ATTRIBUTE_FRIENDLY_NAME, &buffer, &length);
       if (FAILED(hr))
       {
-        std::wcerr << "Failed to get video device name." << std::endl;
+        std::wcerr << "Failed to get video capture device name." << std::endl;
         continue;
       }
       std::wcout << "No. " << i << " : " << buffer << std::endl;
@@ -141,28 +141,28 @@ int main(int argc, char* argv[])
 
   if (videoDeviceCount == 0)
   {
-    std::wcerr << "Video Device not found." << std::endl;
+    std::wcerr << "Video capture device not found." << std::endl;
     CoTaskMemFree(videoDevices);
     ThrowIfFailed(MFShutdown());
     CoUninitialize();
     return -1;
   }
 
-  // Input device no.
+  // Input video capture device no.
   uint32_t videoSelectionNo = 0;
 
-  std::wcout << "Please input video device no : ";
+  std::wcout << "Please input video capture device no : ";
   std::wcin >> videoSelectionNo;
   if (videoSelectionNo > videoDeviceCount)
   {
-    std::wcout << "Failed video device select.";
+    std::wcout << "Failed video capture device select.";
     return -1;
   }
 
-  // Get audio devices.
+  // Get audio capture devices.
   uint32_t audioDeviceCount = 0;
   IMFActivate** audioDevices = nullptr;
-  std::wcout << "----- Audio Devices -----" << std::endl;
+  std::wcout << "----- Audio Capture Devices -----" << std::endl;
   if (getCaptureDevices(audioDeviceCount, audioDevices, true))
   {
     for (uint32_t i = 0; i < audioDeviceCount; i++)
@@ -172,7 +172,7 @@ int main(int argc, char* argv[])
       hr = audioDevices[i]->GetAllocatedString(MF_DEVSOURCE_ATTRIBUTE_FRIENDLY_NAME, &buffer, &length);
       if (FAILED(hr))
       {
-        std::wcerr << "Failed to get audio device name." << std::endl;
+        std::wcerr << "Failed to get audio capture device name." << std::endl;
         continue;
       }
       std::wcout << "No. " << i << " : " << buffer << std::endl;
@@ -181,7 +181,7 @@ int main(int argc, char* argv[])
 
   if (audioDeviceCount == 0)
   {
-    std::wcerr << "Audio Device not found." << std::endl;
+    std::wcerr << "Audio capture device not found." << std::endl;
     if (!videoDevices)
     {
       releaseAllDevices(videoDevices, videoDeviceCount);
@@ -192,13 +192,37 @@ int main(int argc, char* argv[])
     return -1;
   }
 
-  // Input audio device no.
+  // Input audio capture device no.
   uint32_t audioSelectionNo = 0;
-  std::wcout << "Please input audio device no : ";
+  std::wcout << "Please input audio capture device no : ";
   std::wcin >> audioSelectionNo;
   if (audioSelectionNo > audioDeviceCount)
   {
-    std::wcout << "Failed video device select.";
+    std::wcerr << "Failed audio capture device select." << std::endl;
+    return -1;
+  }
+
+  // Get audio output devices.
+  std::vector<std::wstring> vecAudioOutDevNames;
+  std::wcout << "----- Audio Output Devices -----" << std::endl;
+  AudioOutputDeviceManager::getInstance().getAudioDeviceList(vecAudioOutDevNames);
+  if (vecAudioOutDevNames.empty())
+  {
+    std::wcerr << "Failed to get audio output devices." << std::endl;
+    return -1;
+  }
+  for (uint32_t i = 0; i < vecAudioOutDevNames.size(); i++)
+  {
+    std::wcout << "No. " << i << " : " << vecAudioOutDevNames[i] << std::endl;
+  }
+
+  // Input audio output device no.
+  uint32_t audioOutputSelectionNo = 0;
+  std::wcout << "Please input audio output device no : ";
+  std::wcin >> audioOutputSelectionNo;
+  if (audioOutputSelectionNo > vecAudioOutDevNames.size())
+  {
+    std::wcerr << "Failed audio output device select." << std::endl;
     return -1;
   }
 
@@ -270,7 +294,7 @@ int main(int argc, char* argv[])
   else
   {
     // Setup audio device
-    int errCode = AudioOutputDeviceManager::getInstance().init(4);
+    int errCode = AudioOutputDeviceManager::getInstance().init(audioOutputSelectionNo);
     if (errCode == 0)
     {
       errCode = AudioOutputDeviceManager::getInstance().start();

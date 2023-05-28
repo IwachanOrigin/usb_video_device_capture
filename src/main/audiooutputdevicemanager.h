@@ -7,6 +7,9 @@ extern "C"
 #include <SDL.h>
 }
 
+#include <vector>
+#include <string>
+
 class AudioOutputDeviceManager
 {
 public:
@@ -19,6 +22,8 @@ public:
 
   SDL_AudioDeviceID getAudioID() { return m_deviceID; }
   bool getStatus() { return m_status; }
+
+  int getAudioDeviceList(std::vector<std::wstring> &vec);
 
 private:
   explicit AudioOutputDeviceManager();
