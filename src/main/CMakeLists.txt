@@ -26,8 +26,6 @@ set(main_src
   audiocapturemanager.h
   audiooutputdevicemanager.cpp
   audiooutputdevicemanager.h
-  capturemanager.cpp
-  capturemanager.h
   dx11manager.cpp
   dx11manager.h
   dxhelper.h
@@ -45,6 +43,8 @@ set(main_src
   utils.h
   videocapturecallback.cpp
   videocapturecallback.h
+  videocapturemanager.cpp
+  videocapturemanager.h
   win32messagehandler.cpp
   win32messagehandler.h
 )

@@ -1,16 +1,16 @@
 
-#ifndef CAPTURE_MANAGER_H_
-#define CAPTURE_MANAGER_H_
+#ifndef VIDEO_CAPTURE_MANAGER_H_
+#define VIDEO_CAPTURE_MANAGER_H_
 
 #include "stdafx.h"
 #include "videocapturecallback.h"
 
 using namespace Microsoft::WRL;
 
-class CaptureManager
+class VideoCaptureManager
 {
 public:
-  static CaptureManager& getInstance();
+  static VideoCaptureManager& getInstance();
 
   int init(IMFActivate *pActivate);
 
@@ -19,10 +19,10 @@ public:
   uint32_t getCaptureFps() { return m_capFps; }
 
 private:
-  explicit CaptureManager();
-  virtual ~CaptureManager();
-  explicit CaptureManager(const CaptureManager &);
-  CaptureManager &operator=(const CaptureManager &);
+  explicit VideoCaptureManager();
+  virtual ~VideoCaptureManager();
+  explicit VideoCaptureManager(const VideoCaptureManager &);
+  VideoCaptureManager &operator=(const VideoCaptureManager &);
 
   ComPtr<IMFSourceReader> m_sourceReader;
   wchar_t *m_wcSymbolicLink;
@@ -32,4 +32,4 @@ private:
   uint32_t m_capFps;
 };
 
-#endif // CAPTURE_MANAGER_H_
+#endif // VIDEO_CAPTURE_MANAGER_H_

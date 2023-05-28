@@ -1,8 +1,6 @@
 
 #include "stdafx.h"
-#include "timer.h"
 #include "utils.h"
-#include "audiocapturemanager.h"
 #include "audiooutputdevicemanager.h"
 #include "audiocapturecallback.h"
 

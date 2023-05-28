@@ -2,7 +2,7 @@
 #include "stdafx.h"
 #include "dxhelper.h"
 #include "win32messagehandler.h"
-#include "capturemanager.h"
+#include "videocapturemanager.h"
 #include "audiocapturemanager.h"
 #include "audiooutputdevicemanager.h"
 #include "dx11manager.h"
@@ -203,8 +203,8 @@ int main(int argc, char* argv[])
     return -1;
   }
 
-  // Create capturemanager.
-  int retInt = CaptureManager::getInstance().init(videoDevices[videoSelectionNo]);
+  // Create video capturemanager.
+  int retInt = VideoCaptureManager::getInstance().init(videoDevices[videoSelectionNo]);
   if (retInt < 0)
   {
     if (videoDevices != nullptr)
@@ -221,9 +221,9 @@ int main(int argc, char* argv[])
 
   HWND previewWnd = Win32MessageHandler::getInstance().hwnd();
   uint32_t width = 0, height = 0, fps = 0;
-  width = CaptureManager::getInstance().getCaptureWidth();
-  height = CaptureManager::getInstance().getCaptureHeight();
-  fps = CaptureManager::getInstance().getCaptureFps();
+  width = VideoCaptureManager::getInstance().getCaptureWidth();
+  height = VideoCaptureManager::getInstance().getCaptureHeight();
+  fps = VideoCaptureManager::getInstance().getCaptureFps();
   // Create dx11 device, context, swapchain
   result = DX11Manager::getInstance().init(previewWnd, width, height, fps);
   if (!result)

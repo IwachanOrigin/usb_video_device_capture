@@ -1,8 +1,6 @@
 
 #include "stdafx.h"
 #include "dx11manager.h"
-#include "timer.h"
-#include "capturemanager.h"
 #include "utils.h"
 #include "videocapturecallback.h"
 
@@ -318,53 +316,6 @@ STDMETHODIMP VideoCaptureCB::OnReadSample(
 
   LeaveCriticalSection(&m_criticalSection);
 
-#if 0
-  Timer timer;
-
-  ComPtr<IMFMediaBuffer> buf = nullptr;
-  UINT32 pitch = 4 * 3840;
-  hr = sample->ConvertToContiguousBuffer(&buf);
-  if (FAILED(hr))
-  {
-    sample->Release();
-    return E_FAIL;
-  }
-
-  byte* byteBuffer = nullptr;
-  DWORD buffCurrLen = 0;
-  hr = buf->Lock(&byteBuffer, NULL, &buffCurrLen);
-  if (FAILED(hr))
-  {
-    buf->Unlock();
-    sample->Release();
-    return E_FAIL;
-  }
-  assert(buffCurrLen == (pitch * 2160));
-
-  bool result = manager::DX11Manager::getInstance().updateTexture(byteBuffer, buffCurrLen);
-  if (!result)
-  {
-    sample->Release();
-    buf->Unlock();
-    MessageBoxW(nullptr, L"Failed to update texture.", L"Error", MB_OK);
-    return E_FAIL;
-  }
-
-  // Rendering
-  result = manager::DX11Manager::getInstance().render();
-  if (!result)
-  {
-    sample->Release();
-    buf->Unlock();
-    MessageBoxW(nullptr, L"Failed to rendering.", L"Error", MB_OK);
-    return E_FAIL;
-  }
-
-  sample->Release();
-  buf->Unlock();
-  std::wcout << "Timer : " << timer.elapsed() << std::endl;
-
-#endif
   return S_OK;
 }
 
