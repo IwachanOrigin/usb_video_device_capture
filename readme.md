@@ -6,6 +6,9 @@
     Media Foundationを用いてキャプチャしたUSBキャプチャデバイス/USBカメラ(Webカメラ)からの映像を  
     DirectX11ベースのレンダラーにて描画するプログラムです。  
 
+## Demo
+![Demo](https://github.com/IwachanOrigin/usb_video_device_capture/blob/7e322b10cec8068fdbce67ee17c9daf15a2a1a02/doc/images/demo.gif)
+
 ## Performance
 
 ### Verification Machine Spec
