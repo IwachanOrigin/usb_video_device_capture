@@ -33,11 +33,10 @@
 | 2   | I-O DATA GV-HUVC 4K         | 4K(3840x2160)  | 30p     | Yes           |
 
     - Logicool HD Pro Webcam C920(Input : 2K30p, Output : 2K30p) <CPU, Memory, Disk, NW, GPU>
-![input_output_2k30p](https://user-images.githubusercontent.com/12496951/236633859-33b9cf78-28fc-4f8f-8243-8d5a32de5773.png)
+![input_output_2k30p](https://github.com/IwachanOrigin/usb_video_device_capture/blob/eb5f8f47a906f8a32875bbc672d39c4b7e0965cb/doc/images/input_output_2k30p.png)
 
     - I-O DATA GV-HUVC 4K(Input : 4K30p, Output : 4K30p) <CPU, Memory, Disk, NW, GPU>
-![input_4k30p_output_4k30p](https://user-images.githubusercontent.com/12496951/236633770-57a07dca-7093-4188-adb6-47f50edcccda.png)
-
+![input_4k30p_output_4k30p](https://github.com/IwachanOrigin/usb_video_device_capture/blob/eb5f8f47a906f8a32875bbc672d39c4b7e0965cb/doc/images/input_output_4k30p.png)
 
 ## Build
 
@@ -55,8 +54,7 @@
     2. Select the video capture device number.  
     3. Select the audio capture device number.  
     4. Select the audio output device number.  
-    5. Input display window resolution.  
-    6. A window will appear and capture will begin.  
+    5. A window will appear and capture will begin.  
 
 ![how_to_use](https://user-images.githubusercontent.com/12496951/236653443-ee09989f-103f-4756-98a2-275a740579c4.png)
 
