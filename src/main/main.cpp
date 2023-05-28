@@ -70,44 +70,6 @@ static inline void releaseAllDevices(IMFActivate**& devices, uint32_t& deviceCou
   CoTaskMemFree(devices);
 }
 
-LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-  switch (uMsg)
-  {
-  case WM_ERASEBKGND:
-    return 1;
-  }
-  return DefWindowProc(hwnd, uMsg, wParam, lParam);
-}
-
-HWND CreatePreviewWindow(HINSTANCE hInstance, HWND hParent)
-{
-  const wchar_t windowClassName[100] = L"Capture Engine Preview Window Class";
-
-  WNDCLASSEXW wcex = {};
-
-  wcex.lpfnWndProc = WindowProc;
-  wcex.hInstance = hInstance;
-  wcex.lpszClassName = windowClassName;
-
-  RegisterClassExW(&wcex);
-
-  // Create the window.
-  return CreateWindowExW(
-    0
-    , windowClassName
-    , L"Capture Application"
-    , WS_OVERLAPPEDWINDOW
-    , CW_USEDEFAULT
-    , CW_USEDEFAULT
-    , CW_USEDEFAULT
-    , CW_USEDEFAULT
-    , nullptr
-    , nullptr
-    , hInstance
-    , nullptr);
-}
-
 int main(int argc, char* argv[])
 {
   HRESULT hr = S_OK;
