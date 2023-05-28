@@ -1,8 +1,8 @@
 
-#include "capturemanager.h"
+#include "videocapturemanager.h"
 #include "videocapturecallback.h"
 
-CaptureManager::CaptureManager()
+VideoCaptureManager::VideoCaptureManager()
   : m_sourceReader(nullptr)
   , m_wcSymbolicLink(nullptr)
   , m_videoCaptureCB(new VideoCaptureCB())
@@ -12,17 +12,17 @@ CaptureManager::CaptureManager()
 {
 }
 
-CaptureManager::~CaptureManager()
+VideoCaptureManager::~VideoCaptureManager()
 {
 }
 
-CaptureManager& CaptureManager::getInstance()
+VideoCaptureManager& VideoCaptureManager::getInstance()
 {
-  static CaptureManager inst;
+  static VideoCaptureManager inst;
   return inst;
 }
 
-int CaptureManager::init(IMFActivate *pActivate)
+int VideoCaptureManager::init(IMFActivate *pActivate)
 {
   ComPtr<IMFMediaSource> mediaSource = nullptr;
   ComPtr<IMFAttributes> attributes = nullptr;
