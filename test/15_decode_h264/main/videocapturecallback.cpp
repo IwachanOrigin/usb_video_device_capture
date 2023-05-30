@@ -13,6 +13,7 @@ VideoCaptureCB::VideoCaptureCB()
   : m_ref(1)
   , m_sourceReader(nullptr)
   , m_colorConvTransform(nullptr)
+  , m_h264ToNv12Transform(nullptr)
   , m_DecoderOutputMediaType(nullptr)
   , m_sampleCount(0)
 {
@@ -59,98 +60,6 @@ HRESULT VideoCaptureCB::setSourceReader(IMFSourceReader* sourceReader)
   }
   m_sourceReader = sourceReader;
 
-#if 0
-  ComPtr<IUnknown> colorConvTransformUnk = nullptr;
-  hr = CoCreateInstance(CLSID_CColorConvertDMO, nullptr, CLSCTX_INPROC_SERVER, IID_IUnknown, (void**)colorConvTransformUnk.GetAddressOf());
-  if (FAILED(hr))
-  {
-    MessageBoxW(nullptr, L"Failed to create color conversion transform unknown.", L"Error", MB_OK);
-    return hr;
-  }
-
-  hr = colorConvTransformUnk->QueryInterface(IID_PPV_ARGS(m_colorConvTransform.GetAddressOf()));
-  if (FAILED(hr))
-  {
-    MessageBoxW(nullptr, L"Failed to get IMFTransform interface from color converter MFT object..", L"Error", MB_OK);
-    return hr;
-  }
-
-  hr = MFCreateMediaType(m_DecoderOutputMediaType.GetAddressOf());
-  if (FAILED(hr))
-  {
-    MessageBoxW(nullptr, L"Failed to create media type.", L"Error", MB_OK);
-    return hr;
-  }
-
-  ComPtr<IMFMediaType> webCamMediaType = nullptr;
-  hr = m_sourceReader->GetCurrentMediaType(
-    (DWORD)MF_SOURCE_READER_FIRST_VIDEO_STREAM
-    , webCamMediaType.GetAddressOf()
-    );
-  if (FAILED(hr))
-  {
-    MessageBoxW(nullptr, L"Failed to get the camera current media type.", L"Error", MB_OK);
-    return hr;
-  }
-
-  hr = utilCloneVideomediaType(webCamMediaType.Get(), MFVideoFormat_RGB32, m_DecoderOutputMediaType.GetAddressOf());
-  if (FAILED(hr))
-  {
-    MessageBoxW(nullptr, L"Failed to copy the camera current media type to the decoder output media type.", L"Error", MB_OK);
-    return hr;
-  }
-
-  // default : 640, 480, 30, yuy2
-  // chenged : 640, 480, 30, mjpeg
-  hr = m_colorConvTransform->SetInputType(0, webCamMediaType.Get(), 0);
-  if (FAILED(hr))
-  {
-    MessageBoxW(nullptr, L"Failed to set input media type on color conversion MFT.", L"Error", MB_OK);
-    return hr;
-  }
-
-  hr = m_colorConvTransform->SetOutputType(0, m_DecoderOutputMediaType.Get(), 0);
-  if (FAILED(hr))
-  {
-    MessageBoxW(nullptr, L"Failed to set output media type on color conversion MFT.", L"Error", MB_OK);
-    return hr;
-  }
-
-  DWORD mftStatus = 0;
-  hr = m_colorConvTransform->GetInputStatus(0, &mftStatus);
-  if (FAILED(hr))
-  {
-    MessageBoxW(nullptr, L"Failed to get input media status from color conversion MFT.", L"Error", MB_OK);
-    return hr;
-  }
-  if (MFT_INPUT_STATUS_ACCEPT_DATA != mftStatus)
-  {
-    MessageBoxW(nullptr, L"Color conversion MFT is not accepting data.", L"Error", MB_OK);
-    return hr;
-  }
-
-  hr = m_colorConvTransform->ProcessMessage(MFT_MESSAGE_COMMAND_FLUSH, NULL);
-  if (FAILED(hr))
-  {
-    MessageBoxW(nullptr, L"Failed to process FLUSH command on color conversion MFT.", L"Error", MB_OK);
-    return hr;
-  }
-
-  hr = m_colorConvTransform->ProcessMessage(MFT_MESSAGE_NOTIFY_BEGIN_STREAMING, NULL);
-  if (FAILED(hr))
-  {
-    MessageBoxW(nullptr, L"Failed to process BEGIN_STREAMING command on color conversion MFT.", L"Error", MB_OK);
-    return hr;
-  }
-
-  hr = m_colorConvTransform->ProcessMessage(MFT_MESSAGE_NOTIFY_START_OF_STREAM, NULL);
-  if (FAILED(hr))
-  {
-    MessageBoxW(nullptr, L"Failed to process START_OF_STREAM command on color conversion MFT.", L"Error", MB_OK);
-    return hr;
-  }
-#else
-
   ComPtr<IUnknown> colorConvTransformUnk = nullptr;
   // https://learn.microsoft.com/ja-jp/windows/win32/medfound/colorconverter
   // https://learn.microsoft.com/ja-jp/windows/win32/medfound/video-processor-mft
@@ -168,6 +77,23 @@ HRESULT VideoCaptureCB::setSourceReader(IMFSourceReader* sourceReader)
     return hr;
   }
 
+  ComPtr<IUnknown> h264ToNv12TransformUnk = nullptr;
+  // https://learn.microsoft.com/ja-jp/windows/win32/medfound/h-264-video-decoder
+  hr = CoCreateInstance(CLSID_CMSH264DecoderMFT, nullptr, CLSCTX_INPROC_SERVER, IID_IUnknown, (void**)h264ToNv12TransformUnk.GetAddressOf());
+  if (FAILED(hr))
+  {
+    MessageBoxW(nullptr, L"Failed to create h264 to nv12 transform unknown.", L"Error", MB_OK);
+    return hr;
+  }
+
+  hr = h264ToNv12TransformUnk->QueryInterface(IID_PPV_ARGS(m_h264ToNv12Transform.GetAddressOf()));
+  if (FAILED(hr))
+  {
+    MessageBoxW(nullptr, L"Failed to get IMFTransform interface from h264 to nv12 MFT object..", L"Error", MB_OK);
+    return hr;
+  }
+
+  // NV12 to RGB32
   hr = MFCreateMediaType(m_DecoderOutputMediaType.GetAddressOf());
   if (FAILED(hr))
   {
@@ -186,7 +112,7 @@ HRESULT VideoCaptureCB::setSourceReader(IMFSourceReader* sourceReader)
     return hr;
   }
 
-  hr = webCamMediaType->SetGUID(MF_MT_SUBTYPE, MFVideoFormat_NV12);
+  hr = webCamMediaType->SetGUID(MF_MT_SUBTYPE, MFVideoFormat_H264);
   if (FAILED(hr))
   {
     MessageBoxW(nullptr, L"Failed to set the camera media type to subtype.", L"Error", MB_OK);
@@ -219,8 +145,65 @@ HRESULT VideoCaptureCB::setSourceReader(IMFSourceReader* sourceReader)
   }
 
   // default : 640, 480, 30, yuy2
-  // chenged : 1920, 1080, 30, nv12
-  hr = m_colorConvTransform->SetInputType(0, webCamMediaType.Get(), 0);
+  // chenged : 1920, 1080, 30, h264
+  hr = m_h264ToNv12Transform->SetInputType(0, webCamMediaType.Get(), 0);
+  if (FAILED(hr))
+  {
+    MessageBoxW(nullptr, L"Failed to set input media type on h264 to nv12 MFT.", L"Error", MB_OK);
+    return hr;
+  }
+
+  hr = utilCloneVideomediaType(webCamMediaType.Get(), MFVideoFormat_NV12, m_h264ToNv12MediaType.GetAddressOf());
+  if (FAILED(hr))
+  {
+    MessageBoxW(nullptr, L"Failed to copy the camera current media type to the h264 to nv12  media type.", L"Error", MB_OK);
+    return hr;
+  }
+
+  hr = m_h264ToNv12Transform->SetOutputType(0, m_h264ToNv12MediaType.Get(), 0);
+  if (FAILED(hr))
+  {
+    MessageBoxW(nullptr, L"Failed to set output media type on h264 to nv12 MFT.", L"Error", MB_OK);
+    return hr;
+  }
+
+  DWORD mftStatus = 0;
+  hr = m_h264ToNv12Transform->GetInputStatus(0, &mftStatus);
+  if (FAILED(hr))
+  {
+    MessageBoxW(nullptr, L"Failed to get input media status from h264 to nv12  MFT.", L"Error", MB_OK);
+    return hr;
+  }
+  if (MFT_INPUT_STATUS_ACCEPT_DATA != mftStatus)
+  {
+    MessageBoxW(nullptr, L"h264 to nv12 MFT is not accepting data.", L"Error", MB_OK);
+    return hr;
+  }
+
+  hr = m_h264ToNv12Transform->ProcessMessage(MFT_MESSAGE_COMMAND_FLUSH, NULL);
+  if (FAILED(hr))
+  {
+    MessageBoxW(nullptr, L"Failed to process FLUSH command on h264 to nv12 MFT.", L"Error", MB_OK);
+    return hr;
+  }
+
+  hr = m_h264ToNv12Transform->ProcessMessage(MFT_MESSAGE_NOTIFY_BEGIN_STREAMING, NULL);
+  if (FAILED(hr))
+  {
+    MessageBoxW(nullptr, L"Failed to process BEGIN_STREAMING command on h264 to nv12 MFT.", L"Error", MB_OK);
+    return hr;
+  }
+
+  hr = m_h264ToNv12Transform->ProcessMessage(MFT_MESSAGE_NOTIFY_START_OF_STREAM, NULL);
+  if (FAILED(hr))
+  {
+    MessageBoxW(nullptr, L"Failed to process START_OF_STREAM command on h264 to nv12 MFT.", L"Error", MB_OK);
+    return hr;
+  }
+
+
+  // nv12 to rgb32
+  hr = m_colorConvTransform->SetInputType(0, m_h264ToNv12MediaType.Get(), 0);
   if (FAILED(hr))
   {
     MessageBoxW(nullptr, L"Failed to set input media type on color conversion MFT.", L"Error", MB_OK);
@@ -241,7 +224,7 @@ HRESULT VideoCaptureCB::setSourceReader(IMFSourceReader* sourceReader)
     return hr;
   }
 
-  DWORD mftStatus = 0;
+  mftStatus = 0;
   hr = m_colorConvTransform->GetInputStatus(0, &mftStatus);
   if (FAILED(hr))
   {
@@ -274,7 +257,6 @@ HRESULT VideoCaptureCB::setSourceReader(IMFSourceReader* sourceReader)
     MessageBoxW(nullptr, L"Failed to process START_OF_STREAM command on color conversion MFT.", L"Error", MB_OK);
     return hr;
   }
-#endif
 
   return hr;
 }
@@ -304,94 +286,141 @@ STDMETHODIMP VideoCaptureCB::OnReadSample(
       hr = sample->GetSampleFlags(&sampleFlags);
       printf("Sample flags %d, sample duration %I64d, sample time %I64d\n", sampleFlags, llSampleDuration, llTimeStamp);
 
-      hr = m_colorConvTransform->ProcessInput(0, sample, NULL);
+      // h264 to nv12
+      hr = m_h264ToNv12Transform->ProcessInput(0, sample, NULL);
       if (FAILED(hr))
       {
-        std::cerr << "The color conversion decoder ProcessInput call failed." << std::endl;
+        std::cerr << "The h264 to nv12 decoder ProcessInput call failed." << std::endl;
         sample->Release();
       }
 
-      MFT_OUTPUT_STREAM_INFO streamInfo{};
-      DWORD processOutputStatus = 0;
+      MFT_OUTPUT_STREAM_INFO h264ToNv12StreamInfo{};
+      DWORD h264ToNv12ProcessOutputStatus = 0;
 
-      hr = m_colorConvTransform->GetOutputStreamInfo(0, &streamInfo);
+      hr = m_colorConvTransform->GetOutputStreamInfo(0, &h264ToNv12StreamInfo);
       if (FAILED(hr))
       {
-        std::cerr << "Failed to get output stream info from color conversion MFT." << std::endl;
+        std::cerr << "Failed to get output stream info from h264 to nv12 MFT." << std::endl;
         sample->Release();
       }
 
-      ComPtr<IMFSample> mftOutSample = nullptr;
-      hr = MFCreateSample(mftOutSample.GetAddressOf());
+      ComPtr<IMFSample> mftOutH264ToNv12Sample = nullptr;
+      hr = MFCreateSample(mftOutH264ToNv12Sample.GetAddressOf());
       if (FAILED(hr))
       {
-        std::cerr << "Failed to create MF sample." << std::endl;
+        std::cerr << "Failed to create H264 to nv12 MF sample." << std::endl;
         sample->Release();
       }
 
-      ComPtr<IMFMediaBuffer> mftOutBuffer = nullptr;
-      hr = MFCreateMemoryBuffer(streamInfo.cbSize, mftOutBuffer.GetAddressOf());
+      ComPtr<IMFMediaBuffer> mftOutH264ToNv12Buffer = nullptr;
+      hr = MFCreateMemoryBuffer(h264ToNv12StreamInfo.cbSize, mftOutH264ToNv12Buffer.GetAddressOf());
       if (FAILED(hr))
       {
-        std::cerr << "Failed to create memory buffer." << std::endl;
+        std::cerr << "Failed to create h264 t nv12 memory buffer." << std::endl;
         sample->Release();
       }
 
-      hr = mftOutSample->AddBuffer(mftOutBuffer.Get());
+      hr = mftOutH264ToNv12Sample->AddBuffer(mftOutH264ToNv12Buffer.Get());
       if (FAILED(hr))
       {
-        std::cerr << "Failed to add sample to buffer." << std::endl;
+        std::cerr << "Failed to add sample to h264 to nv12 buffer." << std::endl;
         sample->Release();
       }
 
-      MFT_OUTPUT_DATA_BUFFER outputDataBuffer{};
-      outputDataBuffer.dwStreamID = 0;
-      outputDataBuffer.dwStatus = 0;
-      outputDataBuffer.pEvents = NULL;
-      outputDataBuffer.pSample = mftOutSample.Get();
-      auto mftProcessOutput = m_colorConvTransform->ProcessOutput(0, 1, &outputDataBuffer, &processOutputStatus);
-      if (SUCCEEDED(mftProcessOutput))
+      MFT_OUTPUT_DATA_BUFFER outputH264ToNv12DataBuffer{};
+      outputH264ToNv12DataBuffer.dwStreamID = 0;
+      outputH264ToNv12DataBuffer.dwStatus = 0;
+      outputH264ToNv12DataBuffer.pEvents = NULL;
+      outputH264ToNv12DataBuffer.pSample = mftOutH264ToNv12Sample.Get();
+      auto mftH264ToNv12ProcessOutput = m_h264ToNv12Transform->ProcessOutput(0, 1, &outputH264ToNv12DataBuffer, &h264ToNv12ProcessOutputStatus);
+      if (SUCCEEDED(mftH264ToNv12ProcessOutput))
       {
-        std::wcout << "Color conversion result : " << mftProcessOutput << ", MFT status : " << processOutputStatus << std::endl;
-        ComPtr<IMFMediaBuffer> buf = nullptr;
-        hr = mftOutSample->ConvertToContiguousBuffer(buf.GetAddressOf());
+        std::wcout << "h264 to nv12 result : " << mftH264ToNv12ProcessOutput << ", MFT status : " << h264ToNv12ProcessOutputStatus << std::endl;
+        // nv12 to rgb32
+        hr = m_colorConvTransform->ProcessInput(0, mftOutH264ToNv12Sample.Get(), NULL);
         if (FAILED(hr))
         {
-          std::cerr << "Failed the ConvertToContiguousBuffer." << std::endl;
+          std::cerr << "The color conversion decoder ProcessInput call failed." << std::endl;
         }
 
-        byte* byteBuffer = nullptr;
-        DWORD buffCurrLen = 0;
-        hr = buf->Lock(&byteBuffer, NULL, &buffCurrLen);
+        MFT_OUTPUT_STREAM_INFO streamInfo{};
+        DWORD processOutputStatus = 0;
+
+        hr = m_colorConvTransform->GetOutputStreamInfo(0, &streamInfo);
         if (FAILED(hr))
         {
-          std::cerr << "Failed the ConvertToContiguousBuffer." << std::endl;
-        }
-#if 1
-        // Update texture
-        bool result = manager::DX11Manager::getInstance().updateTexture(byteBuffer, buffCurrLen);
-        if (!result)
-        {
-          buf->Unlock();
-          MessageBoxW(nullptr, L"Failed to update texture.", L"Error", MB_OK);
+          std::cerr << "Failed to get output stream info from color conversion MFT." << std::endl;
         }
 
-        // Rendering
-        result = manager::DX11Manager::getInstance().render();
-        if (!result)
+        ComPtr<IMFSample> mftOutSample = nullptr;
+        hr = MFCreateSample(mftOutSample.GetAddressOf());
+        if (FAILED(hr))
         {
-          buf->Unlock();
-          MessageBoxW(nullptr, L"Failed to rendering.", L"Error", MB_OK);
+          std::cerr << "Failed to create MF sample." << std::endl;
         }
+
+        ComPtr<IMFMediaBuffer> mftOutBuffer = nullptr;
+        hr = MFCreateMemoryBuffer(streamInfo.cbSize, mftOutBuffer.GetAddressOf());
+        if (FAILED(hr))
+        {
+          std::cerr << "Failed to create memory buffer." << std::endl;
+        }
+
+        hr = mftOutSample->AddBuffer(mftOutBuffer.Get());
+        if (FAILED(hr))
+        {
+          std::cerr << "Failed to add sample to buffer." << std::endl;
+        }
+
+        MFT_OUTPUT_DATA_BUFFER outputDataBuffer{};
+        outputDataBuffer.dwStreamID = 0;
+        outputDataBuffer.dwStatus = 0;
+        outputDataBuffer.pEvents = NULL;
+        outputDataBuffer.pSample = mftOutSample.Get();
+        auto mftProcessOutput = m_colorConvTransform->ProcessOutput(0, 1, &outputDataBuffer, &processOutputStatus);
+        if (SUCCEEDED(mftProcessOutput))
+        {
+          std::wcout << "Color conversion result : " << mftProcessOutput << ", MFT status : " << processOutputStatus << std::endl;
+          ComPtr<IMFMediaBuffer> buf = nullptr;
+          hr = mftOutSample->ConvertToContiguousBuffer(buf.GetAddressOf());
+          if (FAILED(hr))
+          {
+            std::cerr << "Failed the ConvertToContiguousBuffer." << std::endl;
+          }
+
+          byte* byteBuffer = nullptr;
+          DWORD buffCurrLen = 0;
+          hr = buf->Lock(&byteBuffer, NULL, &buffCurrLen);
+          if (FAILED(hr))
+          {
+            std::cerr << "Failed the ConvertToContiguousBuffer." << std::endl;
+          }
+#if 0
+          // Update texture
+          bool result = manager::DX11Manager::getInstance().updateTexture(byteBuffer, buffCurrLen);
+          if (!result)
+          {
+            buf->Unlock();
+            MessageBoxW(nullptr, L"Failed to update texture.", L"Error", MB_OK);
+          }
+
+          // Rendering
+          result = manager::DX11Manager::getInstance().render();
+          if (!result)
+          {
+            buf->Unlock();
+            MessageBoxW(nullptr, L"Failed to rendering.", L"Error", MB_OK);
+          }
 #endif
-        //std::wcout << "current size : " << buffCurrLen << std::endl;
-        buf->Unlock();
+          std::wcout << "current size : " << buffCurrLen << std::endl;
+          buf->Unlock();
+        }
+        else if (mftProcessOutput == MF_E_TRANSFORM_NEED_MORE_INPUT)
+        {
+          std::wcout << "Color conversion result : MF_E_TRANSFORM_NEED_MORE_INPUT" << std::endl;
+        }
       }
-      else if (mftProcessOutput == MF_E_TRANSFORM_NEED_MORE_INPUT)
-      {
-        std::wcout << "Color conversion result : MF_E_TRANSFORM_NEED_MORE_INPUT" << std::endl;
-      }
-      sample->Release();
+      //sample->Release();
       m_sampleCount++;
     }
   }
@@ -408,53 +437,6 @@ STDMETHODIMP VideoCaptureCB::OnReadSample(
 
   LeaveCriticalSection(&m_criticalSection);
 
-#if 0
-  Timer timer;
-
-  ComPtr<IMFMediaBuffer> buf = nullptr;
-  UINT32 pitch = 4 * 3840;
-  hr = sample->ConvertToContiguousBuffer(&buf);
-  if (FAILED(hr))
-  {
-    sample->Release();
-    return E_FAIL;
-  }
-
-  byte* byteBuffer = nullptr;
-  DWORD buffCurrLen = 0;
-  hr = buf->Lock(&byteBuffer, NULL, &buffCurrLen);
-  if (FAILED(hr))
-  {
-    buf->Unlock();
-    sample->Release();
-    return E_FAIL;
-  }
-  assert(buffCurrLen == (pitch * 2160));
-
-  bool result = manager::DX11Manager::getInstance().updateTexture(byteBuffer, buffCurrLen);
-  if (!result)
-  {
-    sample->Release();
-    buf->Unlock();
-    MessageBoxW(nullptr, L"Failed to update texture.", L"Error", MB_OK);
-    return E_FAIL;
-  }
-
-  // Rendering
-  result = manager::DX11Manager::getInstance().render();
-  if (!result)
-  {
-    sample->Release();
-    buf->Unlock();
-    MessageBoxW(nullptr, L"Failed to rendering.", L"Error", MB_OK);
-    return E_FAIL;
-  }
-
-  sample->Release();
-  buf->Unlock();
-  std::wcout << "Timer : " << timer.elapsed() << std::endl;
-
-#endif
   return S_OK;
 }
 

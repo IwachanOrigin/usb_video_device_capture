@@ -1,4 +1,3 @@
-
 #ifndef VIDEO_CAPTURE_CALLBACK_H_
 #define VIDEO_CAPTURE_CALLBACK_H_
 
@@ -33,7 +32,9 @@ public:
 
 private:
   IMFSourceReader* m_sourceReader;
+  ComPtr<IMFTransform> m_h264ToNv12Transform;
   ComPtr<IMFTransform> m_colorConvTransform;
+  ComPtr<IMFMediaType> m_h264ToNv12MediaType;
   ComPtr<IMFMediaType> m_DecoderOutputMediaType;
   CRITICAL_SECTION m_criticalSection;
   UINT32 m_sampleCount;
