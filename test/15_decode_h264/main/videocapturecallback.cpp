@@ -102,34 +102,15 @@ HRESULT VideoCaptureCB::setSourceReader(IMFSourceReader* sourceReader)
   }
 
   ComPtr<IMFMediaType> webCamMediaType = nullptr;
-  hr = m_sourceReader->GetCurrentMediaType(
+  UINT32 index = this->getOptimizedFormatIndex();
+  hr = m_sourceReader->GetNativeMediaType(
     (DWORD)MF_SOURCE_READER_FIRST_VIDEO_STREAM
+    , (DWORD)index
     , webCamMediaType.GetAddressOf()
     );
   if (FAILED(hr))
   {
     MessageBoxW(nullptr, L"Failed to get the camera current media type.", L"Error", MB_OK);
-    return hr;
-  }
-
-  hr = webCamMediaType->SetGUID(MF_MT_SUBTYPE, MFVideoFormat_H264);
-  if (FAILED(hr))
-  {
-    MessageBoxW(nullptr, L"Failed to set the camera media type to subtype.", L"Error", MB_OK);
-    return hr;
-  }
-
-  hr = MFSetAttributeSize(webCamMediaType.Get(), MF_MT_FRAME_SIZE, 1920, 1080);
-  if (FAILED(hr))
-  {
-    MessageBoxW(nullptr, L"Failed to set the camera media type to frame size.", L"Error", MB_OK);
-    return hr;
-  }
-
-  hr = MFSetAttributeRatio(webCamMediaType.Get(), MF_MT_FRAME_RATE, 30, 1);
-  if (FAILED(hr))
-  {
-    MessageBoxW(nullptr, L"Failed to set the camera media type to frame rate.", L"Error", MB_OK);
     return hr;
   }
 
@@ -290,8 +271,15 @@ STDMETHODIMP VideoCaptureCB::OnReadSample(
       hr = m_h264ToNv12Transform->ProcessInput(0, sample, NULL);
       if (FAILED(hr))
       {
-        std::cerr << "The h264 to nv12 decoder ProcessInput call failed." << std::endl;
-        sample->Release();
+        if (hr == MF_E_NOTACCEPTING)
+        {
+          std::wcout << "The h264 to nv12 decoder MF_E_NOTACCEPTING. Because the buffer is ready to be retrieved from the processOutput method." << std::endl;
+        }
+        else
+        {
+          this->outputError(L"The h264 to nv12 decoder ProcessInput call failed.", sample);
+          return hr;
+        }
       }
 
       MFT_OUTPUT_STREAM_INFO h264ToNv12StreamInfo{};
@@ -300,31 +288,31 @@ STDMETHODIMP VideoCaptureCB::OnReadSample(
       hr = m_colorConvTransform->GetOutputStreamInfo(0, &h264ToNv12StreamInfo);
       if (FAILED(hr))
       {
-        std::cerr << "Failed to get output stream info from h264 to nv12 MFT." << std::endl;
-        sample->Release();
+        this->outputError(L"Failed to get output stream info from h264 to nv12 MFT.", sample);
+        return hr;
       }
 
       ComPtr<IMFSample> mftOutH264ToNv12Sample = nullptr;
       hr = MFCreateSample(mftOutH264ToNv12Sample.GetAddressOf());
       if (FAILED(hr))
       {
-        std::cerr << "Failed to create H264 to nv12 MF sample." << std::endl;
-        sample->Release();
+        this->outputError(L"Failed to create H264 to nv12 MF sample.", sample);
+        return hr;
       }
 
       ComPtr<IMFMediaBuffer> mftOutH264ToNv12Buffer = nullptr;
       hr = MFCreateMemoryBuffer(h264ToNv12StreamInfo.cbSize, mftOutH264ToNv12Buffer.GetAddressOf());
       if (FAILED(hr))
       {
-        std::cerr << "Failed to create h264 t nv12 memory buffer." << std::endl;
-        sample->Release();
+        this->outputError(L"Failed to create h264 t nv12 memory buffer.", sample);
+        return hr;
       }
 
       hr = mftOutH264ToNv12Sample->AddBuffer(mftOutH264ToNv12Buffer.Get());
       if (FAILED(hr))
       {
-        std::cerr << "Failed to add sample to h264 to nv12 buffer." << std::endl;
-        sample->Release();
+        this->outputError(L"Failed to add sample to h264 to nv12 buffer.", sample);
+        return hr;
       }
 
       MFT_OUTPUT_DATA_BUFFER outputH264ToNv12DataBuffer{};
@@ -415,12 +403,16 @@ STDMETHODIMP VideoCaptureCB::OnReadSample(
           std::wcout << "current size : " << buffCurrLen << std::endl;
           buf->Unlock();
         }
-        else if (mftProcessOutput == MF_E_TRANSFORM_NEED_MORE_INPUT)
-        {
-          std::wcout << "Color conversion result : MF_E_TRANSFORM_NEED_MORE_INPUT" << std::endl;
-        }
       }
-      //sample->Release();
+      else if (mftH264ToNv12ProcessOutput == MF_E_TRANSFORM_NEED_MORE_INPUT)
+      {
+        std::wcout << "h264 to nv12 result : MF_E_TRANSFORM_NEED_MORE_INPUT" << std::endl;
+      }
+
+      if (sample)
+      {
+        sample->Release();
+      }
       m_sampleCount++;
     }
   }
@@ -466,7 +458,7 @@ UINT32 VideoCaptureCB::getOptimizedFormatIndex()
         continue;
       }
       // Check
-      if (subtype != MFVideoFormat_MJPG)
+      if (subtype != MFVideoFormat_H264)
       {
         continue;
       }
@@ -485,4 +477,25 @@ UINT32 VideoCaptureCB::getOptimizedFormatIndex()
     }
   }
   return index;
+}
+
+void VideoCaptureCB::outputError(const std::wstring& errMsg, IMFSample* sample)
+{
+  std::wcerr << errMsg << std::endl;
+  if (sample)
+  {
+    sample->Release();
+  }
+
+  // Request next frame
+  HRESULT hr = m_sourceReader->ReadSample(
+    (DWORD)MF_SOURCE_READER_FIRST_VIDEO_STREAM
+    , 0
+    , nullptr
+    , nullptr
+    , nullptr
+    , nullptr
+  );
+
+  LeaveCriticalSection(&m_criticalSection);
 }

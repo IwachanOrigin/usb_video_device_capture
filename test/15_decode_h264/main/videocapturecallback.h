@@ -40,6 +40,7 @@ private:
   UINT32 m_sampleCount;
 
   UINT32 getOptimizedFormatIndex();
+  void outputError(const std::wstring& errMsg, IMFSample* sample);
 };
 
 #endif // VIDEO_CAPTURE_CALLBACK_H_
