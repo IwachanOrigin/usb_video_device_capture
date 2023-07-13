@@ -211,7 +211,41 @@ STDMETHODIMP VideoCaptureCB::OnReadSample(
       hr = sample->GetSampleDuration(&llSampleDuration);
       hr = sample->GetSampleFlags(&sampleFlags);
       printf("Sample flags %d, sample duration %I64d, sample time %I64d\n", (int)sampleFlags, llSampleDuration, llTimeStamp);
+#if 1
+      // Send to gpu to cpu
+      ComPtr<IMFMediaBuffer> buf = nullptr;
+      hr = sample->ConvertToContiguousBuffer(buf.GetAddressOf());
+      if (FAILED(hr))
+      {
+        std::cerr << "Failed the ConvertToContiguousBuffer." << std::endl;
+      }
 
+      byte* byteBuffer = nullptr;
+      DWORD buffCurrLen = 0;
+      hr = buf->Lock(&byteBuffer, NULL, &buffCurrLen);
+      if (FAILED(hr))
+      {
+        std::cerr << "Failed the ConvertToContiguousBuffer." << std::endl;
+      }
+
+      // Update texture
+      bool result = manager::DX11Manager::getInstance().updateTexture(byteBuffer, buffCurrLen);
+      if (!result)
+      {
+        buf->Unlock();
+        std::wcerr << "Failed to update texture." << std::endl;
+      }
+
+      // Rendering
+      result = manager::DX11Manager::getInstance().render();
+      if (!result)
+      {
+        buf->Unlock();
+        std::wcerr << "Failed to rendering." << std::endl;
+      }
+      buf->Unlock();
+
+#else
       hr = m_colorConvTransform->ProcessInput(0, sample, NULL);
       if (FAILED(hr))
       {
@@ -299,6 +333,7 @@ STDMETHODIMP VideoCaptureCB::OnReadSample(
       {
         std::wcout << "Color conversion result : MF_E_TRANSFORM_NEED_MORE_INPUT" << std::endl;
       }
+#endif
       sample->Release();
       m_sampleCount++;
     }
