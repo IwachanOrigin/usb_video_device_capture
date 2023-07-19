@@ -9,6 +9,7 @@ VideoCaptureManager::VideoCaptureManager()
   , m_capWidth(0)
   , m_capHeight(0)
   , m_capFps(0)
+  , m_vcf(VideoCaptureFormat::VideoCapFmt_NONE)
 {
 }
 

@@ -43,6 +43,7 @@ set(main_src
   utils.h
   videocapturecallback.cpp
   videocapturecallback.h
+  videocaptureformat.h
   videocapturemanager.cpp
   videocapturemanager.h
   win32messagehandler.cpp

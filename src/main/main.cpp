@@ -6,6 +6,7 @@
 #include "audiocapturemanager.h"
 #include "audiooutputdevicemanager.h"
 #include "dx11manager.h"
+#include "videocaptureformat.h"
 
 #pragma comment(lib, "mf")
 #pragma comment(lib, "mfplat")
@@ -221,9 +222,11 @@ int main(int argc, char* argv[])
 
   HWND previewWnd = Win32MessageHandler::getInstance().hwnd();
   uint32_t width = 0, height = 0, fps = 0;
+  VideoCaptureFormat fmt = VideoCaptureFormat::VideoCapFmt_NONE;
   width = VideoCaptureManager::getInstance().getCaptureWidth();
   height = VideoCaptureManager::getInstance().getCaptureHeight();
   fps = VideoCaptureManager::getInstance().getCaptureFps();
+  fmt = VideoCaptureManager::getInstance().getCaptureFmt();
   // Create dx11 device, context, swapchain
   result = DX11Manager::getInstance().init(previewWnd, width, height, fps);
   if (!result)

@@ -4,6 +4,7 @@
 
 #include "stdafx.h"
 #include "videocapturecallback.h"
+#include "videocaptureformat.h"
 
 using namespace Microsoft::WRL;
 
@@ -14,9 +15,10 @@ public:
 
   int init(IMFActivate *pActivate);
 
-  uint32_t getCaptureWidth() { return m_capWidth; }
-  uint32_t getCaptureHeight() { return m_capHeight; }
-  uint32_t getCaptureFps() { return m_capFps; }
+  uint32_t getCaptureWidth() const { return m_capWidth; }
+  uint32_t getCaptureHeight() const { return m_capHeight; }
+  uint32_t getCaptureFps() const { return m_capFps; }
+  VideoCaptureFormat getCaptureFmt() const { return m_vcf; }
 
 private:
   explicit VideoCaptureManager();
@@ -30,6 +32,7 @@ private:
   uint32_t m_capWidth;
   uint32_t m_capHeight;
   uint32_t m_capFps;
+  VideoCaptureFormat m_vcf;
 };
 
 #endif // VIDEO_CAPTURE_MANAGER_H_

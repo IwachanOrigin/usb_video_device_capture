@@ -381,7 +381,8 @@ UINT32 VideoCaptureCB::getOptimizedFormatIndex()
       }
 
       // Check
-      if (this->isAcceptedFormat(subtype) == false)
+      VideoCaptureFormat fmt = VideoCaptureFormat::VideoCapFmt_NONE;
+      if (!this->isAcceptedFormat(subtype, fmt))
       {
         continue;
       }
@@ -396,24 +397,28 @@ UINT32 VideoCaptureCB::getOptimizedFormatIndex()
         wMax = width;
         rMax = rate;
         index = i;
+        m_vcf = fmt;
       }
     }
   }
   return index;
 }
 
-bool VideoCaptureCB::isAcceptedFormat(const GUID& subtype)
+bool VideoCaptureCB::isAcceptedFormat(const GUID& subtype, VideoCaptureFormat& fmt)
 {
   if (subtype == MFVideoFormat_NV12)
   {
+    fmt = VideoCaptureFormat::VideoCapFmt_NV12;
     return true;
   }
   else if (subtype == MFVideoFormat_YUY2)
   {
+    fmt = VideoCaptureFormat::VideoCapFmt_YUY2;
     return true;
   }
   else if (subtype == MFVideoFormat_RGB32)
   {
+    fmt = VideoCaptureFormat::VideoCapFmt_RGB32;
     return true;
   }
 
