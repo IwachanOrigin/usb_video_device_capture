@@ -1,6 +1,7 @@
 
 #include "stdafx.h"
 #include "dx11manager.h"
+#include <fstream>
 
 using namespace DirectX;
 using namespace manager;
@@ -227,7 +228,14 @@ bool DX11Manager::updateTexture(const uint8_t* new_data, size_t data_size)
   {
     return false;
   }
-
+#if 0
+  std::ofstream ofs("nv12.yuv", std::ios::out | std::ios::binary | std::ios::trunc);
+  if (ofs.is_open())
+  {
+    ofs.write((char*)new_data, data_size);
+    ofs.close();
+  }
+#endif
   D3D11_MAPPED_SUBRESOURCE ms{};
   HRESULT hr = m_immediateContext->Map(m_texture.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &ms);
   if (FAILED(hr))
@@ -252,12 +260,29 @@ bool DX11Manager::updateTexture(const uint8_t* new_data, size_t data_size)
 
   // Now the U and V lines, need to add Width / 2 pixels of padding between each line.
   uint32_t uv_bytes_per_row = bytes_per_row / 2;
-  for (uint32_t y = 0; y < nlines; y++)
+  uint32_t srcIndex = 0;
+  // U
+  for (uint32_t y = 0; y < nlines / 2; y++)
   {
-    std::memcpy(dst, src, uv_bytes_per_row);
-    src += uv_bytes_per_row;
-    dst += ms.RowPitch;
+    for (uint32_t x = 0; x < uv_bytes_per_row; x++, srcIndex++)
+    {
+      *dst = src[srcIndex * 2];
+      dst++;
+    }
+    dst += (ms.RowPitch / 2); // 960
   }
+  // V
+  srcIndex = 0;
+  for (uint32_t y = 0; y < nlines / 2; y++)
+  {
+    for (uint32_t x = 0; x < uv_bytes_per_row; x++, srcIndex++)
+    {
+      *dst = src[(srcIndex * 2) + 1];
+      dst++;
+    }
+    dst += (ms.RowPitch / 2); // 960
+  }
+
   m_immediateContext->Unmap(m_texture.Get(), 0);
 #else
   std::memcpy(dst, src, data_size);
