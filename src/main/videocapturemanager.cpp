@@ -93,7 +93,36 @@ int VideoCaptureManager::init(IMFActivate *pActivate, HWND previewWnd)
 
   // Create renderer.
   // And set the renderer.
-  m_renderer = new DX11Nv12Renderer();
+  switch (m_vcf)
+  {
+    case VideoCaptureFormat::VideoCapFmt_NV12:
+    {
+      m_renderer = new DX11Nv12Renderer();
+    }
+    break;
+
+    case VideoCaptureFormat::VideoCapFmt_YUY2:
+    {
+      MessageBoxW(nullptr, L"YUY2 is not supported video capture format yet.", L"Error", MB_OK);
+      return -1;
+      //m_renderer = new DX11Nv12Renderer();
+    }
+    break;
+
+    case VideoCaptureFormat::VideoCapFmt_RGB32:
+    {
+      MessageBoxW(nullptr, L"RGB32 is not supported video capture format yet.", L"Error", MB_OK);
+      return -1;
+      //m_renderer = new DX11Nv12Renderer();
+    }
+    break;
+
+    default:
+    {
+      MessageBoxW(nullptr, L"Not supported video capture format.", L"Error", MB_OK);
+      return -1;
+    }
+  }
   m_renderer->init(previewWnd, m_capWidth, m_capHeight, m_capFps, m_vcf);
   hr = m_videoCaptureCB->setDx11Renerer(m_renderer);
   if (FAILED(hr))

@@ -221,7 +221,7 @@ STDMETHODIMP VideoCaptureCB::OnReadSample(
       hr = sample->GetSampleDuration(&llSampleDuration);
       hr = sample->GetSampleFlags(&sampleFlags);
       //printf("video Sample flags %d, sample duration %I64d, sample time %I64d\n", (int)sampleFlags, llSampleDuration, llTimeStamp);
-#if 1
+
       // Send to gpu to cpu
       ComPtr<IMFMediaBuffer> buf = nullptr;
       hr = sample->ConvertToContiguousBuffer(buf.GetAddressOf());
@@ -255,95 +255,6 @@ STDMETHODIMP VideoCaptureCB::OnReadSample(
       }
       buf->Unlock();
 
-#else
-      hr = m_colorConvTransform->ProcessInput(0, sample, NULL);
-      if (FAILED(hr))
-      {
-        std::cerr << "The color conversion decoder ProcessInput call failed." << std::endl;
-        sample->Release();
-      }
-
-      MFT_OUTPUT_STREAM_INFO streamInfo{};
-      DWORD processOutputStatus = 0;
-
-      hr = m_colorConvTransform->GetOutputStreamInfo(0, &streamInfo);
-      if (FAILED(hr))
-      {
-        std::cerr << "Failed to get output stream info from color conversion MFT." << std::endl;
-        sample->Release();
-      }
-
-      ComPtr<IMFSample> mftOutSample = nullptr;
-      hr = MFCreateSample(mftOutSample.GetAddressOf());
-      if (FAILED(hr))
-      {
-        std::cerr << "Failed to create MF sample." << std::endl;
-        sample->Release();
-      }
-
-      ComPtr<IMFMediaBuffer> mftOutBuffer = nullptr;
-      hr = MFCreateMemoryBuffer(streamInfo.cbSize, mftOutBuffer.GetAddressOf());
-      if (FAILED(hr))
-      {
-        std::cerr << "Failed to create memory buffer." << std::endl;
-        sample->Release();
-      }
-
-      hr = mftOutSample->AddBuffer(mftOutBuffer.Get());
-      if (FAILED(hr))
-      {
-        std::cerr << "Failed to add sample to buffer." << std::endl;
-        sample->Release();
-      }
-
-      MFT_OUTPUT_DATA_BUFFER outputDataBuffer{};
-      outputDataBuffer.dwStreamID = 0;
-      outputDataBuffer.dwStatus = 0;
-      outputDataBuffer.pEvents = NULL;
-      outputDataBuffer.pSample = mftOutSample.Get();
-      auto mftProcessOutput = m_colorConvTransform->ProcessOutput(0, 1, &outputDataBuffer, &processOutputStatus);
-      if (SUCCEEDED(mftProcessOutput))
-      {
-        std::wcout << "Color conversion result : " << mftProcessOutput << ", MFT status : " << processOutputStatus << std::endl;
-        ComPtr<IMFMediaBuffer> buf = nullptr;
-        hr = mftOutSample->ConvertToContiguousBuffer(buf.GetAddressOf());
-        if (FAILED(hr))
-        {
-          std::cerr << "Failed the ConvertToContiguousBuffer." << std::endl;
-        }
-
-        byte* byteBuffer = nullptr;
-        DWORD buffCurrLen = 0;
-        hr = buf->Lock(&byteBuffer, NULL, &buffCurrLen);
-        if (FAILED(hr))
-        {
-          std::cerr << "Failed the ConvertToContiguousBuffer." << std::endl;
-        }
-
-        // Update texture
-        bool result = manager::DX11Manager::getInstance().updateTexture(byteBuffer, buffCurrLen);
-        if (!result)
-        {
-          buf->Unlock();
-          //MessageBoxW(nullptr, L"Failed to update texture.", L"Error", MB_OK);
-          std::wcerr << "Failed to update texture." << std::endl;
-        }
-
-        // Rendering
-        result = manager::DX11Manager::getInstance().render();
-        if (!result)
-        {
-          buf->Unlock();
-          //MessageBoxW(nullptr, L"Failed to rendering.", L"Error", MB_OK);
-          std::wcerr << "Failed to rendering." << std::endl;
-        }
-        buf->Unlock();
-      }
-      else if (mftProcessOutput == MF_E_TRANSFORM_NEED_MORE_INPUT)
-      {
-        std::wcout << "Color conversion result : MF_E_TRANSFORM_NEED_MORE_INPUT" << std::endl;
-      }
-#endif
       sample->Release();
       m_sampleCount++;
     }
