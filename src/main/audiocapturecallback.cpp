@@ -154,13 +154,13 @@ STDMETHODIMP AudioCaptureCB::OnReadSample(
     {
       sample->AddRef();
 
-      std::wcout << "Processing audio sample : " << m_sampleCount << std::endl;
+      //std::wcout << "Processing audio sample : " << m_sampleCount << std::endl;
       LONGLONG llSampleDuration = 0;
       DWORD sampleFlags = 0;
       hr = sample->SetSampleTime(llTimeStamp);
       hr = sample->GetSampleDuration(&llSampleDuration);
       hr = sample->GetSampleFlags(&sampleFlags);
-      printf("audio Sample flags %d, sample duration %I64d, sample time %I64d\n", (int)sampleFlags, llSampleDuration, llTimeStamp);
+      //printf("audio Sample flags %d, sample duration %I64d, sample time %I64d\n", (int)sampleFlags, llSampleDuration, llTimeStamp);
 
       ComPtr<IMFMediaBuffer> buf = nullptr;
       hr = sample->ConvertToContiguousBuffer(buf.GetAddressOf());

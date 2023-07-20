@@ -1,7 +1,6 @@
 
 #include <d3dcompiler.h>
 
-#include "dx11manager.h"
 #include "pipeline.h"
 
 // Header files automatically generated when compiling HLSL.
@@ -9,12 +8,14 @@
 #include "videoPS.h"
 #include "videoVS.h"
 
-using namespace manager;
+using namespace renderer;
 
 Pipeline::Pipeline()
   : m_vs(nullptr)
   , m_ps(nullptr)
   , m_inputLayout(nullptr)
+  , m_d3dDevice(nullptr)
+  , m_immediateContext(nullptr)
 {
 }
 
@@ -22,25 +23,27 @@ Pipeline::~Pipeline()
 {
 }
 
-bool Pipeline::create(D3D11_INPUT_ELEMENT_DESC* input_elements, uint32_t ninput_elements)
+bool Pipeline::create(D3D11_INPUT_ELEMENT_DESC* input_elements, uint32_t ninput_elements, ComPtr<ID3D11Device> d3dDevice, ComPtr<ID3D11DeviceContext> immediateContext)
 {
   HRESULT hr = S_OK;
+  m_d3dDevice = d3dDevice;
+  m_immediateContext = immediateContext;
   // Create the vertex shader
-  hr = DX11Manager::getInstance().getDevice()->CreateVertexShader(g_videoVS, sizeof(g_videoVS), nullptr, m_vs.GetAddressOf());
+  hr = m_d3dDevice->CreateVertexShader(g_videoVS, sizeof(g_videoVS), nullptr, m_vs.GetAddressOf());
   if (FAILED(hr))
   {
     return false;
   }
 
   // Create the input layout
-  hr = DX11Manager::getInstance().getDevice()->CreateInputLayout(input_elements, ninput_elements, g_videoVS, sizeof(g_videoVS), m_inputLayout.GetAddressOf());
+  hr = m_d3dDevice->CreateInputLayout(input_elements, ninput_elements, g_videoVS, sizeof(g_videoVS), m_inputLayout.GetAddressOf());
   if (FAILED(hr))
   {
     return false;
   }
 
   // Create the pixel shader
-  hr = DX11Manager::getInstance().getDevice()->CreatePixelShader(g_videoPS, sizeof(g_videoPS), nullptr, m_ps.GetAddressOf());
+  hr = m_d3dDevice->CreatePixelShader(g_videoPS, sizeof(g_videoPS), nullptr, m_ps.GetAddressOf());
   if (FAILED(hr))
   {
     return false;
@@ -51,9 +54,9 @@ bool Pipeline::create(D3D11_INPUT_ELEMENT_DESC* input_elements, uint32_t ninput_
 
 void Pipeline::activate() const
 {
-  DX11Manager::getInstance().getDeviceContext()->IASetInputLayout(m_inputLayout.Get());
-  DX11Manager::getInstance().getDeviceContext()->VSSetShader(m_vs.Get(), nullptr, 0);
-  DX11Manager::getInstance().getDeviceContext()->PSSetShader(m_ps.Get(), nullptr, 0);
+  m_immediateContext->IASetInputLayout(m_inputLayout.Get());
+  m_immediateContext->VSSetShader(m_vs.Get(), nullptr, 0);
+  m_immediateContext->PSSetShader(m_ps.Get(), nullptr, 0);
 }
 
 void Pipeline::destroy()
