@@ -1,6 +1,5 @@
 
 #include "stdafx.h"
-#include "dx11manager.h"
 #include "utils.h"
 #include "videocapturecallback.h"
 
@@ -13,6 +12,7 @@ VideoCaptureCB::VideoCaptureCB()
   , m_colorConvTransform(nullptr)
   , m_DecoderOutputMediaType(nullptr)
   , m_sampleCount(0)
+  , m_renderer(nullptr)
 {
   InitializeCriticalSection(&m_criticalSection);
 }
@@ -187,6 +187,16 @@ HRESULT VideoCaptureCB::setSourceReader(IMFSourceReader* sourceReader)
   return hr;
 }
 
+HRESULT VideoCaptureCB::setDx11Renerer(DX11BaseRenderer* renderer)
+{
+  if (!renderer)
+  {
+    return E_FAIL;
+  }
+  m_renderer = renderer;
+  return S_OK;
+}
+
 STDMETHODIMP VideoCaptureCB::OnReadSample(
     HRESULT hrStatus
     , DWORD dwStreamIndex
@@ -229,7 +239,7 @@ STDMETHODIMP VideoCaptureCB::OnReadSample(
       }
 
       // Update texture
-      bool result = manager::DX11Manager::getInstance().updateTexture(byteBuffer, buffCurrLen);
+      bool result = m_renderer->updateTexture(byteBuffer, buffCurrLen);
       if (!result)
       {
         buf->Unlock();
@@ -237,7 +247,7 @@ STDMETHODIMP VideoCaptureCB::OnReadSample(
       }
 
       // Rendering
-      result = manager::DX11Manager::getInstance().render();
+      result = m_renderer->render();
       if (!result)
       {
         buf->Unlock();

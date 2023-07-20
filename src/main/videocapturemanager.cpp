@@ -1,6 +1,7 @@
 
 #include "videocapturemanager.h"
 #include "videocapturecallback.h"
+#include "dx11nv12renderer.h"
 
 VideoCaptureManager::VideoCaptureManager()
   : m_sourceReader(nullptr)
@@ -10,6 +11,7 @@ VideoCaptureManager::VideoCaptureManager()
   , m_capHeight(0)
   , m_capFps(0)
   , m_vcf(VideoCaptureFormat::VideoCapFmt_NONE)
+  , m_renderer(nullptr)
 {
 }
 
@@ -23,7 +25,7 @@ VideoCaptureManager& VideoCaptureManager::getInstance()
   return inst;
 }
 
-int VideoCaptureManager::init(IMFActivate *pActivate)
+int VideoCaptureManager::init(IMFActivate *pActivate, HWND previewWnd)
 {
   ComPtr<IMFMediaSource> mediaSource = nullptr;
   ComPtr<IMFAttributes> attributes = nullptr;
@@ -87,6 +89,10 @@ int VideoCaptureManager::init(IMFActivate *pActivate)
   m_capWidth = m_videoCaptureCB->getCaptureWidth();
   m_capHeight = m_videoCaptureCB->getCaptureHeight();
   m_capFps = m_videoCaptureCB->getCaptureFps();
+  m_vcf = m_videoCaptureCB->getCaptureFmt();
+
+  m_renderer = new DX11Nv12Renderer();
+  m_renderer->init(previewWnd, m_capWidth, m_capHeight, m_capFps, m_vcf);
 
   // Ask for the first sample.
   hr = m_sourceReader->ReadSample(

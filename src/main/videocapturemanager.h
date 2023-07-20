@@ -3,6 +3,7 @@
 #define VIDEO_CAPTURE_MANAGER_H_
 
 #include "stdafx.h"
+#include "dx11baserenderer.h"
 #include "videocapturecallback.h"
 #include "videocaptureformat.h"
 
@@ -13,7 +14,7 @@ class VideoCaptureManager
 public:
   static VideoCaptureManager& getInstance();
 
-  int init(IMFActivate *pActivate);
+  int init(IMFActivate *pActivate, HWND previewWnd);
 
   uint32_t getCaptureWidth() const { return m_capWidth; }
   uint32_t getCaptureHeight() const { return m_capHeight; }
@@ -27,6 +28,7 @@ private:
   VideoCaptureManager &operator=(const VideoCaptureManager &);
 
   ComPtr<IMFSourceReader> m_sourceReader;
+  DX11BaseRenderer* m_renderer;
   wchar_t *m_wcSymbolicLink;
   ComPtr<VideoCaptureCB> m_videoCaptureCB;
   uint32_t m_capWidth;

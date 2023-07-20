@@ -26,8 +26,10 @@ set(main_src
   audiocapturemanager.h
   audiooutputdevicemanager.cpp
   audiooutputdevicemanager.h
-  dx11manager.cpp
-  dx11manager.h
+  dx11baserenderer.cpp
+  dx11baserenderer.h
+  dx11nv12renderer.cpp
+  dx11nv12renderer.h
   dxhelper.h
   main.cpp
   mesh.cpp

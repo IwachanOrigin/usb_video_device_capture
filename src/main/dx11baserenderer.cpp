@@ -25,7 +25,7 @@ DX11BaseRenderer::~DX11BaseRenderer()
 {
 }
 
-bool DX11BaseRenderer::init(const HWND hwnd, const uint32_t& width, const uint32_t& height, const uint32_t& fpsNum, const ShaderMode& shaderMode)
+bool DX11BaseRenderer::init(const HWND hwnd, const uint32_t& width, const uint32_t& height, const uint32_t& fpsNum, const VideoCaptureFormat& vcf)
 {
   if (hwnd == nullptr)
   {
@@ -155,7 +155,7 @@ bool DX11BaseRenderer::init(const HWND hwnd, const uint32_t& width, const uint32
     return false;
   }
 
-  result = this->createPipeline(shaderMode);
+  result = this->createPipeline(vcf);
   if (!result)
   {
     MessageBoxW(nullptr, L"Failed to create pipeline.", L"Error", MB_OK);
@@ -206,7 +206,7 @@ bool DX11BaseRenderer::render()
   return true;
 }
 
-bool DX11BaseRenderer::createPipeline(const ShaderMode& shaderMode)
+bool DX11BaseRenderer::createPipeline(const VideoCaptureFormat& vcf)
 {
   D3D11_INPUT_ELEMENT_DESC layout[] = {
     { "POSITION",  0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },

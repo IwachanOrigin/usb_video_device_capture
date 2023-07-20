@@ -5,19 +5,12 @@
 #include "stdafx.h"
 #include "pipeline.h"
 #include "mesh.h"
+#include "videocaptureformat.h"
 
 using namespace Microsoft::WRL;
 
 namespace renderer
 {
-
-enum class ShaderMode
-{
-  NONE = -1
-  , NV12 = 0
-  , YUY2 = 1
-  , RGBA = 2
-};
 
 class DX11BaseRenderer
 {
@@ -25,7 +18,7 @@ public:
   explicit DX11BaseRenderer();
   virtual ~DX11BaseRenderer();
 
-  bool init(const HWND hwnd, const uint32_t& width, const uint32_t& height, const uint32_t& fpsNum, const ShaderMode& shaderMode);
+  bool init(const HWND hwnd, const uint32_t& width, const uint32_t& height, const uint32_t& fpsNum, const VideoCaptureFormat& vcf);
   virtual bool updateTexture(const uint8_t* new_data, size_t data_size) = 0;
   bool render();
 
@@ -47,7 +40,7 @@ protected:
   virtual bool createTexture() = 0;
 
 private:
-  bool createPipeline(const ShaderMode& shaderMode);
+  bool createPipeline(const VideoCaptureFormat& vcf);
   bool createMesh();
 };
 

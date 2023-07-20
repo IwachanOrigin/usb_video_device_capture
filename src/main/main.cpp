@@ -5,7 +5,6 @@
 #include "videocapturemanager.h"
 #include "audiocapturemanager.h"
 #include "audiooutputdevicemanager.h"
-#include "dx11manager.h"
 #include "videocaptureformat.h"
 
 #pragma comment(lib, "mf")
@@ -25,7 +24,6 @@
 
 using namespace helper;
 using namespace message_handler;
-using namespace manager;
 
 static inline bool getCaptureDevices(uint32_t& deviceCount, IMFActivate**& devices, bool audioMode = false)
 {
@@ -205,7 +203,8 @@ int main(int argc, char* argv[])
   }
 
   // Create video capturemanager.
-  int retInt = VideoCaptureManager::getInstance().init(videoDevices[videoSelectionNo]);
+  HWND previewWnd = Win32MessageHandler::getInstance().hwnd();
+  int retInt = VideoCaptureManager::getInstance().init(videoDevices[videoSelectionNo], previewWnd);
   if (retInt < 0)
   {
     if (videoDevices != nullptr)
@@ -219,31 +218,6 @@ int main(int argc, char* argv[])
     return -1;
   }
   videoDevices[videoSelectionNo]->AddRef();
-
-  HWND previewWnd = Win32MessageHandler::getInstance().hwnd();
-  uint32_t width = 0, height = 0, fps = 0;
-  VideoCaptureFormat fmt = VideoCaptureFormat::VideoCapFmt_NONE;
-  width = VideoCaptureManager::getInstance().getCaptureWidth();
-  height = VideoCaptureManager::getInstance().getCaptureHeight();
-  fps = VideoCaptureManager::getInstance().getCaptureFps();
-  fmt = VideoCaptureManager::getInstance().getCaptureFmt();
-  // Create dx11 device, context, swapchain
-  result = DX11Manager::getInstance().init(previewWnd, width, height, fps);
-  if (!result)
-  {
-    if (videoDevices != nullptr)
-    {
-      releaseAllDevices(videoDevices, videoDeviceCount);
-    }
-
-    if (audioDevices != nullptr)
-    {
-      releaseAllDevices(audioDevices, audioDeviceCount);
-    }
-
-    ThrowIfFailed(MFShutdown());
-    CoUninitialize();
-  }
 
   // Create audio capturemanager
   retInt = AudioCaptureManager::getInstance().init(audioDevices[audioSelectionNo]);

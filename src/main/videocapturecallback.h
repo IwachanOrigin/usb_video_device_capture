@@ -3,9 +3,11 @@
 #define VIDEO_CAPTURE_CALLBACK_H_
 
 #include "stdafx.h"
+#include "dx11baserenderer.h"
 #include "videocaptureformat.h"
 
 using namespace Microsoft::WRL;
+using namespace renderer;
 
 class VideoCaptureCB : public IMFSourceReaderCallback
 {
@@ -31,6 +33,7 @@ public:
   STDMETHODIMP OnFlush(DWORD) { return S_OK; }
 
   HRESULT setSourceReader(IMFSourceReader* sourceReader);
+  HRESULT setDx11Renerer(DX11BaseRenderer* renderer);
   uint32_t getCaptureWidth() const { return m_capWidth; }
   uint32_t getCaptureHeight() const { return m_capHeight; }
   uint32_t getCaptureFps() const { return m_capFps; }
@@ -38,6 +41,7 @@ public:
 
 private:
   IMFSourceReader* m_sourceReader;
+  DX11BaseRenderer* m_renderer;
   ComPtr<IMFTransform> m_colorConvTransform;
   ComPtr<IMFMediaType> m_DecoderOutputMediaType;
   CRITICAL_SECTION m_criticalSection;
