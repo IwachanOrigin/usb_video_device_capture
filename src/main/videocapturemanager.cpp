@@ -91,8 +91,16 @@ int VideoCaptureManager::init(IMFActivate *pActivate, HWND previewWnd)
   m_capFps = m_videoCaptureCB->getCaptureFps();
   m_vcf = m_videoCaptureCB->getCaptureFmt();
 
+  // Create renderer.
+  // And set the renderer.
   m_renderer = new DX11Nv12Renderer();
   m_renderer->init(previewWnd, m_capWidth, m_capHeight, m_capFps, m_vcf);
+  hr = m_videoCaptureCB->setDx11Renerer(m_renderer);
+  if (FAILED(hr))
+  {
+    MessageBoxW(nullptr, L"Failed to setDx11Renerer in videocapture callback.", L"Error", MB_OK);
+    return -1;
+  }
 
   // Ask for the first sample.
   hr = m_sourceReader->ReadSample(
