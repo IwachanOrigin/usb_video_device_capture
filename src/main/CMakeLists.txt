@@ -1,17 +1,17 @@
 
 set(hlsl_srcs
   common.fxh
-  videoVS.hlsl
-  videoPS.hlsl
+  videonv12vs.hlsl
+  videonv12ps.hlsl
 )
 
 # options for shader debug mode:  /Zi /Zss /Od /FdColorConvPS.pdb
-set_source_files_properties(videoVS.hlsl
+set_source_files_properties(videonv12vs.hlsl
   PROPERTIES VS_SHADER_FLAGS "/Vng_videoVS /Fh\"${CMAKE_CURRENT_SOURCE_DIR}/videoVS.h\""
   VS_SHADER_TYPE Vertex
   VS_SHADER_MODEL 4.0
   VS_SHADER_ENTRYPOINT VS )
-set_source_files_properties(videoPS.hlsl
+set_source_files_properties(videonv12ps.hlsl
   PROPERTIES VS_SHADER_FLAGS "/Vng_videoPS /Fh\"${CMAKE_CURRENT_SOURCE_DIR}/videoPS.h\""
   VS_SHADER_TYPE Pixel
   VS_SHADER_MODEL 4.0
