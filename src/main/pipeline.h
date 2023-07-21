@@ -3,6 +3,7 @@
 #define PIPELINE_H_
 
 #include "stdafx.h"
+#include "videocaptureformat.h"
 
 using namespace Microsoft::WRL;
 
@@ -15,7 +16,7 @@ public:
   explicit Pipeline();
   ~Pipeline();
 
-  bool create(D3D11_INPUT_ELEMENT_DESC* input_elements, uint32_t ninput_elements, ComPtr<ID3D11Device> d3dDevice, ComPtr<ID3D11DeviceContext> immediateContext);
+  bool create(D3D11_INPUT_ELEMENT_DESC* input_elements, uint32_t ninput_elements, ComPtr<ID3D11Device> d3dDevice, ComPtr<ID3D11DeviceContext> immediateContext, const VideoCaptureFormat& fmt);
   void activate() const;
   void destroy();
 

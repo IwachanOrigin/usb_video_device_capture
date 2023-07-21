@@ -7,6 +7,8 @@
 // See set_source_files_properties on CMakeLists.txt.
 #include "videoNV12PS.h"
 #include "videoNV12VS.h"
+#include "videoRGB32PS.h"
+#include "videoRGB32VS.h"
 
 using namespace renderer;
 
@@ -23,30 +25,88 @@ Pipeline::~Pipeline()
 {
 }
 
-bool Pipeline::create(D3D11_INPUT_ELEMENT_DESC* input_elements, uint32_t ninput_elements, ComPtr<ID3D11Device> d3dDevice, ComPtr<ID3D11DeviceContext> immediateContext)
+bool Pipeline::create(D3D11_INPUT_ELEMENT_DESC* input_elements, uint32_t ninput_elements, ComPtr<ID3D11Device> d3dDevice, ComPtr<ID3D11DeviceContext> immediateContext, const VideoCaptureFormat& fmt)
 {
   HRESULT hr = S_OK;
   m_d3dDevice = d3dDevice;
   m_immediateContext = immediateContext;
-  // Create the vertex shader
-  hr = m_d3dDevice->CreateVertexShader(g_videoVS, sizeof(g_videoVS), nullptr, m_vs.GetAddressOf());
-  if (FAILED(hr))
+  switch (fmt)
   {
-    return false;
-  }
+    case VideoCaptureFormat::VideoCapFmt_NV12:
+    {
+      // Create the vertex shader
+      hr = m_d3dDevice->CreateVertexShader(g_videoNV12VS, sizeof(g_videoNV12VS), nullptr, m_vs.GetAddressOf());
+      if (FAILED(hr))
+      {
+        return false;
+      }
+      // Create the input layout
+      hr = m_d3dDevice->CreateInputLayout(input_elements, ninput_elements, g_videoNV12VS, sizeof(g_videoNV12VS), m_inputLayout.GetAddressOf());
+      if (FAILED(hr))
+      {
+        return false;
+      }
+      // Create the pixel shader
+      hr = m_d3dDevice->CreatePixelShader(g_videoNV12PS, sizeof(g_videoNV12PS), nullptr, m_ps.GetAddressOf());
+      if (FAILED(hr))
+      {
+        return false;
+      }
+    }
+    break;
 
-  // Create the input layout
-  hr = m_d3dDevice->CreateInputLayout(input_elements, ninput_elements, g_videoVS, sizeof(g_videoVS), m_inputLayout.GetAddressOf());
-  if (FAILED(hr))
-  {
-    return false;
-  }
+    case VideoCaptureFormat::VideoCapFmt_YUY2:
+    {
+      // YUY2 is not supported yet.
+      return false;
+      // Create the vertex shader
+      hr = m_d3dDevice->CreateVertexShader(g_videoNV12VS, sizeof(g_videoNV12VS), nullptr, m_vs.GetAddressOf());
+      if (FAILED(hr))
+      {
+        return false;
+      }
+      // Create the input layout
+      hr = m_d3dDevice->CreateInputLayout(input_elements, ninput_elements, g_videoNV12VS, sizeof(g_videoNV12VS), m_inputLayout.GetAddressOf());
+      if (FAILED(hr))
+      {
+        return false;
+      }
+      // Create the pixel shader
+      hr = m_d3dDevice->CreatePixelShader(g_videoNV12PS, sizeof(g_videoNV12PS), nullptr, m_ps.GetAddressOf());
+      if (FAILED(hr))
+      {
+        return false;
+      }
+    }
+    break;
 
-  // Create the pixel shader
-  hr = m_d3dDevice->CreatePixelShader(g_videoPS, sizeof(g_videoPS), nullptr, m_ps.GetAddressOf());
-  if (FAILED(hr))
-  {
-    return false;
+    case VideoCaptureFormat::VideoCapFmt_RGB32:
+    {
+      // Create the vertex shader
+      hr = m_d3dDevice->CreateVertexShader(g_videoRGB32VS, sizeof(g_videoRGB32VS), nullptr, m_vs.GetAddressOf());
+      if (FAILED(hr))
+      {
+        return false;
+      }
+      // Create the input layout
+      hr = m_d3dDevice->CreateInputLayout(input_elements, ninput_elements, g_videoRGB32VS, sizeof(g_videoRGB32VS), m_inputLayout.GetAddressOf());
+      if (FAILED(hr))
+      {
+        return false;
+      }
+      // Create the pixel shader
+      hr = m_d3dDevice->CreatePixelShader(g_videoRGB32PS, sizeof(g_videoRGB32PS), nullptr, m_ps.GetAddressOf());
+      if (FAILED(hr))
+      {
+        return false;
+      }
+    }
+    break;
+
+    default:
+    {
+      return false;
+    }
   }
 
   return true;

@@ -213,7 +213,7 @@ bool DX11BaseRenderer::createPipeline(const VideoCaptureFormat& vcf)
     { "TEXCOORD",  0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
   };
 
-  if (!m_pipeline.create(layout, ARRAYSIZE(layout), m_d3dDevice, m_immediateContext))
+  if (!m_pipeline.create(layout, ARRAYSIZE(layout), m_d3dDevice, m_immediateContext, vcf))
   {
     MessageBoxW(nullptr, L"Failed to create Pipeline.", L"Error", MB_OK);
     return false;
