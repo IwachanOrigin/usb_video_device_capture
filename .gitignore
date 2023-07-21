@@ -1,20 +1,17 @@
 
-compile_commands.json
-
+# Directory
+Debug/
 .cache/
-
 build/
-
-*.user
-
 .vs/
-
 x64/
 
+# Files
+compile_commands.json
 videoPS.h
-
 videoVS.h
-
+videoNV12PS.h
+videoNV12VS.h
+*.user
 *.aps
 
-Debug/
