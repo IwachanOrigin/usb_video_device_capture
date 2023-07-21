@@ -42,6 +42,8 @@ set(main_src
   dx11baserenderer.h
   dx11nv12renderer.cpp
   dx11nv12renderer.h
+  dx11rgb32renderer.cpp
+  dx11rgb32renderer.h
   dxhelper.h
   main.cpp
   mesh.cpp
