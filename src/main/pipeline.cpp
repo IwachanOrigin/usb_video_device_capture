@@ -5,8 +5,8 @@
 
 // Header files automatically generated when compiling HLSL.
 // See set_source_files_properties on CMakeLists.txt.
-#include "videoPS.h"
-#include "videoVS.h"
+#include "videoNV12PS.h"
+#include "videoNV12VS.h"
 
 using namespace renderer;
 
