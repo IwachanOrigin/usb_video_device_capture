@@ -9,6 +9,8 @@
 #include "videoNV12VS.h"
 #include "videoRGB32PS.h"
 #include "videoRGB32VS.h"
+#include "videoYUY2PS.h"
+#include "videoYUY2VS.h"
 
 using namespace renderer;
 
@@ -57,22 +59,20 @@ bool Pipeline::create(D3D11_INPUT_ELEMENT_DESC* input_elements, uint32_t ninput_
 
     case VideoCaptureFormat::VideoCapFmt_YUY2:
     {
-      // YUY2 is not supported yet.
-      return false;
       // Create the vertex shader
-      hr = m_d3dDevice->CreateVertexShader(g_videoNV12VS, sizeof(g_videoNV12VS), nullptr, m_vs.GetAddressOf());
+      hr = m_d3dDevice->CreateVertexShader(g_videoYUY2VS, sizeof(g_videoYUY2VS), nullptr, m_vs.GetAddressOf());
       if (FAILED(hr))
       {
         return false;
       }
       // Create the input layout
-      hr = m_d3dDevice->CreateInputLayout(input_elements, ninput_elements, g_videoNV12VS, sizeof(g_videoNV12VS), m_inputLayout.GetAddressOf());
+      hr = m_d3dDevice->CreateInputLayout(input_elements, ninput_elements, g_videoYUY2VS, sizeof(g_videoYUY2VS), m_inputLayout.GetAddressOf());
       if (FAILED(hr))
       {
         return false;
       }
       // Create the pixel shader
-      hr = m_d3dDevice->CreatePixelShader(g_videoNV12PS, sizeof(g_videoNV12PS), nullptr, m_ps.GetAddressOf());
+      hr = m_d3dDevice->CreatePixelShader(g_videoYUY2PS, sizeof(g_videoYUY2PS), nullptr, m_ps.GetAddressOf());
       if (FAILED(hr))
       {
         return false;

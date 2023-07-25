@@ -3,6 +3,8 @@ set(hlsl_srcs
   common.fxh
   videonv12vs.hlsl
   videonv12ps.hlsl
+  videoyuy2vs.hlsl
+  videoyuy2ps.hlsl
   videorgb32ps.hlsl
   videorgb32vs.hlsl
 )
@@ -18,6 +20,18 @@ set_source_files_properties(videonv12ps.hlsl
   VS_SHADER_TYPE Pixel
   VS_SHADER_MODEL 4.0
   VS_SHADER_ENTRYPOINT PS )
+
+set_source_files_properties(videoyuy2vs.hlsl
+  PROPERTIES VS_SHADER_FLAGS "/Vn g_videoYUY2VS /Fh \"${CMAKE_CURRENT_SOURCE_DIR}/videoYUY2VS.h\""
+  VS_SHADER_TYPE Vertex
+  VS_SHADER_MODEL 4.0
+  VS_SHADER_ENTRYPOINT VS )
+set_source_files_properties(videoyuy2ps.hlsl
+  PROPERTIES VS_SHADER_FLAGS "/Vn g_videoYUY2PS /Fh \"${CMAKE_CURRENT_SOURCE_DIR}/videoYUY2PS.h\""
+  VS_SHADER_TYPE Pixel
+  VS_SHADER_MODEL 4.0
+  VS_SHADER_ENTRYPOINT PS )
+
 set_source_files_properties(videorgb32vs.hlsl
   PROPERTIES VS_SHADER_FLAGS "/Vn g_videoRGB32VS /Fh \"${CMAKE_CURRENT_SOURCE_DIR}/videoRGB32VS.h\""
   VS_SHADER_TYPE Vertex
@@ -42,6 +56,8 @@ set(main_src
   dx11baserenderer.h
   dx11nv12renderer.cpp
   dx11nv12renderer.h
+  dx11yuy2renderer.cpp
+  dx11yuy2renderer.h
   dx11rgb32renderer.cpp
   dx11rgb32renderer.h
   dxhelper.h

@@ -2,7 +2,10 @@
 #include "videocapturemanager.h"
 #include "videocapturecallback.h"
 #include "dx11nv12renderer.h"
+#include "dx11yuy2renderer.h"
 #include "dx11rgb32renderer.h"
+
+using namespace renderer;
 
 VideoCaptureManager::VideoCaptureManager()
   : m_sourceReader(nullptr)
@@ -104,9 +107,7 @@ int VideoCaptureManager::init(IMFActivate *pActivate, HWND previewWnd)
 
     case VideoCaptureFormat::VideoCapFmt_YUY2:
     {
-      MessageBoxW(nullptr, L"YUY2 is not supported video capture format yet.", L"Error", MB_OK);
-      return -1;
-      //m_renderer = new DX11Nv12Renderer();
+      m_renderer = new DX11YUY2Renderer();
     }
     break;
 
