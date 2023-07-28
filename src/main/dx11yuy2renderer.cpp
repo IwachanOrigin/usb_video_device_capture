@@ -24,16 +24,14 @@ bool DX11YUY2Renderer::createTexture()
   }
 
   D3D11_TEXTURE2D_DESC desc{};
-  desc.Width = m_textureWidth;
+  desc.Width = m_textureWidth * 2;
   desc.Height = m_textureHeight;
   desc.MipLevels = 1;
   desc.ArraySize = 1;
   desc.Format = DXGI_FORMAT_R8G8_UNORM;
   desc.SampleDesc.Count = 1;
   desc.SampleDesc.Quality = 0;
-  desc.Usage = D3D11_USAGE_DEFAULT;
   desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-  desc.CPUAccessFlags = 0;
   desc.MiscFlags = 0;
   desc.Usage = D3D11_USAGE_DYNAMIC;
   desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
@@ -72,7 +70,7 @@ bool DX11YUY2Renderer::updateTexture(const uint8_t* new_data, size_t data_size)
   }
 
   Constants constants;
-  constants.width = m_textureWidth;
+  constants.width = m_textureWidth * 2;
   constants.height = m_textureHeight;
 
   // Set constant buffer
