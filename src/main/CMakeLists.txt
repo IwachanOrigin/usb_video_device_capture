@@ -73,8 +73,11 @@ set(main_src
   stdafx.h
   timer.h
   utils.h
-  videocapturecallback.cpp
   videocapturecallback.h
+  videocapturecallbackdmo.h
+  videocapturecallbackdmo.cpp
+  videocapturecallbackshader.h
+  videocapturecallbackshader.cpp
   videocaptureformat.h
   videocapturemanager.cpp
   videocapturemanager.h

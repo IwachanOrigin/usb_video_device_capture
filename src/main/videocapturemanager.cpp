@@ -1,6 +1,8 @@
 
 #include "videocapturemanager.h"
 #include "videocapturecallback.h"
+#include "videocapturecallbackdmo.h"
+#include "videocapturecallbackshader.h"
 #include "dx11nv12renderer.h"
 #include "dx11yuy2renderer.h"
 #include "dx11rgb32renderer.h"
@@ -10,7 +12,7 @@ using namespace renderer;
 VideoCaptureManager::VideoCaptureManager()
   : m_sourceReader(nullptr)
   , m_wcSymbolicLink(nullptr)
-  , m_videoCaptureCB(new VideoCaptureCB())
+  , m_videoCaptureCB(nullptr)
   , m_capWidth(0)
   , m_capHeight(0)
   , m_capFps(0)
@@ -29,7 +31,7 @@ VideoCaptureManager& VideoCaptureManager::getInstance()
   return inst;
 }
 
-int VideoCaptureManager::init(IMFActivate *pActivate, HWND previewWnd)
+int VideoCaptureManager::init(IMFActivate *pActivate, HWND previewWnd, VideoCaptureColorConvMode vcccm)
 {
   ComPtr<IMFMediaSource> mediaSource = nullptr;
   ComPtr<IMFAttributes> attributes = nullptr;
@@ -58,6 +60,13 @@ int VideoCaptureManager::init(IMFActivate *pActivate, HWND previewWnd)
   if (FAILED(hr))
   {
     MessageBoxW(nullptr, L"Failed to create attributes", L"Error", MB_OK);
+    return -1;
+  }
+
+  m_videoCaptureCB = this->callbackFactory(vcccm);
+  if (!m_videoCaptureCB)
+  {
+    MessageBoxW(nullptr, L"Failed to generate callback class.", L"Error", MB_OK);
     return -1;
   }
 
@@ -90,10 +99,10 @@ int VideoCaptureManager::init(IMFActivate *pActivate, HWND previewWnd)
     MessageBoxW(nullptr, L"Failed to setSourceReader in videocapture callback.", L"Error", MB_OK);
     return -1;
   }
-  m_capWidth = m_videoCaptureCB->getCaptureWidth();
-  m_capHeight = m_videoCaptureCB->getCaptureHeight();
-  m_capFps = m_videoCaptureCB->getCaptureFps();
-  m_vcf = m_videoCaptureCB->getCaptureFmt();
+  m_capWidth = m_videoCaptureCB->captureWidth();
+  m_capHeight = m_videoCaptureCB->captureHeight();
+  m_capFps = m_videoCaptureCB->captureFps();
+  m_vcf = m_videoCaptureCB->captureFmt();
 
   // Create renderer.
   // And set the renderer.
@@ -146,4 +155,24 @@ int VideoCaptureManager::init(IMFActivate *pActivate, HWND previewWnd)
   }
 
   return 0;
+}
+
+VideoCaptureCallback* VideoCaptureManager::callbackFactory(VideoCaptureColorConvMode vcccm)
+{
+  switch (vcccm)
+  {
+    case VideoCaptureColorConvMode::DMO:
+    {
+      return new VideoCaptureCBDMO();
+    }
+    break;
+
+    case VideoCaptureColorConvMode::Shader:
+    {
+      return new VideoCaptureCBShader();
+    }
+    break;
+  }
+
+  return new VideoCaptureCBDMO();
 }

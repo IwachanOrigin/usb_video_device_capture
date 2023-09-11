@@ -204,7 +204,7 @@ int main(int argc, char* argv[])
 
   // Create video capturemanager.
   HWND previewWnd = Win32MessageHandler::getInstance().hwnd();
-  int retInt = VideoCaptureManager::getInstance().init(videoDevices[videoSelectionNo], previewWnd);
+  int retInt = VideoCaptureManager::getInstance().init(videoDevices[videoSelectionNo], previewWnd, VideoCaptureColorConvMode::Shader);
   if (retInt < 0)
   {
     if (videoDevices != nullptr)

@@ -1,12 +1,12 @@
 
 #include "stdafx.h"
 #include "utils.h"
-#include "videocapturecallback.h"
+#include "videocapturecallbackshader.h"
 
 using namespace Microsoft::WRL;
 using namespace helper;
 
-VideoCaptureCB::VideoCaptureCB()
+VideoCaptureCBShader::VideoCaptureCBShader()
   : m_ref(1)
   , m_sourceReader(nullptr)
   , m_colorConvTransform(nullptr)
@@ -17,27 +17,27 @@ VideoCaptureCB::VideoCaptureCB()
   InitializeCriticalSection(&m_criticalSection);
 }
 
-VideoCaptureCB::~VideoCaptureCB()
+VideoCaptureCBShader::~VideoCaptureCBShader()
 {
   DeleteCriticalSection(&m_criticalSection);
 }
 
-STDMETHODIMP VideoCaptureCB::QueryInterface(REFIID riid, void** ppv)
+STDMETHODIMP VideoCaptureCBShader::QueryInterface(REFIID riid, void** ppv)
 {
   static const QITAB qit[] =
   {
-    QITABENT(VideoCaptureCB, IMFSourceReaderCallback)
+    QITABENT(VideoCaptureCBShader, IMFSourceReaderCallback)
     , { 0 }
   };
   return QISearch(this, qit, riid, ppv);
 }
 
-STDMETHODIMP_(ULONG) VideoCaptureCB::AddRef()
+STDMETHODIMP_(ULONG) VideoCaptureCBShader::AddRef()
 {
   return InterlockedIncrement(&m_ref);
 }
 
-STDMETHODIMP_(ULONG) VideoCaptureCB::Release()
+STDMETHODIMP_(ULONG) VideoCaptureCBShader::Release()
 {
   LONG ref = InterlockedDecrement(&m_ref);
   if (ref == 0)
@@ -47,7 +47,7 @@ STDMETHODIMP_(ULONG) VideoCaptureCB::Release()
   return ref;
 }
 
-HRESULT VideoCaptureCB::setSourceReader(IMFSourceReader* sourceReader)
+HRESULT VideoCaptureCBShader::setSourceReader(IMFSourceReader* sourceReader)
 {
   HRESULT hr = E_FAIL;
 
@@ -187,7 +187,7 @@ HRESULT VideoCaptureCB::setSourceReader(IMFSourceReader* sourceReader)
   return hr;
 }
 
-HRESULT VideoCaptureCB::setDx11Renerer(DX11BaseRenderer* renderer)
+HRESULT VideoCaptureCBShader::setDx11Renerer(DX11BaseRenderer* renderer)
 {
   if (!renderer)
   {
@@ -197,7 +197,7 @@ HRESULT VideoCaptureCB::setDx11Renerer(DX11BaseRenderer* renderer)
   return S_OK;
 }
 
-STDMETHODIMP VideoCaptureCB::OnReadSample(
+STDMETHODIMP VideoCaptureCBShader::OnReadSample(
     HRESULT hrStatus
     , DWORD dwStreamIndex
     , DWORD dwStreamFlags
@@ -275,7 +275,7 @@ STDMETHODIMP VideoCaptureCB::OnReadSample(
   return S_OK;
 }
 
-UINT32 VideoCaptureCB::getOptimizedFormatIndex()
+UINT32 VideoCaptureCBShader::getOptimizedFormatIndex()
 {
   UINT32 index = 0, wMax = 0, rMax = 0;
   for (DWORD i = 0; ; i++)
@@ -325,7 +325,7 @@ UINT32 VideoCaptureCB::getOptimizedFormatIndex()
   return index;
 }
 
-bool VideoCaptureCB::isAcceptedFormat(const GUID& subtype, VideoCaptureFormat& fmt)
+bool VideoCaptureCBShader::isAcceptedFormat(const GUID& subtype, VideoCaptureFormat& fmt)
 {
   if (subtype == MFVideoFormat_NV12)
   {
@@ -346,7 +346,7 @@ bool VideoCaptureCB::isAcceptedFormat(const GUID& subtype, VideoCaptureFormat& f
   return false;
 }
 
-HRESULT VideoCaptureCB::setCaptureResolutionAndFps()
+HRESULT VideoCaptureCBShader::setCaptureResolutionAndFps()
 {
   if (!m_sourceReader)
   {

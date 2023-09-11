@@ -3,57 +3,38 @@
 #define VIDEO_CAPTURE_CALLBACK_H_
 
 #include "stdafx.h"
-#include "dx11baserenderer.h"
 #include "videocaptureformat.h"
+#include "dx11baserenderer.h"
 
-using namespace Microsoft::WRL;
 using namespace renderer;
 
-class VideoCaptureCB : public IMFSourceReaderCallback
+class VideoCaptureCallback : public IMFSourceReaderCallback
 {
-  long m_ref;
-
 public:
-  explicit VideoCaptureCB();
-  virtual ~VideoCaptureCB();
+  explicit VideoCaptureCallback() = default;
+  virtual ~VideoCaptureCallback() = default;
 
   // IUnknown
-  STDMETHODIMP QueryInterface(REFIID riid, void** ppv);
-  STDMETHODIMP_(ULONG) AddRef();
-  STDMETHODIMP_(ULONG) Release();
+  virtual STDMETHODIMP QueryInterface(REFIID riid, void** ppv) = 0;
+  virtual STDMETHODIMP_(ULONG) AddRef() = 0;
+  virtual STDMETHODIMP_(ULONG) Release() = 0;
 
   // IMFSourceReaderCallback methods
-  STDMETHODIMP OnReadSample(
+  virtual STDMETHODIMP OnReadSample(
     HRESULT hrStatus
     , DWORD dwStreamIndex
     , DWORD dwStreamFlags
     , LONGLONG llTimeStamp
-    , IMFSample* sample);
-  STDMETHODIMP OnEvent(DWORD, IMFMediaEvent*) { return S_OK; };
-  STDMETHODIMP OnFlush(DWORD) { return S_OK; }
+    , IMFSample* sample) = 0;
+  virtual STDMETHODIMP OnEvent(DWORD, IMFMediaEvent*) = 0;
+  virtual STDMETHODIMP OnFlush(DWORD) = 0;
 
-  HRESULT setSourceReader(IMFSourceReader* sourceReader);
-  HRESULT setDx11Renerer(DX11BaseRenderer* renderer);
-  uint32_t getCaptureWidth() const { return m_capWidth; }
-  uint32_t getCaptureHeight() const { return m_capHeight; }
-  uint32_t getCaptureFps() const { return m_capFps; }
-  VideoCaptureFormat getCaptureFmt() const { return m_vcf; }
-
-private:
-  IMFSourceReader* m_sourceReader;
-  DX11BaseRenderer* m_renderer;
-  ComPtr<IMFTransform> m_colorConvTransform;
-  ComPtr<IMFMediaType> m_DecoderOutputMediaType;
-  CRITICAL_SECTION m_criticalSection;
-  uint32_t m_sampleCount;
-  uint32_t m_capWidth;
-  uint32_t m_capHeight;
-  uint32_t m_capFps;
-  VideoCaptureFormat m_vcf;
-
-  uint32_t getOptimizedFormatIndex();
-  bool isAcceptedFormat(const GUID& subtype, VideoCaptureFormat& fmt);
-  HRESULT setCaptureResolutionAndFps();
+  virtual HRESULT setSourceReader(IMFSourceReader* sourceReader) = 0;
+  virtual HRESULT setDx11Renerer(DX11BaseRenderer* renderer) = 0;
+  virtual uint32_t captureWidth() const = 0;
+  virtual uint32_t captureHeight() const = 0;
+  virtual uint32_t captureFps() const = 0;
+  virtual VideoCaptureFormat captureFmt() const = 0;
 };
 
 #endif // VIDEO_CAPTURE_CALLBACK_H_
