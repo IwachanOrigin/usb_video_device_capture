@@ -12,6 +12,10 @@ videoPS.h
 videoVS.h
 videoNV12PS.h
 videoNV12VS.h
+videoRGB32PS.h
+videoRGB32VS.h
+videoYUY2PS.h
+videoYUY2VS.h
 *.user
 *.aps
 
