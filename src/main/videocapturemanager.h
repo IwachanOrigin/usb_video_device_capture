@@ -12,7 +12,8 @@ using namespace Microsoft::WRL;
 enum class VideoCaptureColorConvMode
 {
   DMO = 0
-  , Shader = 1
+  , Shader
+  , Max
 };
 
 class VideoCaptureManager

@@ -187,6 +187,19 @@ int main(int argc, char* argv[])
     return -1;
   }
 
+  // Get Color conv mode.
+  std::wcout << "----- Please input color converter modes -----" << std::endl;
+  std::wcout << " 0 : Color Converter DSP(DirectX Media Object) | ref : https://learn.microsoft.com/ja-jp/windows/win32/medfound/colorconverter" << std::endl;
+  std::wcout << " 1 : Pixel Shader" << std::endl;
+  std::wcout << "Please input color conv mode no : ";
+  uint32_t coloConvMode = 0;
+  std::wcin >> coloConvMode;
+  if (coloConvMode > (int)VideoCaptureColorConvMode::Max)
+  {
+    std::wcerr << "Failed color converter mode select." << std::endl;
+    return -1;
+  }
+
   // Create main window.
   bool result = Win32MessageHandler::getInstance().init((HINSTANCE)0, 1);
   if (!result)
@@ -204,7 +217,7 @@ int main(int argc, char* argv[])
 
   // Create video capturemanager.
   HWND previewWnd = Win32MessageHandler::getInstance().hwnd();
-  int retInt = VideoCaptureManager::getInstance().init(videoDevices[videoSelectionNo], previewWnd, VideoCaptureColorConvMode::Shader);
+  int retInt = VideoCaptureManager::getInstance().init(videoDevices[videoSelectionNo], previewWnd, (VideoCaptureColorConvMode)coloConvMode);
   if (retInt < 0)
   {
     if (videoDevices != nullptr)
