@@ -80,6 +80,7 @@ bool Pipeline::create(D3D11_INPUT_ELEMENT_DESC* input_elements, uint32_t ninput_
     }
     break;
 
+    case VideoCaptureFormat::VideoCapFmt_DMO:
     case VideoCaptureFormat::VideoCapFmt_RGB32:
     {
       // Create the vertex shader

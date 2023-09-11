@@ -222,39 +222,91 @@ STDMETHODIMP VideoCaptureCBDMO::OnReadSample(
       hr = sample->GetSampleFlags(&sampleFlags);
       //printf("video Sample flags %d, sample duration %I64d, sample time %I64d\n", (int)sampleFlags, llSampleDuration, llTimeStamp);
 
-      // Send to gpu to cpu
-      ComPtr<IMFMediaBuffer> buf = nullptr;
-      hr = sample->ConvertToContiguousBuffer(buf.GetAddressOf());
+      hr = m_colorConvTransform->ProcessInput(0, sample, NULL);
       if (FAILED(hr))
       {
-        std::cerr << "Failed the ConvertToContiguousBuffer." << std::endl;
+        std::cerr << "The color conversion decoder ProcessInput call failed." << std::endl;
+        sample->Release();
       }
 
-      byte* byteBuffer = nullptr;
-      DWORD buffCurrLen = 0;
-      hr = buf->Lock(&byteBuffer, NULL, &buffCurrLen);
+      MFT_OUTPUT_STREAM_INFO streamInfo{};
+      DWORD processOutputStatus = 0;
+
+      hr = m_colorConvTransform->GetOutputStreamInfo(0, &streamInfo);
       if (FAILED(hr))
       {
-        std::cerr << "Failed the ConvertToContiguousBuffer." << std::endl;
+        std::cerr << "Failed to get output stream info from color conversion MFT." << std::endl;
+        sample->Release();
       }
 
-      // Update texture
-      bool result = m_renderer->updateTexture(byteBuffer, buffCurrLen);
-      if (!result)
+      ComPtr<IMFSample> mftOutSample = nullptr;
+      hr = MFCreateSample(mftOutSample.GetAddressOf());
+      if (FAILED(hr))
       {
-        buf->Unlock();
-        std::wcerr << "Failed to update texture." << std::endl;
+        std::cerr << "Failed to create MF sample." << std::endl;
+        sample->Release();
       }
 
-      // Rendering
-      result = m_renderer->render();
-      if (!result)
+      ComPtr<IMFMediaBuffer> mftOutBuffer = nullptr;
+      hr = MFCreateMemoryBuffer(streamInfo.cbSize, mftOutBuffer.GetAddressOf());
+      if (FAILED(hr))
       {
-        buf->Unlock();
-        std::wcerr << "Failed to rendering." << std::endl;
+        std::cerr << "Failed to create memory buffer." << std::endl;
+        sample->Release();
       }
-      buf->Unlock();
 
+      hr = mftOutSample->AddBuffer(mftOutBuffer.Get());
+      if (FAILED(hr))
+      {
+        std::cerr << "Failed to add sample to buffer." << std::endl;
+        sample->Release();
+      }
+
+      MFT_OUTPUT_DATA_BUFFER outputDataBuffer{};
+      outputDataBuffer.dwStreamID = 0;
+      outputDataBuffer.dwStatus = 0;
+      outputDataBuffer.pEvents = NULL;
+      outputDataBuffer.pSample = mftOutSample.Get();
+      auto mftProcessOutput = m_colorConvTransform->ProcessOutput(0, 1, &outputDataBuffer, &processOutputStatus);
+      if (SUCCEEDED(mftProcessOutput))
+      {
+        //std::wcout << "Color conversion result : " << mftProcessOutput << ", MFT status : " << processOutputStatus << std::endl;
+        ComPtr<IMFMediaBuffer> buf = nullptr;
+        hr = mftOutSample->ConvertToContiguousBuffer(buf.GetAddressOf());
+        if (FAILED(hr))
+        {
+          std::cerr << "Failed the ConvertToContiguousBuffer." << std::endl;
+        }
+
+        byte* byteBuffer = nullptr;
+        DWORD buffCurrLen = 0;
+        hr = buf->Lock(&byteBuffer, NULL, &buffCurrLen);
+        if (FAILED(hr))
+        {
+          std::cerr << "Failed the ConvertToContiguousBuffer." << std::endl;
+        }
+
+        // Update texture
+        bool result = m_renderer->updateTexture(byteBuffer, buffCurrLen);
+        if (!result)
+        {
+          buf->Unlock();
+          std::wcerr << "Failed to update texture." << std::endl;
+        }
+
+        // Rendering
+        result = m_renderer->render();
+        if (!result)
+        {
+          buf->Unlock();
+          std::wcerr << "Failed to rendering." << std::endl;
+        }
+        buf->Unlock();
+      }
+      else if (mftProcessOutput == MF_E_TRANSFORM_NEED_MORE_INPUT)
+      {
+        std::wcout << "Color conversion result : MF_E_TRANSFORM_NEED_MORE_INPUT" << std::endl;
+      }
       sample->Release();
       m_sampleCount++;
     }
@@ -318,32 +370,25 @@ UINT32 VideoCaptureCBDMO::getOptimizedFormatIndex()
         wMax = width;
         rMax = rate;
         index = i;
-        m_vcf = fmt;
       }
     }
   }
+  m_vcf = VideoCaptureFormat::VideoCapFmt_DMO;
   return index;
 }
 
 bool VideoCaptureCBDMO::isAcceptedFormat(const GUID& subtype, VideoCaptureFormat& fmt)
 {
-  if (subtype == MFVideoFormat_NV12)
+  if (subtype == MFVideoFormat_H264)
   {
-    fmt = VideoCaptureFormat::VideoCapFmt_NV12;
-    return true;
+    return false;
   }
-  else if (subtype == MFVideoFormat_YUY2)
+  else if (subtype == MFVideoFormat_MJPG)
   {
-    fmt = VideoCaptureFormat::VideoCapFmt_YUY2;
-    return true;
-  }
-  else if (subtype == MFVideoFormat_RGB32)
-  {
-    fmt = VideoCaptureFormat::VideoCapFmt_RGB32;
-    return true;
+    return false;
   }
 
-  return false;
+  return true;
 }
 
 HRESULT VideoCaptureCBDMO::setCaptureResolutionAndFps()

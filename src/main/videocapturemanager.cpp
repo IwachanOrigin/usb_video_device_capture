@@ -120,6 +120,7 @@ int VideoCaptureManager::init(IMFActivate *pActivate, HWND previewWnd, VideoCapt
     }
     break;
 
+    case VideoCaptureFormat::VideoCapFmt_DMO:
     case VideoCaptureFormat::VideoCapFmt_RGB32:
     {
       m_renderer = new DX11RGB32Renderer();
