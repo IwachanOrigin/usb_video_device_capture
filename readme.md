@@ -44,7 +44,7 @@
 ## Build
 
     ex. VS2017 の場合  
-    powershell.exe cmake -S . -B build -G "\"Visual Studio 15 2017 Win64\""  
+    powershell.exe cmake -S . -B build -G "\"Visual Studio 15 2017 Win64"\"  
     powershell.exe cmake --build build  
 
     ex. VS2019以上の場合  
@@ -53,11 +53,12 @@
 
 ## How to use
 
-    1. Run the usbVideoDeviceCapture.exe  
+    1. Run the usbVideoDeviceCapture.exe from console.  
     2. Select the video capture device number.  
     3. Select the audio capture device number.  
     4. Select the audio output device number.  
-    5. A window will appear and capture will begin.  
+    5. Select the color conversion mode number.  
+    6. A window will appear and capture will begin.  
 
 ![how_to_use](https://github.com/IwachanOrigin/usb_video_device_capture/blob/1fa0ac7ecec934c6080774b6735a5660707b00aa/doc/images/how_to_use.png)
 
@@ -68,6 +69,19 @@
       for example...  
 ![active_signal_resolution](https://github.com/IwachanOrigin/usb_video_device_capture/blob/1fa0ac7ecec934c6080774b6735a5660707b00aa/doc/images/active_signal_resolution.png)
 
+## Supported color format
+
+### Color Converter DSP(DirectX Media Object)
+
+Please check to below url.  
+[https://learn.microsoft.com/ja-jp/windows/win32/medfound/colorconverter](https://learn.microsoft.com/ja-jp/windows/win32/medfound/colorconverter)  
+
+### Pixel Shader
+
+| No. | Color format |
+|-----|--------------|
+| 1   | NV12         |
+| 2   | RGB32        |
 
 ## Design
 
