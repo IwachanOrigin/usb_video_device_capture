@@ -43,11 +43,11 @@
 
 ## Build
 
-    ex. VS2017 の場合  
+    ex. For VS2017  
     powershell.exe cmake -S . -B build -G "\"Visual Studio 15 2017 Win64"\"  
     powershell.exe cmake --build build  
 
-    ex. VS2019以上の場合  
+    ex. VS2019 or higher  
     powershell.exe cmake -S . -B build  
     powershell.exe cmake --build build  
 
@@ -62,7 +62,7 @@
 
 ![how_to_use](https://github.com/IwachanOrigin/usb_video_device_capture/blob/1fa0ac7ecec934c6080774b6735a5660707b00aa/doc/images/how_to_use.png)
 
-## Attention
+## Note
 
     - If all settings good, but capture is not started, the active signal resolution is not right.  
       Please check your windows display settings.  
@@ -86,3 +86,4 @@ Please check to below url.
 ## Design
 
 ![design](https://github.com/IwachanOrigin/usb_video_device_capture/blob/9dcf10dcd3e06da4cf24942abb2c5eb694b5099f/doc/images/design.png)
+
