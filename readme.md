@@ -16,7 +16,7 @@
 #### No.1  
 
 OS  : Windows 10 Pro 22H2  
-CPU : Intel Core i9-7900X  
+CPU : Intel Core i9-7900X(10core, 20threads)  
 RAM : 24.0GB  
 GPU : NVIDIA GeForce RTX A4000(Driver ver.535.98)  
 
