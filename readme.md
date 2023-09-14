@@ -13,10 +13,19 @@
 
 ### Verification Machine Spec
 
-    OS  : Windows 10 Pro 22H2
-    CPU : Intel Core i7-9700K
-    RAM : 32.0GB
-    GPU : NVIDIA GeForce RTX 2060(Driver ver.522.30)
+#### No.1  
+
+OS  : Windows 10 Pro 22H2  
+CPU : Intel Core i9-7900X  
+RAM : 24.0GB  
+GPU : NVIDIA GeForce RTX A4000(Driver ver.535.98)  
+
+#### No.2  
+
+OS  : Windows 10 Pro 22H2  
+CPU : Intel Pentium N4200(4core, 4threads)  
+RAM : 4.0GB  
+GPU : Intel(R) HD Graphics 505  
 
 ### Verification USB Web camera
 
