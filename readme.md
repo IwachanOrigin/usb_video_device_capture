@@ -61,16 +61,16 @@
 #### I-O DATA GV-HUVC 4K(Input : 4K30p, Output : 4K30p) <CPU, Memory, Disk, NW, GPU>
 
     - With No.1 PC(DMO)  
-![input_4k30p_output_4k30p](https://github.com/IwachanOrigin/usb_video_device_capture/blob/1c87211e987152a1df2e078f34ca713460537169/doc/images/input_output_4k30p.png)
+![input_output_4k30p_no01_dmo](./doc/images/input_output_4k30p_no01_dmo.png)
 
     - With No.1 PC(Pixel Shader)  
-
+![input_output_4k30p_no01_ps](./doc/images/input_output_4k30p_no01_ps.png)
 
     - With No.2 PC(DMO)
-
+![input_output_4k30p_no02_dmo](./doc/images/input_output_4k30p_no02_dmo.png)
 
     - With No.2 PC(Pixel Shader)  
-
+![input_output_4k30p_no02_ps](./doc/images/input_output_4k30p_no02_ps.png)
 
 ## Build
 
