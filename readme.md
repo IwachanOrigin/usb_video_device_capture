@@ -15,26 +15,26 @@
 
 #### No.1  
 
-OS  : Windows 10 Pro 22H2  
-CPU : Intel Core i9-7900X(10core, 20threads)  
-RAM : 24.0GB  
-GPU : NVIDIA GeForce RTX A4000(Driver ver.535.98)  
+    OS  : Windows 10 Pro 22H2  
+    CPU : Intel Core i9-7900X(10core, 20threads)  
+    RAM : 24.0GB  
+    GPU : NVIDIA GeForce RTX A4000(Driver ver.535.98)  
 
 #### No.2  
 
-OS  : Windows 10 Pro 22H2  
-CPU : Intel Pentium N4200(4core, 4threads)  
-RAM : 4.0GB  
-GPU : Intel(R) HD Graphics 505  
+    OS  : Windows 10 Pro 22H2  
+    CPU : Intel Pentium N4200(4core, 4threads)  
+    RAM : 4.0GB  
+    GPU : Intel(R) HD Graphics 505  
 
 ### Verification USB Web camera
 
- Logicool HD Pro Webcam C920  
+    Logicool HD Pro Webcam C920  
 [LINK](https://www.logicool.co.jp/ja-jp/products/webcams/hd-pro-webcam-c920n.960-001261.html)
 
 ### Verification USB Video Capture Device
 
- I-O DATA GV-HUVC 4K  
+    I-O DATA GV-HUVC 4K  
 [LINK](https://www.iodata.jp/product/av/capture/gv-huvc4k/index.htm)
 
 ### Result
@@ -47,16 +47,16 @@ GPU : Intel(R) HD Graphics 505
 #### Logicool HD Pro Webcam C920(Input : 2K30p, Output : 2K30p) <CPU, Memory, Disk, NW, GPU>
 
     - With No.1 PC(DMO)  
-![input_output_2k30p](https://github.com/IwachanOrigin/usb_video_device_capture/blob/eb5f8f47a906f8a32875bbc672d39c4b7e0965cb/doc/images/input_output_2k30p.png)
+![input_output_2k30p_no01_dmo](./doc/images/input_output_2k30p_no01_dmo.png)
 
     - With No.1 PC(Pixel Shader)  
-
+![input_output_2k30p_no01_ps](./doc/images/input_output_2k30p_no01_ps.png)
 
     - With No.2 PC(DMO)  
-
+![input_output_2k30p_no02_dmo](./doc/images/input_output_2k30p_no02_dmo.png)
 
     - With No.2 PC(Pixel Shader)  
-
+![input_output_2k30p_no02_ps](./doc/images/input_output_2k30p_no02_ps.png)
 
 #### I-O DATA GV-HUVC 4K(Input : 4K30p, Output : 4K30p) <CPU, Memory, Disk, NW, GPU>
 
