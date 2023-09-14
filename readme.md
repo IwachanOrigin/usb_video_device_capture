@@ -29,12 +29,12 @@ GPU : Intel(R) HD Graphics 505
 
 ### Verification USB Web camera
 
-    Logicool HD Pro Webcam C920
+ Logicool HD Pro Webcam C920  
 [LINK](https://www.logicool.co.jp/ja-jp/products/webcams/hd-pro-webcam-c920n.960-001261.html)
 
 ### Verification USB Video Capture Device
 
-    I-O DATA GV-HUVC 4K
+ I-O DATA GV-HUVC 4K  
 [LINK](https://www.iodata.jp/product/av/capture/gv-huvc4k/index.htm)
 
 ### Result
@@ -44,11 +44,33 @@ GPU : Intel(R) HD Graphics 505
 | 1   | Logicool HD Pro Webcam C920 | 2K(1920x1080)  | 30p     | Yes           |
 | 2   | I-O DATA GV-HUVC 4K         | 4K(3840x2160)  | 30p     | Yes           |
 
-    - Logicool HD Pro Webcam C920(Input : 2K30p, Output : 2K30p) <CPU, Memory, Disk, NW, GPU>
+#### Logicool HD Pro Webcam C920(Input : 2K30p, Output : 2K30p) <CPU, Memory, Disk, NW, GPU>
+
+    - With No.1 PC(DMO)  
 ![input_output_2k30p](https://github.com/IwachanOrigin/usb_video_device_capture/blob/eb5f8f47a906f8a32875bbc672d39c4b7e0965cb/doc/images/input_output_2k30p.png)
 
-    - I-O DATA GV-HUVC 4K(Input : 4K30p, Output : 4K30p) <CPU, Memory, Disk, NW, GPU>
+    - With No.1 PC(Pixel Shader)  
+
+
+    - With No.2 PC(DMO)  
+
+
+    - With No.2 PC(Pixel Shader)  
+
+
+#### I-O DATA GV-HUVC 4K(Input : 4K30p, Output : 4K30p) <CPU, Memory, Disk, NW, GPU>
+
+    - With No.1 PC(DMO)  
 ![input_4k30p_output_4k30p](https://github.com/IwachanOrigin/usb_video_device_capture/blob/1c87211e987152a1df2e078f34ca713460537169/doc/images/input_output_4k30p.png)
+
+    - With No.1 PC(Pixel Shader)  
+
+
+    - With No.2 PC(DMO)
+
+
+    - With No.2 PC(Pixel Shader)  
+
 
 ## Build
 
