@@ -91,14 +91,14 @@
     5. Select the color conversion mode number.  
     6. A window will appear and capture will begin.  
 
-![how_to_use](https://github.com/IwachanOrigin/usb_video_device_capture/blob/1fa0ac7ecec934c6080774b6735a5660707b00aa/doc/images/how_to_use.png)
+![how_to_use](./doc/images/how_to_use.png)
 
 ## Note
 
     - If all settings good, but capture is not started, the active signal resolution is not right.  
       Please check your windows display settings.  
       for example...  
-![active_signal_resolution](https://github.com/IwachanOrigin/usb_video_device_capture/blob/1fa0ac7ecec934c6080774b6735a5660707b00aa/doc/images/active_signal_resolution.png)
+![active_signal_resolution](./doc/images/active_signal_resolution.png)
 
 ## Supported color format
 
@@ -116,5 +116,5 @@ Please check to below url.
 
 ## Design
 
-![design](https://github.com/IwachanOrigin/usb_video_device_capture/blob/9dcf10dcd3e06da4cf24942abb2c5eb694b5099f/doc/images/design.png)
+![design](./doc/images/design.png)
 
