@@ -14,6 +14,7 @@ DX11BaseRenderer::DX11BaseRenderer()
   , m_srv(nullptr)
   , m_samplerClampLinear(nullptr)
   , m_texture(nullptr)
+  , m_cbTexOriginalSize(nullptr)
   , m_renderWidth(0)
   , m_renderHeight(0)
   , m_textureWidth(0)
@@ -169,6 +170,13 @@ bool DX11BaseRenderer::init(const HWND hwnd, const uint32_t& width, const uint32
     return false;
   }
 
+  result = this->createCBTexOrigin();
+  if (!result)
+  {
+    MessageBoxW(nullptr, L"Failed to create ConstantBuffer of texturesize.", L"Error", MB_OK);
+    return false;
+  }
+
   return true;
 }
 
@@ -185,6 +193,7 @@ bool DX11BaseRenderer::render()
 
   {
     // Set the shader's
+    m_immediateContext->VSSetConstantBuffers(0, 1, m_cbTexOriginalSize.GetAddressOf());
     m_pipeline.activate();
     if (m_texture && m_immediateContext)
     {
@@ -274,5 +283,36 @@ bool DX11BaseRenderer::createMesh()
     }
   }
 
+  return true;
+}
+
+bool DX11BaseRenderer::createCBTexOrigin()
+{
+  struct CBTextureSize
+  {
+    int width;
+    int height;
+    float padding[2];
+  };
+
+  D3D11_BUFFER_DESC bd = {};
+  bd.Usage = D3D11_USAGE_DEFAULT;
+  bd.ByteWidth = sizeof(CBTextureSize);
+  bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+  bd.CPUAccessFlags = 0;
+
+  CBTextureSize texSize{};
+  texSize.width = m_textureWidth;
+  texSize.height = m_textureHeight;
+
+  D3D11_SUBRESOURCE_DATA subresourceData = {};
+  subresourceData.pSysMem = &texSize;
+
+  HRESULT hr = m_d3dDevice->CreateBuffer(&bd, &subresourceData, m_cbTexOriginalSize.GetAddressOf());
+  if (FAILED(hr))
+  {
+    MessageBoxW(nullptr, L"Failed to create Constant Buffer.", L"Error", MB_OK);
+    return false;
+  }
   return true;
 }

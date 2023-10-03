@@ -30,6 +30,8 @@ protected:
   ComPtr<ID3D11SamplerState> m_samplerClampLinear;
   ComPtr<ID3D11ShaderResourceView> m_srv;
   ComPtr<ID3D11Resource> m_texture;
+  ComPtr<ID3D11Buffer> m_cbTexOriginalSize;
+
   uint32_t m_renderWidth;
   uint32_t m_renderHeight;
   uint32_t m_textureWidth;
@@ -42,6 +44,7 @@ protected:
 private:
   bool createPipeline(const VideoCaptureFormat& vcf);
   bool createMesh();
+  bool createCBTexOrigin();
 };
 
 } // renderer
